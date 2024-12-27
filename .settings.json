@@ -1,0 +1,14 @@
+{
+    "type": "setting",
+    "settings": {
+      "python.linting.pylintArgs": [
+        "--rcfile=${workspaceFolder}/pyproject.toml"
+      ],
+      "python.formatting.provider": "black",
+      "python.formatting.blackArgs": [
+        "--line-length",
+        "88"
+      ]
+
+    }
+  }
