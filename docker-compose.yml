@@ -1,0 +1,26 @@
+services:
+  bot:
+    build: .
+    command: python3 app.py
+    volumes:
+      - .:/app
+    environment:
+      DISCORD_TOKEN: ${DISCORD_BOT_TOKEN}
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    restart: on-failure:3
+
+  db:
+    image: postgres
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: 'eggsauce'
+      PGDATA: /data/postgres
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+volumes:
+  db-data:
