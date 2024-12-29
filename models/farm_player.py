@@ -8,6 +8,7 @@ class FarmPlayer(Model):
     player = fields.OneToOneField('models.Player', related_name='farm_player')
     farm_title = fields.CharField(max_length=50)
     farmer = fields.CharField(max_length=50)
+    chickens = fields.ForeignKeyField('models.Chicken', related_name='farm_chickens')
     last_drop_time = fields.DatetimeField(auto_now=True)
     last_chicken_roll_time = fields.DatetimeField(auto_now=True)    
     

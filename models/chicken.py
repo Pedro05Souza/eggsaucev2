@@ -12,6 +12,7 @@ class Chicken(Model):
     upkeep_multiplier = fields.FloatField()
     rarity = fields.CharEnumField(ChickenRarityEnum)
     status_code = fields.IntField()
+    happiness = fields.IntField()
 
     class Meta:
         table = "chicken"
