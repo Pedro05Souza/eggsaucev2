@@ -1,7 +1,6 @@
 from pathlib import Path
 from discord import Intents
 from discord.ext.commands import Bot
-
 from tools.app_env_vars import AppEnvVars
 
 class Eggsauce(Bot):
