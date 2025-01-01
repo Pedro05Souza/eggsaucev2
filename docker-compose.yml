@@ -6,6 +6,7 @@ services:
       - .:/app
     environment:
       DISCORD_TOKEN: ${DISCORD_BOT_TOKEN}
+      PYTHONUNBUFFERED: 1
     ports:
       - "5000:5000"
     depends_on:
@@ -21,6 +22,12 @@ services:
       PGDATA: /data/postgres
     volumes:
       - db-data:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
 
 volumes:
   db-data:
