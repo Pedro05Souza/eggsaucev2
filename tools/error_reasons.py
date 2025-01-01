@@ -1,0 +1,1 @@
+REASON_DM_FAILURE = "❌ Something went wrong while sending a DM to you. Please make sure your DMs are open."
