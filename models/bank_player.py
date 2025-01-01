@@ -5,8 +5,8 @@ __all__ = ['BankPlayer']
 
 class BankPlayer(Model):
     player = fields.OneToOneField('models.Player', pk=True, related_name='bank_player')
-    balance = fields.IntField()
-    upgrade_level = fields.IntField()
+    balance = fields.IntField(default=0)
+    upgrade_level = fields.IntField(default=1)
     
     class Meta:
         table = 'bank_player'
