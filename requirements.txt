@@ -3,3 +3,5 @@ discord.py
 tortoise-orm
 asyncpg
 python-dotenv
+aerich
+tomlkit
