@@ -1,10 +1,9 @@
 [tool.pylint]
-disable = [
-    "C0114",  # Missing module docstring
-    "C0115",  # Missing class docstring
-    "C0116",  # Missing function or method docstring
-    "format",  # string formatting
-    "R0903",  # Too few public methods
-]
+disable = ["C0114", "C0115", "C0116", "format", "R0903"]
 max-line-length = 88
-suggestion-mode=true
+suggestion-mode = true
+
+[tool.aerich]
+tortoise_orm = "tools.constants.TORTOISE_ORM"
+location = "./migrations"
+src_folder = "./."
