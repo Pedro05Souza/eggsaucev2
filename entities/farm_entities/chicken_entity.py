@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+__all__ = ["ChickenEntity"]
+
 @dataclass
 class ChickenEntity:
     __slots__ = ['chicken_id', 'eggs_generated', 'upkeep_multiplier', 'rarity', 'status_code', 'name', 'happiness']

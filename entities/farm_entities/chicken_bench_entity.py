@@ -1,5 +1,7 @@
 from dataclasses import dataclass
-from entities.chicken_entity import ChickenEntity
+from entities.farm_entities.chicken_entity import ChickenEntity
+
+__all__ = ["ChickenBenchEntity"]
 
 @dataclass
 class ChickenBenchEntity:

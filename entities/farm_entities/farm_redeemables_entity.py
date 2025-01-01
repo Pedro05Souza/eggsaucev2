@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from entities.farm_entities.chicken_entity import ChickenEntity
 
+__all__ = ["FarmRedeemables"]
+
 @dataclass
 class FarmRedeemables:
     
