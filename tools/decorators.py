@@ -6,12 +6,12 @@ __all__ = ['database_user']
 
 def database_user(player_repo: PlayerRepository):
     async def predicate(ctx: Context) -> bool:
-        player = await player_repo.get_player_by_discord_id(ctx.author.id)
+        player_entity = await player_repo.get_player_by_discord_id(ctx.author.id)
 
-        if not player:
-            player = await player_repo.create_player(ctx.author.id)
+        if not player_entity:
+            player_entity = await player_repo.create_player(ctx.author.id)
 
-        ctx.player = player
+        ctx.player_entity = player_entity
 
         return True
 

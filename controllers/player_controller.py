@@ -12,7 +12,7 @@ class PlayerController(Cog):
     @hybrid_command(name="balance", aliases=["bal"])
     @database_user(player_repo)
     async def balance(self, ctx: Context) -> None:
-        player_usecase = PlayerBalanceUsecase(ctx, ctx.player)
+        player_usecase = PlayerBalanceUsecase(ctx, ctx.player_entity)
         await player_usecase.get_player_balance()
         
 async def setup(bot: Bot) -> None:

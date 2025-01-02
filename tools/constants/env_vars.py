@@ -11,4 +11,3 @@ def get_env_var(enviroment_variable: str) -> str:
         raise ValueError(f"Environment variable {enviroment_variable} not set.")
     
     return env_var
-    
