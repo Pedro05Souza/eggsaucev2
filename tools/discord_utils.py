@@ -1,9 +1,9 @@
 from typing import Union, Optional
 from discord.ext.commands import Context
 from discord import Interaction, Color, Embed, Forbidden
-from .error_reasons import REASON_DM_FAILURE
+from .constants import REASON_DM_FAILURE
 
-__all__ = ["send_bot_embed", "embed_builder", "send_user_dm"]
+__all__ = ["send_bot_embed", "embed_builder", "send_user_dm", "send_failed_embed"]
 
 
 async def send_bot_embed(
@@ -106,3 +106,17 @@ async def send_user_dm(ctx: Union[Context, Interaction], embed: Embed) -> None:
             ephemeral=True,
         )
         return
+    
+async def send_failed_embed(context: Union[Context, Interaction], description: str) -> None:
+    """This function is responsable for sending an embed when a command fails.
+    This works the same as the `send_bot_embed` coroutine, but with a predefined title.
+    
+    Args:
+        context (Context): The context of the command.
+        description (str): The description of the embed.
+    """
+    return await send_bot_embed(
+        ctx=context,
+        title="❌ Command failed",
+        description=description,
+    )
