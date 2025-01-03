@@ -26,13 +26,13 @@ class PlayerRepository():
     
     async def update_player(self, player: PlayerEntity) -> PlayerEntity:
         async with in_transaction():
-            await Player.filter(id=player.player_id).update(
+            await Player.filter(id=player.id).update(
                 balance=player.balance,
                 role_values=player.roles,
                 last_salary_time=player.last_salary_time
             )
             
-            await BankPlayer.filter(player=player.player_id).update(
+            await BankPlayer.filter(player=player.id).update(
                 balance=player.bank_balance,
                 upgrade_level=player.upgrade_level
             )
