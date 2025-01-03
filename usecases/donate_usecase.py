@@ -1,16 +1,25 @@
-from typing import Union
-from discord import Member, Interaction
+from discord import Member
 from discord.ext.commands import Context
 from tortoise.transactions import in_transaction
 from entities import PlayerEntity
 from repositories import PlayerRepository
-from tools import REASON_INVALID_USER, REASON_INVALID_AMOUNT, send_bot_embed
+from tools import (
+    send_bot_embed,
+    send_failed_embed,
+)
+from tools.constants import (
+    REASON_INVALID_USER,
+    REASON_INVALID_AMOUNT,
+    REASON_INSUFFICIENT_BALANCE,
+    REASON_CANT_ACTION_SELF,
+)
+
 
 class DonateUsecase:
 
     def __init__(
         self,
-        context: Union[Context, Interaction],
+        context: Context,
         donator: PlayerEntity,
         donation_amount: int,
         recipient: Member,
@@ -23,27 +32,25 @@ class DonateUsecase:
         self.player_repository = player_repository
 
     async def donate(self) -> None:
-        recipient_entity = await self.player_repository.get_player_by_discord_id(self.recipient.id)
-        
-        if not recipient_entity or recipient_entity.id == self.donator.id:
-            return await send_bot_embed(
-                ctx=self.context,
-                title="❌ Donation failed",
-                description=REASON_INVALID_USER,
-                thumbnail_url=self.context.author.display_avatar.url
-            )
-            
+        recipient_entity = await self.player_repository.get_player_by_discord_id(
+            self.recipient.id
+        )
+
+        if not recipient_entity:
+            return await send_failed_embed(self.context, REASON_INVALID_USER)
+
+        if self.recipient.id == self.donator.id:
+            return await send_failed_embed(self.context, REASON_CANT_ACTION_SELF)
+
         if self.donation_amount <= 0:
-            return await send_bot_embed(
-                ctx=self.context,
-                title="❌ Donation failed",
-                description=REASON_INVALID_AMOUNT,
-                thumbnail_url=self.context.author.display_avatar.url
-            )
-        
+            return await send_failed_embed(self.context, REASON_INVALID_AMOUNT)
+
+        if self.donator.balance < self.donation_amount:
+            return await send_failed_embed(self.context, REASON_INSUFFICIENT_BALANCE)
+
         self.donator.balance -= self.donation_amount
         recipient_entity.balance += self.donation_amount
-        
+
         async with in_transaction():
             await self.player_repository.update_player(self.donator)
             await self.player_repository.update_player(recipient_entity)

@@ -1,17 +1,16 @@
-from typing import Union
 from datetime import timedelta
 from discord.ext.commands import Context
-from discord import Interaction, Member
+from discord import Member
 from discord.utils import format_dt
-from tools import send_bot_embed, REASON_INVALID_USER
-from tools.constants import SECONDS_TO_SALARY_DROP
+from tools import send_bot_embed
+from tools.constants import SECONDS_TO_SALARY_DROP, REASON_INVALID_USER
 from repositories import PlayerRepository
 
 __all__ = ['BalanceUsecase']
 
 class BalanceUsecase():
     
-    def __init__(self, ctx: Union[Context, Interaction], discord_member: Member, player_repository: PlayerRepository) -> None:
+    def __init__(self, ctx: Context, discord_member: Member, player_repository: PlayerRepository) -> None:
         self.context = ctx
         self.discord_member = discord_member
         self.player_repository = player_repository
