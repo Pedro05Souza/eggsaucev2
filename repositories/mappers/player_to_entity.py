@@ -1,13 +1,10 @@
 from entities.player_entities.player_entity import PlayerEntity
-from models import Player, BankPlayer
+from models import Player
 from tools.constants import AMOUNT_PER_BANK_UPGRADE
 
 __all__ = ['player_model_to_entity']
 
 async def player_model_to_entity(player: Player) -> PlayerEntity:
-    bank_player: BankPlayer = await player.bank_player.filter(player=player).first()
-    bank_balance: int = bank_player.balance
-    bank_upgrades: int = bank_player.upgrade_level
     
     return PlayerEntity(
         id=player.id,
@@ -15,7 +12,7 @@ async def player_model_to_entity(player: Player) -> PlayerEntity:
         balance=player.balance,
         roles=player.role_values,
         last_salary_time=player.last_salary_time,
-        bank_balance=bank_balance,
-        bank_capacity=bank_upgrades * AMOUNT_PER_BANK_UPGRADE,
-        upgrade_level=bank_upgrades
+        bank_balance=player.bank_player.balance,
+        bank_capacity=player.bank_player.upgrade_level * AMOUNT_PER_BANK_UPGRADE,
+        upgrade_level=player.bank_player.upgrade_level
     )

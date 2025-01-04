@@ -1,5 +1,4 @@
 from typing import Optional
-from tortoise.transactions import in_transaction
 from entities import PlayerEntity
 from models import Player, BankPlayer
 from ..mappers import player_model_to_entity
@@ -9,7 +8,7 @@ __all__ = ['PlayerRepository']
 class PlayerRepository():
     
     async def get_player_by_discord_id(self, discord_id: int) -> Optional[PlayerEntity]:
-        database_player = await Player.get_or_none(discord_user_id=discord_id)
+        database_player = await Player.filter(discord_user_id=discord_id).select_related('bank_player').first()
         
         if not database_player:
             return None
@@ -25,19 +24,17 @@ class PlayerRepository():
         return await BankPlayer.create(player=player)
     
     async def update_player(self, player: PlayerEntity) -> PlayerEntity:
-        async with in_transaction():
-            await Player.filter(id=player.id).update(
-                balance=player.balance,
-                role_values=player.roles,
-                last_salary_time=player.last_salary_time
-            )
-            
-            await BankPlayer.filter(player=player.id).update(
-                balance=player.bank_balance,
-                upgrade_level=player.upgrade_level
-            )
-            return player
+        await Player.filter(id=player.id).update(
+            balance=player.balance,
+            role_values=player.roles,
+            last_salary_time=player.last_salary_time
+        )
+        return player
         
+    async def update_player_bank(self, player: PlayerEntity) -> PlayerEntity:
+        await BankPlayer.filter(player=player.id).update(
+            balance=player.bank_balance,
+            upgrade_level=player.upgrade_level
+        )
+        return player
         
-        
-    
