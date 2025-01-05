@@ -1,4 +1,4 @@
-name: Linte
+name: 🔧 Lint
 
 on:
   push:
