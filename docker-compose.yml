@@ -5,7 +5,7 @@ services:
     volumes:
       - .:/app
     environment:
-      DISCORD_TOKEN: ${DISCORD_BOT_TOKEN}
+      ENVIRONMENT: ${ENVIRONMENT}
       PYTHONUNBUFFERED: 1
     ports:
       - "5000:5000"

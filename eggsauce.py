@@ -39,4 +39,13 @@ class Eggsauce(Bot):
         await self.__load_cogs()
 
     def run(self) -> None:
-        super().run(get_env_var("DISCORD_TOKEN"))
+        workspace_env = get_env_var("ENVIRONMENT")
+
+        discord_token_key = None
+
+        if workspace_env == "DEV":
+            discord_token_key = get_env_var("DISCORD_BOT_TOKEN_DEV")
+        else:
+            discord_token_key = get_env_var("DISCORD_BOT_TOKEN_PROD")
+
+        super().run(discord_token_key)
