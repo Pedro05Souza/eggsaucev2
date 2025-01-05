@@ -58,7 +58,7 @@ jobs:
 
             - name: Run
               run: |
-                python app.py
+                timeout 60s python app.py
                 
                 
                     
