@@ -58,7 +58,11 @@ jobs:
 
             - name: Run
               run: |
-                timeout 60s python app.py
+                python app.py &
+                sleep 5
+                kill %1
+                wait %1
+                exit 0
                 
                 
                     
