@@ -1,9 +1,13 @@
 [tool.pylint]
-disable = ["C0114", "C0115", "C0116", "R0903", "W0703", "R0913"]
-max-line-length = 88
+disable = ["C0114", "C0115", "C0116", "R0903", "W0703", "R0913", "R0917", "R0902"]
+max-line-length = 120
 suggestion-mode = true
+ignore=["venv", "migrations"]
 
 [tool.aerich]
 tortoise_orm = "tools.constants.tortoise_config.TORTOISE_ORM"
 location = "./migrations"
 src_folder = "./."
+
+[tool.black]
+line-length = 120

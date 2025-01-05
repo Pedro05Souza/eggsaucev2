@@ -6,6 +6,7 @@ __all__ = ["CacheService"]
 K = TypeVar("K")
 V = TypeVar("V")
 
+
 class CacheService(Generic[K, V]):
 
     def __init__(self, max_size: int = 100, expiration_time: int = 3600) -> None:
@@ -15,8 +16,7 @@ class CacheService(Generic[K, V]):
         if key not in self.__cache:
             self.__cache[key] = value
             return True
-        else:
-            return False
+        return False
 
     async def remove_item(self, key: K) -> None:
         if key in self.__cache:
@@ -27,5 +27,4 @@ class CacheService(Generic[K, V]):
     async def get_item(self, key: K) -> Optional[V]:
         if key in self.__cache:
             return self.__cache[key]
-        else:
-            return None
+        return None

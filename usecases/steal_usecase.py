@@ -41,19 +41,19 @@ class StealUsecase:
 
         if target_entity.balance == 0:
             return await send_failed_embed(self.ctx, REASON_STEAL_NO_MONEY)
-        
+
         max_steal_amount = int(target_entity.balance * MAX_PERCETANGE_TO_STEAL)
-        
+
         random_number = self.random.random()
-        
+
         if random_number < STEAL_FAILURE_CHANCE:
             return await send_failed_embed(self.ctx, "Your attempt to steal failed.")
-        
+
         stolen_amount = self.random.randint(1, max_steal_amount)
-        
+
         self.stealer.balance += stolen_amount
         target_entity.balance -= stolen_amount
-        
+
         async with in_transaction():
             await self.player_repo.update_player(self.stealer)
             await self.player_repo.update_player(target_entity)
@@ -62,5 +62,3 @@ class StealUsecase:
                 title="✅ Steal successful",
                 description=f"You stole **{stolen_amount}** eggbux from {self.target.mention}",
             )
-        
-        

@@ -3,6 +3,7 @@ from tortoise import fields
 
 __all__ = ["Player"]
 
+
 class Player(Model):
     id = fields.UUIDField(pk=True)
     discord_user_id = fields.BigIntField()
@@ -12,4 +13,3 @@ class Player(Model):
 
     class Meta:
         table = "player"
-    

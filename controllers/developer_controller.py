@@ -14,6 +14,5 @@ class DeveloperController(Cog):
         reload_usecase = ReloadCogsUsecase(self.bot)
         await reload_usecase.reload_cogs()
 
-
 async def setup(bot: Bot) -> None:
     await bot.add_cog(DeveloperController(bot))

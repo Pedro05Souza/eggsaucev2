@@ -2,10 +2,19 @@ from dataclasses import dataclass
 
 __all__ = ["FarmCornfieldEntity"]
 
+
 @dataclass
 class FarmCornfieldEntity:
-    __slots__ = ["farm_cornfield_id", "farm_id", "cornfield_name", "current_corn", "corn_limit", "plot", "last_corn_drop"]
-    
+    __slots__ = [
+        "farm_cornfield_id",
+        "farm_id",
+        "cornfield_name",
+        "current_corn",
+        "corn_limit",
+        "plot",
+        "last_corn_drop",
+    ]
+
     farm_cornfield_id: str
     farm_id: str
     cornfield_name: str

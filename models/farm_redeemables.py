@@ -1,11 +1,14 @@
 from tortoise.models import Model
 from tortoise import fields
 
-__all__ = ['FarmRedeemables']
+__all__ = ["FarmRedeemables"]
+
 
 class FarmRedeemables(Model):
-    farm = fields.OneToOneField('models.FarmPlayer', pk=True)
-    chicken = fields.ForeignKeyField('models.Chicken', related_name="chicken_redeemables")
-    
+    farm = fields.OneToOneField("models.FarmPlayer", pk=True)
+    chicken = fields.ForeignKeyField(
+        "models.Chicken", related_name="chicken_redeemables"
+    )
+
     class Meta:
-        table = 'farm_redeemaables'
+        table = "farm_redeemaables"

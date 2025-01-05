@@ -20,11 +20,15 @@ async def send_bot_embed(
     Args:
         ctx (Union[Context, Interaction]): The context of the command.
         color (str, optional): The color of the embed, defaults to "#FEE75C".
-        footer_text (Optional[str], optional): The text that will be displayed in the footer of the embed. Defaults to None.
-        ephemeral (bool, optional): A boolean that checks if the message should be sent privately within the server. Defaults to False.
-        is_dm (bool, optional): Checks if the message should be sent privately to the user. Defaults to False.
+        footer_text (Optional[str], optional): The text that will be displayed in the footer of the embed.
+        Defaults to None.
+        ephemeral (bool, optional): A boolean that checks if the message should be sent privately within the server.
+        Defaults to False.
+        is_dm (bool, optional): Checks if the message should be sent privately to the user.
+        Defaults to False.
         embed_file (Optional[str], optional): The file that will be sent with the embed. Defaults to None.
-        thumbnail_url (Optional[str], optional): The URL of the thumbnail that will be displayed in the embed. Defaults to None.
+        thumbnail_url (Optional[str], optional): The URL of the thumbnail that will be displayed in the embed. 
+        Defaults to None.
 
     Raises:
         ValueError: If ephemeral and is_dm are both True or if ephemeral is True and the context is not an interaction.
@@ -36,13 +40,11 @@ async def send_bot_embed(
 
     if ephemeral and not is_interaction:
         raise ValueError("Ephemeral can only be used with interactions")
-    
+
     if is_interaction:
         if not ctx.response.is_done():
             return await ctx.response.send_message(
-                embed=await embed_builder(
-                    color=color, footer_text=footer_text, thumbnail_url=thumbnail_url, **kwargs
-                ),
+                embed=await embed_builder(color=color, footer_text=footer_text, thumbnail_url=thumbnail_url, **kwargs),
                 ephemeral=ephemeral,
             )
 
@@ -57,10 +59,7 @@ async def send_bot_embed(
 
 
 async def embed_builder(
-    color: str,
-    footer_text: Optional[str] = None,
-    thumbnail_url: Optional[str] = None,
-    **kwargs
+    color: str, footer_text: Optional[str] = None, thumbnail_url: Optional[str] = None, **kwargs
 ) -> Embed:
     """This function is responsable for building the embed that will be sent to the user.
 
@@ -76,7 +75,7 @@ async def embed_builder(
 
     if footer_text:
         embed.set_footer(text=footer_text)
-        
+
     if thumbnail_url:
         embed.set_thumbnail(url=thumbnail_url)
 
@@ -106,11 +105,12 @@ async def send_user_dm(ctx: Union[Context, Interaction], embed: Embed) -> None:
             ephemeral=True,
         )
         return
-    
+
+
 async def send_failed_embed(context: Union[Context, Interaction], description: str) -> None:
     """This function is responsable for sending an embed when a command fails.
     This works the same as the `send_bot_embed` coroutine, but with a predefined title.
-    
+
     Args:
         context (Context): The context of the command.
         description (str): The description of the embed.

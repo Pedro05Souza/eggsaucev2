@@ -2,6 +2,7 @@ from enum import Enum
 
 __all__ = ["ChickenRarityEnum"]
 
+
 class ChickenRarityEnum(str, Enum):
     DEAD = "dead"
     COMMON = "common"

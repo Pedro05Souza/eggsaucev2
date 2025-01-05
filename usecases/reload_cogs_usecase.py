@@ -1,14 +1,15 @@
 import os
-from tools import get_logger
 from discord.ext.commands import Bot
+from tools import get_logger
 
-__all__ = ['ReloadCogsUsecase']
+__all__ = ["ReloadCogsUsecase"]
 
-class ReloadCogsUsecase():
+
+class ReloadCogsUsecase:
     def __init__(self, bot: Bot) -> None:
         self.bot = bot
         self.logger = get_logger(__name__)
-        
+
     async def reload_cogs(self) -> None:
         for ext in os.listdir("./controllers/"):
             if ext.endswith(".py") and not ext.startswith("__"):

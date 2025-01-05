@@ -21,7 +21,7 @@ class PlayerController(Cog):
         member = member if member else ctx.author
         balance_usecase = BalanceUsecase(ctx, member, self.player_repo)
         await balance_usecase.get_player_balance()
-        
+
     @hybrid_command(name="donate", aliases=["give"])
     @database_user()
     async def donate(self, ctx: Context, amount: int, recipient: Member) -> None:
@@ -59,6 +59,7 @@ class PlayerController(Cog):
         await g.calculate_points_voice(
             member.id, self.player_repo, self.points_service, before, after
         )
+
 
 async def setup(bot: Bot) -> None:
     player_repo = PlayerRepository()

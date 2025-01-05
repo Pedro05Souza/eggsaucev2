@@ -6,7 +6,7 @@ from entities import PlayerEntity
 
 
 class GainPointsUsecase:
-    
+
     async def calculate_points_message(
         self,
         player_entity_or_discord_id: Union[PlayerEntity, int],
@@ -16,7 +16,7 @@ class GainPointsUsecase:
         player_entity = await self.__get_player_entity_or_none(
             player_entity_or_discord_id, player_repo
         )
-        
+
         if not player_entity:
             return
 
@@ -30,8 +30,7 @@ class GainPointsUsecase:
         player_entity.balance += calculated_points
 
         await player_repo.update_player(player_entity)
-        
-        
+
     async def calculate_points_voice(
         self,
         player_entity_or_discord_id: Union[PlayerEntity, int],
@@ -43,7 +42,7 @@ class GainPointsUsecase:
         player_entity = await self.__get_player_entity_or_none(
             player_entity_or_discord_id, player_repo
         )
-        
+
         if not player_entity:
             return
 
@@ -57,9 +56,11 @@ class GainPointsUsecase:
         player_entity.balance += calculated_points
 
         await player_repo.update_player(player_entity)
-        
+
     async def __get_player_entity_or_none(
-        self, player_entity_or_discord_id: Union[PlayerEntity, int], player_repo: PlayerRepository
+        self,
+        player_entity_or_discord_id: Union[PlayerEntity, int],
+        player_repo: PlayerRepository,
     ) -> Optional[PlayerEntity]:
         if isinstance(player_entity_or_discord_id, int):
             player_entity = await player_repo.get_player_by_discord_id(

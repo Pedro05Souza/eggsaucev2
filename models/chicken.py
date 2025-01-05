@@ -2,7 +2,8 @@ from tortoise.models import Model
 from tortoise import fields
 from .model_enums import ChickenRarityEnum
 
-__all__ = ['Chicken']
+__all__ = ["Chicken"]
+
 
 class Chicken(Model):
     id = fields.UUIDField(pk=True)
@@ -15,4 +16,3 @@ class Chicken(Model):
 
     class Meta:
         table = "chicken"
-    
