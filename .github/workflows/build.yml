@@ -13,7 +13,7 @@ jobs:
         runs-on: ubuntu-latest
         env:
             DATABASE_URL: postgres://postgres:postgres@localhost:5432/eggsauce
-            DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+            DISCORD_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
             DEVELOPER_IDS: ${{ secrets.DEVELOPER_IDS }}
         services:
             db:
