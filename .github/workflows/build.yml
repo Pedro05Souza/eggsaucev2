@@ -1,0 +1,64 @@
+name: ⚙️ Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        env:
+            DATABASE_URL: postgres://postgres:postgres@localhost:5432/eggsauce
+            DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+            DEVELOPER_IDS: ${{ secrets.DEVELOPER_IDS }}
+        services:
+            db:
+                image: postgres
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                    POSTGRES_DB: eggsauce
+                ports:
+                    - 5432:5432
+        name: Build
+        steps:
+            - name: Checkout codeP
+              uses: actions/checkout@v3
+
+            - name: Cache pip
+              uses: actions/cache@v3
+              with:
+                path: ~/.cache/pip
+                key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+                restore-keys: |
+                  ${{ runner.os }}-pip-
+
+            - name: Set up Python
+              uses: actions/setup-python@v4
+              with:
+                python-version: "3.12"
+
+            - name: Install dependencies
+              run: |
+                python -m pip install --upgrade pip
+                pip install -r requirements.txt
+
+            - name: Setup Aerich
+              run: |
+                aerich init -t tools.constants.tortoise_config.TORTOISE_ORM
+                aerich init-db
+
+            - name: Apply migrations
+              run: |
+                aerich upgrade
+
+            - name: Run
+              run: |
+                python app.py
+                
+                
+                    
