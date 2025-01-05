@@ -72,16 +72,25 @@ pip install -r requirements.txt
 docker --version
 ```
 
-3. If Docker is successfully installed, you can proceed by building and running the project using `docker-compose`. Execute the following command:
+### Installing and Running the `eggsauce CLI`
 
-```powershell
-docker compose build
-```
+Once Docker is successfully installed, follow these steps to set up and run the `eggsauce CLI`:
 
-followed by
+1. **Install the CLI**  
+   Run the following command in your terminal to install the CLI:
 
-```powershell
-docker compose up
-```
+   ```bash
+   pip install .
+   ```
 
-Your bot should now be live and running! 🎉
+2. **Run the CLI**
+  Use the command below to run the `eggsauce CLI:`
+
+  ```bash
+   eggsauce run --env <environment>
+   ```
+
+   The `--env` flag specifies the environment in which the CLI will run. It supports the following options:
+
+  * `dev`: Development environment (default).
+  * `prod`: Production enviroment.
