@@ -7,3 +7,5 @@ aerich
 tomlkit
 cachetools
 pylint
+click
+setuptools
