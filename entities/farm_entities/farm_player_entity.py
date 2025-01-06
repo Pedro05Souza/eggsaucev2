@@ -6,10 +6,20 @@ __all__ = ["FarmPlayerEntity"]
 
 @dataclass
 class FarmPlayerEntity:
-    __slots__ = ["farm_id", "player_id", "farm_title", "farmer", "last_drop_time", "last_chicken_roll_time", "chickens"]
+    __slots__ = [
+        "farm_id",
+        "player_id",
+        "discord_user_id",
+        "farm_title",
+        "farmer",
+        "last_drop_time",
+        "last_chicken_roll_time",
+        "chickens",
+    ]
 
     farm_id: str
     player_id: str
+    discord_user_id: int
     farm_title: str
     farmer: str
     last_drop_time: float
