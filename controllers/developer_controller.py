@@ -15,12 +15,13 @@ class DeveloperController(Cog):
         reload_usecase = ReloadCogsUsecase(self.bot)
         await reload_usecase.reload_cogs()
         self.logger.info("Reloaded cogs.")
-        
+
     @command(name="sync")
     @dev_only()
     async def sync(self, _: Context) -> None:
         await self.bot.tree.sync()
         self.logger.info("Synced tree.")
+
 
 async def setup(bot: Bot) -> None:
     await bot.add_cog(DeveloperController(bot))

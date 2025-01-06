@@ -10,7 +10,7 @@ from tools.constants import (
     REASON_INVALID_USER,
     REASON_CANT_ACTION_SELF,
     REASON_STEAL_NO_MONEY,
-    MINIMUM_AMOUNT_TO_STEAL
+    MINIMUM_AMOUNT_TO_STEAL,
 )
 
 
@@ -40,9 +40,11 @@ class StealUsecase:
 
         if target_entity.balance == 0:
             return await send_failed_embed(self.ctx, REASON_STEAL_NO_MONEY)
-        
+
         if target_entity.balance < MINIMUM_AMOUNT_TO_STEAL:
-            return await send_failed_embed(self.ctx, f"The target user must have at least **{MINIMUM_AMOUNT_TO_STEAL}** eggbux to steal.")
+            return await send_failed_embed(
+                self.ctx, f"The target user must have at least **{MINIMUM_AMOUNT_TO_STEAL}** eggbux to steal."
+            )
 
         max_steal_amount = int(target_entity.balance * MAX_PERCETANGE_TO_STEAL)
 

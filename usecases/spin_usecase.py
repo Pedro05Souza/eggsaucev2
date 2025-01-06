@@ -71,7 +71,7 @@ class SpinUsecase:
         if random_value < 0.5:
             random_color = SpinColorEnum.RED.value
 
-        elif random_value >= 0.5 and random_value <= 0.52:
+        elif 0.5 <= random_value <= 0.52:
             random_color = SpinColorEnum.GREEN.value
 
         else:
