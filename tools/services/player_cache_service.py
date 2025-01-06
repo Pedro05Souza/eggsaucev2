@@ -16,7 +16,7 @@ class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, Farm
         self.discord_user_ids_sets = set()
 
     async def get_or_add_player_entity(self, discord_user_id: int) -> PlayerEntity:
-        """Adds a player to the cache, fetches from repository.
+        """Gets or adds a player entity to the cache.
 
         Args:
             discord_id (int): The Discord ID of the player.
