@@ -1,10 +1,12 @@
 from discord.ext.commands import Context, check
+from discord.app_commands import Choice
 from discord.ext import commands
+from discord import Interaction
 from tools.services import PlayerCacheService
 from tools.constants import get_env_var
 from repositories import PlayerRepository
 
-__all__ = ["dev_only", "database_user"]
+__all__ = ["dev_only", "database_user", "spin_command_autocomplete"]
 
 
 def dev_only():
@@ -40,3 +42,8 @@ def database_user():
         return True
 
     return check(predicate)
+
+
+async def spin_command_autocomplete(_: Interaction, current_choice: str) -> list[Choice]:
+    color = ["black", "red", "green"]
+    return [Choice(name=choice, value=choice) for choice in color if current_choice.lower() in choice.lower()]
