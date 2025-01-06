@@ -9,7 +9,7 @@ from tools import (
     GlobalPlayerCache,
     spin_command_autocomplete,
 )
-from usecases import BalanceUsecase, DonateUsecase, StealUsecase, GainPointsUsecase, SpinUsecase
+from usecases import BalanceUsecase, DonateUsecase, StealUsecase, GainPointsUsecase, SpinUsecase, UpgradeBankUsecase
 
 
 class PlayerController(Cog):
@@ -45,6 +45,12 @@ class PlayerController(Cog):
     async def spin(self, ctx: Context, color_choice: str, amount_betted: int) -> None:
         spin_usecase = SpinUsecase(ctx, ctx.player_entity, self.player_cache, color_choice, amount_betted)
         await spin_usecase.spin()
+
+    @hybrid_command(name="upgradebank", aliases=["ub"], description="🏦 Upgrade your bank limit!")
+    @database_user()
+    async def upgrade_bank_limit(self, ctx: Context) -> None:
+        upgrade_bank_limit_usecase = UpgradeBankUsecase(ctx, ctx.player_entity, self.player_cache)
+        await upgrade_bank_limit_usecase.upgrade_bank_limit()
 
     @Cog.listener()
     async def on_message(self, message: Message) -> None:
