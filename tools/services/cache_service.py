@@ -33,4 +33,4 @@ class CacheService(Generic[K, V]):
         if key in self._cache:
             self._cache.update({key: value})
         else:
-            raise KeyError(f"Key {key} not found in cache")
+            await self.add_item(key, value)
