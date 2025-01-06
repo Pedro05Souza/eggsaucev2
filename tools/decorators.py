@@ -1,7 +1,8 @@
 from discord.ext.commands import Context, check
 from discord.ext import commands
-from repositories import PlayerRepository
+from tools.services import PlayerCacheService
 from tools.constants import get_env_var
+from repositories import PlayerRepository
 
 __all__ = ["dev_only", "database_user"]
 
@@ -26,9 +27,10 @@ def database_user():
     """
 
     async def predicate(ctx: Context) -> bool:
-        player_repo: PlayerRepository = ctx.cog.player_repo
+        player_cache: PlayerCacheService = ctx.cog.player_cache
+        player_repo: PlayerRepository = player_cache.player_repo
 
-        player_entity = await player_repo.get_player_by_discord_id(ctx.author.id)
+        player_entity = await player_cache.get_or_add_player_entity(ctx.author.id)
 
         if not player_entity:
             player_entity = await player_repo.create_player(ctx.author.id)

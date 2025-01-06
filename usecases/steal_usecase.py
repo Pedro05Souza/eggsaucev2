@@ -2,9 +2,8 @@ from random import Random
 from discord.ext.commands import Context
 from discord import Member
 from tortoise.transactions import in_transaction
-from repositories import PlayerRepository
 from entities import PlayerEntity
-from tools import send_failed_embed, send_bot_embed
+from tools import send_failed_embed, send_bot_embed, PlayerCacheService
 from tools.constants import (
     MAX_PERCETANGE_TO_STEAL,
     STEAL_FAILURE_CHANCE,
@@ -21,20 +20,20 @@ class StealUsecase:
         ctx: Context,
         stealer: PlayerEntity,
         target: Member,
-        player_repo: PlayerRepository,
+        player_cache: PlayerCacheService,
         random: Random,
     ) -> None:
         self.ctx = ctx
         self.stealer = stealer
         self.target = target
-        self.player_repo = player_repo
+        self.player_cache = player_cache
         self.random = random
 
     async def steal(self) -> None:
         if self.target.id == self.stealer.id:
             return await send_failed_embed(self.ctx, REASON_CANT_ACTION_SELF)
 
-        target_entity = await self.player_repo.get_player_by_discord_id(self.target.id)
+        target_entity = await self.player_cache.get_or_add_player_entity(self.target.id)
 
         if not target_entity or target_entity.id == self.stealer.id:
             return await send_failed_embed(self.ctx, REASON_INVALID_USER)
@@ -55,8 +54,8 @@ class StealUsecase:
         target_entity.balance -= stolen_amount
 
         async with in_transaction():
-            await self.player_repo.update_player(self.stealer)
-            await self.player_repo.update_player(target_entity)
+            await self.player_cache.player_synchronizer(self.stealer)
+            await self.player_cache.player_synchronizer(target_entity)
             return await send_bot_embed(
                 ctx=self.ctx,
                 title="✅ Steal successful",

@@ -2,22 +2,21 @@ from datetime import timedelta
 from discord.ext.commands import Context
 from discord import Member
 from discord.utils import format_dt
-from tools import send_bot_embed
+from tools import send_bot_embed, PlayerCacheService
 from tools.constants import SECONDS_TO_SALARY_DROP, REASON_INVALID_USER
-from repositories import PlayerRepository
 
 __all__ = ["BalanceUsecase"]
 
 
 class BalanceUsecase:
 
-    def __init__(self, ctx: Context, discord_member: Member, player_repository: PlayerRepository) -> None:
+    def __init__(self, ctx: Context, discord_member: Member, player_cache: PlayerCacheService) -> None:
         self.context = ctx
         self.discord_member = discord_member
-        self.player_repository = player_repository
+        self.player_cache = player_cache
 
     async def get_player_balance(self) -> None:
-        player_entity = await self.player_repository.get_player_by_discord_id(self.discord_member.id)
+        player_entity = await self.player_cache.get_or_add_player_entity(self.discord_member.id)
 
         if not player_entity:
             return await send_bot_embed(
