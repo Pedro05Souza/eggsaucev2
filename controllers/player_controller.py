@@ -19,25 +19,27 @@ class PlayerController(Cog):
         self.player_cache = player_cache
         self.points_service = points_service
 
-    @hybrid_command(name="balance", aliases=["bal", "points", "p"])
+    @hybrid_command(
+        name="balance", aliases=["bal", "points", "p"], description="💰 Check your balance or another user's!"
+    )
     async def balance(self, ctx: Context, member: Member = None) -> None:
         member = member if member else ctx.author
         balance_usecase = BalanceUsecase(ctx, member, self.player_cache)
         await balance_usecase.get_player_balance()
 
-    @hybrid_command(name="donate", aliases=["give"])
+    @hybrid_command(name="donate", aliases=["give"], description="🤝 Share the love by donating eggbux to others!")
     @database_user()
     async def donate(self, ctx: Context, amount: int, recipient: Member) -> None:
         donate_usecase = DonateUsecase(ctx, ctx.player_entity, amount, recipient, self.player_cache)
         await donate_usecase.donate()
 
-    @hybrid_command(name="steal", aliases=["rob"])
+    @hybrid_command(name="steal", aliases=["rob"], description="🦹‍♂️ Steal some eggbux from another user!")
     @database_user()
     async def steal(self, ctx: Context, target: Member) -> None:
         steal_usecase = StealUsecase(ctx, ctx.player_entity, target, self.player_cache)
         await steal_usecase.steal()
 
-    @hybrid_command(name="spin")
+    @hybrid_command(name="spin", description="🎰 Spin the roulette wheel to win some eggbux!")
     @app_commands.autocomplete(color_choice=spin_command_autocomplete)
     @database_user()
     async def spin(self, ctx: Context, color_choice: str, amount_betted: int) -> None:
