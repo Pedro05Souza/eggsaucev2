@@ -13,6 +13,7 @@ from tools.constants import (
     MINIMUM_AMOUNT_TO_STEAL,
 )
 
+__all__ = ("StealUsecase",)
 
 class StealUsecase:
 

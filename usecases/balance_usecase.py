@@ -11,7 +11,7 @@ __all__ = ["BalanceUsecase"]
 class BalanceUsecase:
 
     def __init__(self, ctx: Context, discord_member: Member, player_cache: PlayerCacheService) -> None:
-        self.context = ctx
+        self.ctx = ctx
         self.discord_member = discord_member
         self.player_cache = player_cache
 
@@ -20,7 +20,7 @@ class BalanceUsecase:
 
         if not player_entity:
             return await send_bot_embed(
-                ctx=self.context,
+                ctx=self.ctx,
                 title="❌ Balance failed",
                 description=REASON_INVALID_USER,
             )
@@ -36,8 +36,8 @@ class BalanceUsecase:
             description += f"\n⏰Next salary in: **{format_dt(next_salary, "R")}**"
 
         return await send_bot_embed(
-            ctx=self.context,
-            title=f"💼 {self.context.author.display_name}'s balance",
+            ctx=self.ctx,
+            title=f"💼 {self.ctx.author.display_name}'s balance",
             description=description,
             thumbnail_url=self.discord_member.display_avatar.url,
         )

@@ -4,3 +4,4 @@ from .donate_usecase import *
 from .steal_usecase import *
 from .gain_points_usecase import *
 from .spin_usecase import *
+from .upgrade_bank_usecase import *

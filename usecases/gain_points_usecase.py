@@ -4,6 +4,7 @@ from repositories import PlayerRepository
 from tools import PointsService, PlayerCacheService
 from entities import PlayerEntity
 
+__all__ = ("GainPointsUsecase",)
 
 class GainPointsUsecase:
 
@@ -20,7 +21,7 @@ class GainPointsUsecase:
         if not player_entity:
             return
 
-        calculated_points = await points_service.calculate_points_message(
+        calculated_points = points_service.calculate_points_message(
             player_entity.discord_user_id
         )
 
@@ -46,7 +47,7 @@ class GainPointsUsecase:
         if not player_entity:
             return
 
-        calculated_points = await points_service.calculate_points_voice(
+        calculated_points = points_service.calculate_points_voice(
             player_entity.discord_user_id, before, after
         )
 

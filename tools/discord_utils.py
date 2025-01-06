@@ -1,9 +1,18 @@
 from typing import Union, Optional
 from discord.ext.commands import Context
-from discord import Interaction, Color, Embed, Forbidden
+from discord import Interaction, Color, Embed, Forbidden, ButtonStyle
+from discord.ui import View, Button
 from .constants import REASON_DM_FAILURE
 
-__all__ = ["send_bot_embed", "embed_builder", "send_user_dm", "send_failed_embed"]
+__all__ = [
+    "send_bot_embed",
+    "embed_builder",
+    "send_user_dm",
+    "send_failed_embed",
+    "button_builder",
+    "view_button_builder",
+    "confirmation_popup",
+]
 
 
 async def send_bot_embed(
@@ -27,7 +36,7 @@ async def send_bot_embed(
         is_dm (bool, optional): Checks if the message should be sent privately to the user.
         Defaults to False.
         embed_file (Optional[str], optional): The file that will be sent with the embed. Defaults to None.
-        thumbnail_url (Optional[str], optional): The URL of the thumbnail that will be displayed in the embed. 
+        thumbnail_url (Optional[str], optional): The URL of the thumbnail that will be displayed in the embed.
         Defaults to None.
 
     Raises:
@@ -44,22 +53,22 @@ async def send_bot_embed(
     if is_interaction:
         if not ctx.response.is_done():
             return await ctx.response.send_message(
-                embed=await embed_builder(color=color, footer_text=footer_text, thumbnail_url=thumbnail_url, **kwargs),
+                embed=embed_builder(color=color, footer_text=footer_text, thumbnail_url=thumbnail_url, **kwargs),
                 ephemeral=ephemeral,
             )
 
         return await ctx.followup.send(
-            embed=await embed_builder(color=color, footer_text=footer_text, thumbnail_url=thumbnail_url, **kwargs),
+            embed=embed_builder(color=color, footer_text=footer_text, thumbnail_url=thumbnail_url, **kwargs),
             ephemeral=ephemeral,
         )
 
     return await ctx.send(
-        embed=await embed_builder(color=color, footer_text=footer_text, thumbnail_url=thumbnail_url, **kwargs),
+        embed=embed_builder(color=color, footer_text=footer_text, thumbnail_url=thumbnail_url, **kwargs),
     )
 
 
-async def embed_builder(
-    color: str, footer_text: Optional[str] = None, thumbnail_url: Optional[str] = None, **kwargs
+def embed_builder(
+    footer_text: Optional[str] = None, thumbnail_url: Optional[str] = None, color: str = "#FEE75C", **kwargs
 ) -> Embed:
     """This function is responsable for building the embed that will be sent to the user.
 
@@ -120,3 +129,87 @@ async def send_failed_embed(context: Union[Context, Interaction], description: s
         title="❌ Command failed",
         description=description,
     )
+
+
+def button_builder(**kwargs) -> Button:
+    """
+    Function that creates a button.
+
+    Args:
+        **kwargs: The keyword arguments that will be passed to the button builder.
+
+    Returns:
+        Button: The button.
+    """
+    return Button(**kwargs)
+
+
+def view_button_builder(*buttons) -> View:
+    """
+    Function that creates a view with buttons.
+
+    Args:
+        *buttons: The buttons that will be added to the view.
+
+    Returns:
+        View: The view.
+    """
+    view = View()
+    for button in buttons:
+        if not isinstance(button, Button):
+            raise TypeError("All buttons must be of type Button.")
+        view.add_item(button)
+    return view
+
+
+async def confirmation_popup(
+    ctx: Context | Interaction,
+    embed: Embed,
+    ephemeral=False,
+    is_dm=False,
+) -> bool:
+    """
+    Function that creates a confirmation popup.
+
+    Args:
+        ctx (Context): The context of the command.
+        embed (Embed): The embed that will be sent.
+        ephemeral (bool): Whether the message should be ephemeral or not.
+        is_dm (bool): Whether the message should be sent in DMs or not.
+    """
+    cancel_button = button_builder(label="Cancel", style=ButtonStyle.red, custom_id="cancel")
+    confirm_button = button_builder(label="Confirm", style=ButtonStyle.green, custom_id="confirm")
+
+    view = view_button_builder(cancel_button, confirm_button)
+
+    is_interaction = isinstance(ctx, Interaction)
+
+    if is_dm:
+
+        if ephemeral:
+            raise ValueError("Ephemeral messages are not supported in DMs.")
+
+        user = ctx.author if not is_interaction else ctx.user
+        await user.send(embed=embed, view=view)
+
+    else:
+        if is_interaction:
+            if not ctx.response.is_done():
+                await ctx.response.send_message(embed=embed, ephemeral=ephemeral, view=view)
+            else:
+                await ctx.followup.send(embed=embed, ephemeral=ephemeral, view=view)
+        else:
+            await ctx.send(embed=embed, view=view)
+
+    client = ctx.client if is_interaction else ctx.bot  # Interaction and Context have different names for the bot.
+    author = ctx.user if is_interaction else ctx.author  # Interaction and Context have different names for the author.
+
+    try:
+        interaction = await client.wait_for("interaction", check=lambda i: i.user.id == author.id, timeout=60)
+        await interaction.response.defer()
+
+        if interaction.data["custom_id"] == "confirm":
+            return True
+        return False
+    except TimeoutError:
+        return False

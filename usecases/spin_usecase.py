@@ -50,11 +50,11 @@ class SpinUsecase:
         if spin_data.amount_result == 0:
             self.player_entity.balance -= self.amount_betted
             embed_description += (
-                f"You lost **{self.amount_betted}** eggbux."
+                f" You lost **{self.amount_betted}** eggbux."
             )
         else:
             self.player_entity.balance += spin_data.amount_result
-            embed_description += f"You won **{spin_data.amount_result}** eggbux!"
+            embed_description += f" You won **{spin_data.amount_result}** eggbux!"
 
         await self.player_cache.player_synchronizer(self.player_entity)
 

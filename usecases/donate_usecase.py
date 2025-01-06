@@ -10,18 +10,19 @@ from tools.constants import (
     REASON_CANT_ACTION_SELF,
 )
 
+__all__ = ("DonateUsecase",)
 
 class DonateUsecase:
 
     def __init__(
         self,
-        context: Context,
+        ctx: Context,
         donator: PlayerEntity,
         donation_amount: int,
         recipient: Member,
         player_cache: PlayerCacheService,
     ) -> None:
-        self.context = context
+        self.ctx = ctx
         self.donator = donator
         self.donation_amount = donation_amount
         self.recipient = recipient
@@ -31,16 +32,16 @@ class DonateUsecase:
         recipient_entity = await self.player_cache.get_or_add_player_entity(self.recipient.id)
 
         if not recipient_entity:
-            return await send_failed_embed(self.context, REASON_INVALID_USER)
+            return await send_failed_embed(self.ctx, REASON_INVALID_USER)
 
         if self.recipient.id == self.donator.id:
-            return await send_failed_embed(self.context, REASON_CANT_ACTION_SELF)
+            return await send_failed_embed(self.ctx, REASON_CANT_ACTION_SELF)
 
         if self.donation_amount <= 0:
-            return await send_failed_embed(self.context, REASON_INVALID_AMOUNT)
+            return await send_failed_embed(self.ctx, REASON_INVALID_AMOUNT)
 
         if self.donator.balance < self.donation_amount:
-            return await send_failed_embed(self.context, REASON_INSUFFICIENT_BALANCE)
+            return await send_failed_embed(self.ctx, REASON_INSUFFICIENT_BALANCE)
 
         self.donator.balance -= self.donation_amount
         recipient_entity.balance += self.donation_amount
@@ -49,7 +50,7 @@ class DonateUsecase:
             await self.player_cache.player_synchronizer(self.donator)
             await self.player_cache.player_synchronizer(recipient_entity)
             return await send_bot_embed(
-                ctx=self.context,
+                ctx=self.ctx,
                 title="✅ Donation successful",
                 description=f"You donated {self.donation_amount} eggbux to {self.recipient.mention}",
             )

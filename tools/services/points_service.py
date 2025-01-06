@@ -24,40 +24,40 @@ class PointsService:
             max_items, expiration_time
         )
 
-    async def calculate_points_message(self, discord_member_id: int) -> int:
-        if not await self.message_users_cache.get_item(discord_member_id):
-            await self.message_users_cache.add_item(discord_member_id, datetime.now())
+    def calculate_points_message(self, discord_member_id: int) -> int:
+        if not self.message_users_cache.get_item(discord_member_id):
+            self.message_users_cache.add_item(discord_member_id, datetime.now())
             return 0
 
-        points_calculated = await self.__calculate_points_earned(
+        points_calculated = self.__calculate_points_earned(
             self.message_users_cache, discord_member_id
         )
 
         if points_calculated > 0:
-            await self.message_users_cache.remove_item(discord_member_id)
+            self.message_users_cache.remove_item(discord_member_id)
 
         return points_calculated
 
-    async def calculate_points_voice(
+    def calculate_points_voice(
         self, discord_member_id: int, before: VoiceState, after: VoiceState
     ) -> int:
-        if not await self.voice_users_cache.get_item(discord_member_id):
-            await self.voice_users_cache.add_item(discord_member_id, datetime.now())
+        if not self.voice_users_cache.get_item(discord_member_id):
+            self.voice_users_cache.add_item(discord_member_id, datetime.now())
 
-            return await self.__calculate_points_earned(
+            return self.__calculate_points_earned(
                 self.voice_users_cache, discord_member_id, use_creation_timestamp=True
             )
 
-        points_earnt = await self.__calculate_points_earned(
+        points_earnt = self.__calculate_points_earned(
             self.voice_users_cache, discord_member_id
         )
 
         if before.channel and not after.channel:
-            await self.voice_users_cache.remove_item(discord_member_id)
+            self.voice_users_cache.remove_item(discord_member_id)
 
         return points_earnt
 
-    async def __calculate_points_earned(
+    def __calculate_points_earned(
         self,
         cache_type: CacheService,
         discord_member_id: int,
@@ -67,7 +67,7 @@ class PointsService:
         if use_creation_timestamp:
             time_difference: timedelta = datetime.now() - self.creation_timestamp
         else:
-            time_difference: timedelta = datetime.now() - await cache_type.get_item(
+            time_difference: timedelta = datetime.now() - cache_type.get_item(
                 discord_member_id
             )
 

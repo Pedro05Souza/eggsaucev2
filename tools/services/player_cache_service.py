@@ -13,7 +13,6 @@ class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, Farm
         super().__init__(max_size, expiration_time)
         self.lock = Lock()
         self.player_repo = player_repo
-        self.discord_user_ids_sets = set()
 
     async def get_or_add_player_entity(self, discord_user_id: int) -> PlayerEntity:
         """Gets or adds a player entity to the cache.
@@ -25,16 +24,16 @@ class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, Farm
             Union[PlayerEntity, FarmPlayerEntity, tuple]: The player entity or both player and farm player entities.
         """
         async with self.lock:
-            player = await self.get_item(discord_user_id, "PlayerEntity")
+            player = self.get_item(discord_user_id, "PlayerEntity")
 
             if player:
                 return player
 
             player = await self.__get_from_repository(discord_user_id, "P")
-            await self.add_item(discord_user_id, {"PlayerEntity": player})
+            self.add_item(discord_user_id, {"PlayerEntity": player})
             return player
 
-    async def get_item(  # pylint: disable=arguments-differ
+    def get_item(  # pylint: disable=arguments-differ
         self, discord_user_id: int, entity_flag: str
     ) -> Union[PlayerEntity, FarmPlayerEntity, tuple]:
         """Gets a player entity from the cache.
@@ -46,7 +45,7 @@ class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, Farm
         Returns:
             Union[PlayerEntity, FarmPlayerEntity, tuple]: The player entity or both player and farm player entities.
         """
-        cache_entry = await super().get_item(discord_user_id)
+        cache_entry = super().get_item(discord_user_id)
 
         if cache_entry and entity_flag in cache_entry:
             return cache_entry[entity_flag]
@@ -77,28 +76,15 @@ class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, Farm
         Raises:
             ValueError: If the entity type is not PlayerEntity or FarmPlayerEntity.
         """
-        async def inner():
-            self.discord_user_ids_sets.add(entity.discord_user_id)
-
-            if isinstance(entity, PlayerEntity):
-                await self.player_repo.update_player(entity)
-                if entity.discord_user_id in self._cache:
-                    await self.update_item(
-                        entity.discord_user_id, {"PlayerEntity": entity}
-                    )  # Keeps the reference in the cache
-                else:
-                    await self.add_item(entity.discord_user_id, {"PlayerEntity": entity})
-
-            elif isinstance(entity, FarmPlayerEntity):
-                pass
-
+        if isinstance(entity, PlayerEntity):
+            await self.player_repo.update_player(entity)
+            if entity.discord_user_id in self._cache:
+                self.update_item(entity.discord_user_id, {"PlayerEntity": entity})  # Keeps the reference in the cache
             else:
-                raise ValueError("Invalid entity type. Must be PlayerEntity or FarmPlayerEntity.")
-            self.discord_user_ids_sets.remove(entity.discord_user_id)
+                self.add_item(entity.discord_user_id, {"PlayerEntity": entity})
 
-        if entity.discord_user_id in self.discord_user_ids_sets:
-            async with self.lock:
-                await inner()
+        elif isinstance(entity, FarmPlayerEntity):
+            pass
 
         else:
-            await inner()
+            raise ValueError("Invalid entity type. Must be PlayerEntity or FarmPlayerEntity.")
