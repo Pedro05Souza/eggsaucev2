@@ -1,12 +1,18 @@
+from enum import Enum
 from typing import NamedTuple
 from random import Random
 from collections import namedtuple
 from discord.ext.commands import Context
 from entities import PlayerEntity
-from tools import PlayerCacheService, SpinColorEnum, send_failed_embed, send_bot_embed
+from tools import PlayerCacheService, send_failed_embed, send_bot_embed
 from tools.constants import REASON_INSUFFICIENT_BALANCE, REASON_INVALID_AMOUNT, MINIMUM_AMOUNT_SPIN
 
 __all__ = ["SpinUsecase"]
+
+class SpinColorEnum(Enum):
+    RED = "red"
+    GREEN = "green"
+    BLACK = "black"
 
 
 class SpinUsecase:
