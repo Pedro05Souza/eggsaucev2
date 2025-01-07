@@ -1,1 +1,2 @@
 from .player_repository import PlayerRepository
+from .bot_config_repository import BotConfigRepository
