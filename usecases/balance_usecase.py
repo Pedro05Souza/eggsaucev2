@@ -2,7 +2,7 @@ from datetime import timedelta
 from discord.ext.commands import Context
 from discord import Member
 from discord.utils import format_dt
-from tools import send_bot_embed, PlayerCacheService
+from tools import send_bot_embed, PlayerCacheService, send_failed_embed
 from tools.constants import SECONDS_TO_SALARY_DROP, REASON_INVALID_USER
 
 __all__ = ["BalanceUsecase"]
@@ -19,10 +19,9 @@ class BalanceUsecase:
         player_entity = await self.player_cache.get_or_add_player_entity(self.discord_member.id)
 
         if not player_entity:
-            return await send_bot_embed(
-                ctx=self.ctx,
-                title="❌ Balance failed",
-                description=REASON_INVALID_USER,
+            return await send_failed_embed(
+                self.ctx,
+                REASON_INVALID_USER,
             )
 
         description = (
