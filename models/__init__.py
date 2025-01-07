@@ -3,7 +3,7 @@ from .bot_config import *
 from .chicken import *
 from .chicken_bench import *
 from .farm_cornfield import *
-from .farm_player import *
+from .farm import *
 from .farm_offers import *
 from .ranked_player import *
 from .player import *

@@ -1,10 +1,10 @@
 from tortoise.models import Model
 from tortoise import fields
 
-__all__ = ["FarmPlayer"]
+__all__ = ["Farm"]
 
 
-class FarmPlayer(Model):
+class Farm(Model):
     id = fields.UUIDField(pk=True)
     player = fields.OneToOneField("models.Player", related_name="farm_player")
     farm_title = fields.CharField(max_length=50)

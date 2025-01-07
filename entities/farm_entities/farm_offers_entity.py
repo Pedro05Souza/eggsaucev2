@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 __all__ = ["FarmOfferEntity"]
 
@@ -13,4 +14,4 @@ class FarmOfferEntity:
     chicken_id: str
     price: int
     description: str
-    expires_at: str
+    expires_at: datetime

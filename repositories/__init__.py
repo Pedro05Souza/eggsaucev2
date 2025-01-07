@@ -1,1 +1,1 @@
-from .players import *
+from .player_repository import PlayerRepository

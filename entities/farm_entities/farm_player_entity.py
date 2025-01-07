@@ -1,11 +1,12 @@
 from dataclasses import dataclass
+from datetime import datetime
 from entities.farm_entities.chicken_entity import ChickenEntity
 
-__all__ = ["FarmPlayerEntity"]
+__all__ = ["FarmEntity"]
 
 
 @dataclass
-class FarmPlayerEntity:
+class FarmEntity:
     __slots__ = [
         "farm_id",
         "player_id",
@@ -22,6 +23,6 @@ class FarmPlayerEntity:
     discord_user_id: int
     farm_title: str
     farmer: str
-    last_drop_time: float
-    last_chicken_roll_time: float
+    last_drop_time: datetime
+    last_chicken_roll_time: datetime
     chickens: list[ChickenEntity]

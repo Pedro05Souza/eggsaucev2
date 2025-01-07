@@ -1,13 +1,13 @@
 from typing import Mapping, Union
 from asyncio import Lock
-from entities import PlayerEntity, FarmPlayerEntity
+from entities import PlayerEntity, FarmEntity
 from repositories import PlayerRepository
 from .cache_service import CacheService
 
 __all__ = ["PlayerCacheService"]
 
 
-class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, FarmPlayerEntity]]]):
+class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, FarmEntity]]]):
 
     def __init__(self, player_repo: PlayerRepository, max_size: int = 250, expiration_time: int = 3600) -> None:
         super().__init__(max_size, expiration_time)
@@ -35,7 +35,7 @@ class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, Farm
 
     def get_item(  # pylint: disable=arguments-differ
         self, discord_user_id: int, entity_flag: str
-    ) -> Union[PlayerEntity, FarmPlayerEntity, tuple]:
+    ) -> Union[PlayerEntity, FarmEntity, tuple]:
         """Gets a player entity from the cache.
 
         Args:
@@ -53,7 +53,7 @@ class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, Farm
 
     async def __get_from_repository(
         self, discord_user_id: int, entity_flag: str
-    ) -> Union[PlayerEntity, FarmPlayerEntity, tuple]:
+    ) -> Union[PlayerEntity, FarmEntity, tuple]:
         if entity_flag == "P":
             return await self.player_repo.get_player_by_discord_id(discord_user_id)
 
@@ -66,7 +66,7 @@ class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, Farm
 
             return player, farm_player
 
-    async def player_synchronizer(self, entity: Union[PlayerEntity, FarmPlayerEntity]) -> None:
+    async def player_synchronizer(self, entity: Union[PlayerEntity, FarmEntity]) -> None:
         """Synchronizes the player entity with the cache and repository.
 
         Args:
@@ -83,7 +83,7 @@ class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, Farm
             else:
                 self.add_item(entity.discord_user_id, {"PlayerEntity": entity})
 
-        elif isinstance(entity, FarmPlayerEntity):
+        elif isinstance(entity, FarmEntity):
             pass
 
         else:

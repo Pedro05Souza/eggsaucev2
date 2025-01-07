@@ -5,7 +5,7 @@ __all__ = ["FarmRedeemables"]
 
 
 class FarmRedeemables(Model):
-    farm = fields.OneToOneField("models.FarmPlayer", pk=True)
+    farm = fields.OneToOneField("models.Farm", pk=True)
     chicken = fields.ForeignKeyField(
         "models.Chicken", related_name="chicken_redeemables"
     )

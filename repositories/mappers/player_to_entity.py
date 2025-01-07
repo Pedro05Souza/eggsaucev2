@@ -1,4 +1,4 @@
-from entities.player_entities.player_entity import PlayerEntity
+from entities import PlayerEntity
 from models import Player
 from tools.constants import AMOUNT_PER_BANK_UPGRADE
 

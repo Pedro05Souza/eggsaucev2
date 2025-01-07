@@ -1,7 +1,7 @@
 from typing import Optional
 from entities import PlayerEntity
 from models import Player, BankPlayer
-from ..mappers import player_model_to_entity
+from .mappers import player_model_to_entity
 
 __all__ = ["PlayerRepository"]
 

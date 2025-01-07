@@ -3,3 +3,4 @@ from .logging_config import *
 from .tortoise_config import *
 from .env_vars import *
 from .error_reasons import *
+from .chicken_config import *

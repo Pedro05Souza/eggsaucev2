@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 __all__ = ["FarmCornfieldEntity"]
 
@@ -21,4 +22,4 @@ class FarmCornfieldEntity:
     current_corn: int
     corn_limit: int
     plot: int
-    last_corn_drop: str
+    last_corn_drop: datetime
