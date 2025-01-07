@@ -9,7 +9,15 @@ from tools import (
     GlobalPlayerCache,
     spin_command_autocomplete,
 )
-from usecases import BalanceUsecase, DonateUsecase, StealUsecase, GainPointsUsecase, SpinUsecase, UpgradeBankUsecase
+from usecases import (
+    BalanceUsecase,
+    DonateUsecase,
+    StealUsecase,
+    GainPointsUsecase,
+    SpinUsecase,
+    UpgradeBankUsecase,
+    SlotsUsecase,
+)
 
 
 class PlayerController(Cog):
@@ -42,9 +50,15 @@ class PlayerController(Cog):
     @hybrid_command(name="spin", description="🎰 Spin the roulette wheel to win some eggbux!")
     @app_commands.autocomplete(color_choice=spin_command_autocomplete)
     @database_user()
-    async def spin(self, ctx: Context, color_choice: str, amount_betted: int) -> None:
-        spin_usecase = SpinUsecase(ctx, ctx.player_entity, self.player_cache, color_choice, amount_betted)
+    async def spin(self, ctx: Context, color_choice: str, amount: int) -> None:
+        spin_usecase = SpinUsecase(ctx, ctx.player_entity, self.player_cache, color_choice, amount)
         await spin_usecase.spin()
+
+    @hybrid_command(name="slots", description="🎰 Play the slot machine to win some eggbux!")
+    @database_user()
+    async def slots(self, ctx: Context, amount: int) -> None:
+        slots_usecase = SlotsUsecase(ctx, ctx.player_entity, self.player_cache, amount)
+        await slots_usecase.slots()
 
     @hybrid_command(name="upgradebank", aliases=["ub"], description="🏦 Upgrade your bank limit!")
     @database_user()
