@@ -1,5 +1,5 @@
 from datetime import datetime
-from discord.ext.commands import Cog, hybrid_command, Bot, Context
+from discord.ext.commands import Cog, hybrid_command, Bot, Context, cooldown
 from discord import Member, Message, VoiceState, app_commands
 from tools import (
     database_user,
@@ -9,6 +9,7 @@ from tools import (
     GlobalPlayerCache,
     spin_command_autocomplete,
 )
+from tools.constants import REGULAR_COMMAND_COOLDOWN
 from usecases import (
     BalanceUsecase,
     DonateUsecase,
@@ -18,6 +19,7 @@ from usecases import (
     UpgradeBankUsecase,
     SlotsUsecase,
 )
+
 
 
 class PlayerController(Cog):
@@ -30,18 +32,21 @@ class PlayerController(Cog):
     @hybrid_command(
         name="balance", aliases=["bal", "points", "p"], description="💰 Check your balance or another user's!"
     )
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN)
     async def balance(self, ctx: Context, member: Member = None) -> None:
         member = member if member else ctx.author
         balance_usecase = BalanceUsecase(ctx, member, self.player_cache)
         await balance_usecase.get_player_balance()
 
     @hybrid_command(name="donate", aliases=["give"], description="🤝 Share the love by donating eggbux to others!")
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN)
     @database_user()
     async def donate(self, ctx: Context, amount: int, recipient: Member) -> None:
         donate_usecase = DonateUsecase(ctx, ctx.player_entity, amount, recipient, self.player_cache)
         await donate_usecase.donate()
 
     @hybrid_command(name="steal", aliases=["rob"], description="🦹‍♂️ Steal some eggbux from another user!")
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN)
     @database_user()
     async def steal(self, ctx: Context, target: Member) -> None:
         steal_usecase = StealUsecase(ctx, ctx.player_entity, target, self.player_cache)
@@ -49,18 +54,21 @@ class PlayerController(Cog):
 
     @hybrid_command(name="spin", description="🎰 Spin the roulette wheel to win some eggbux!")
     @app_commands.autocomplete(color_choice=spin_command_autocomplete)
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN)
     @database_user()
     async def spin(self, ctx: Context, color_choice: str, amount: int) -> None:
         spin_usecase = SpinUsecase(ctx, ctx.player_entity, self.player_cache, color_choice, amount)
         await spin_usecase.spin()
 
     @hybrid_command(name="slots", description="🎰 Play the slot machine to win some eggbux!")
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN)
     @database_user()
     async def slots(self, ctx: Context, amount: int) -> None:
         slots_usecase = SlotsUsecase(ctx, ctx.player_entity, self.player_cache, amount)
         await slots_usecase.slots()
 
     @hybrid_command(name="upgradebank", aliases=["ub"], description="🏦 Upgrade your bank limit!")
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN)
     @database_user()
     async def upgrade_bank_limit(self, ctx: Context) -> None:
         upgrade_bank_limit_usecase = UpgradeBankUsecase(ctx, ctx.player_entity, self.player_cache)
