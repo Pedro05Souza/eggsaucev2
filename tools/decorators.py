@@ -44,6 +44,7 @@ def database_user():
 
     return check(predicate)
 
+
 def database_config():
     """Fetches the player entity from the cache or database and attaches it to the context.
 
@@ -67,12 +68,14 @@ def database_config():
 
     return check(predicate)
 
+
 def admin_only():
     """Check if the user has administrator permissions.
-    
+
     Returns:
         bool: True if the user has administrator permissions, False otherwise
-    """ 
+    """
+
     async def predicate(ctx: Context) -> bool:
         if ctx.author.guild_permissions.administrator:
             return True

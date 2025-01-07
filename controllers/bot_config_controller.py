@@ -19,4 +19,3 @@ class BotConfigController(Cog):
 
 async def setup(bot: Bot) -> None:
     await bot.add_cog(BotConfigController(bot, GlobalBotConfigCache))
-    

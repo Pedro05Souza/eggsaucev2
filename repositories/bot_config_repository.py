@@ -10,7 +10,7 @@ class BotConfigRepository:
 
         if not bot_config:
             return None
-        
+
         return bot_config_model_to_entity(bot_config)
 
     async def update_bot_config(self, bot_config: BotConfigEntity) -> BotConfigEntity:
