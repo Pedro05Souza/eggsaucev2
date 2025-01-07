@@ -5,6 +5,7 @@ from tortoise.transactions import in_transaction
 from entities import PlayerEntity, FarmEntity
 from repositories import PlayerRepository
 from .cache_service import CacheService
+from ._singleton_meta import SingletonMeta
 
 __all__ = ["PlayerCacheService"]
 
@@ -15,7 +16,7 @@ class EntityFlag(Enum):
     ALL = "ALL"
 
 
-class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, FarmEntity]]]):
+class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, FarmEntity]]], metaclass=SingletonMeta):
 
     def __init__(self, player_repo: PlayerRepository, max_size: int = 250, expiration_time: int = 3600) -> None:
         super().__init__(max_size, expiration_time)
