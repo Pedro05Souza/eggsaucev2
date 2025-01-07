@@ -89,7 +89,7 @@ class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, Farm
             return True
 
     async def player_synchronizer(self, entity: Union[PlayerEntity, FarmEntity]) -> None:
-        """Synchronizes the player entity with the cache and repository.
+        """Synchronizes the player entity with the cache and database.
 
         Args:
             key (int): The Discord ID of the player.
