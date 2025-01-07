@@ -19,6 +19,7 @@ class PlayerRepository:
     async def create_player(self, discord_id: int) -> PlayerEntity:
         player = await Player.create(discord_user_id=discord_id)
         await self.__create_bank_player(player)
+        player = await Player.filter(id=player.id).select_related("bank_player").first()
         return player_model_to_entity(player)
 
     async def __create_bank_player(self, player: Player) -> BankPlayer:
