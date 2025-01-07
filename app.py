@@ -1,9 +1,9 @@
 from eggsauce import Eggsauce
-from tools.database_starter import DatabaseStarter
+from tools import DatabaseStarterService
 
 
 def main():
-    DatabaseStarter()
+    DatabaseStarterService()
     bot = Eggsauce()
     bot.run()
 
