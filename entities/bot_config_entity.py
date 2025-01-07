@@ -1,4 +1,4 @@
-from typing import Set
+from typing import Set, Optional
 from dataclasses import dataclass
 
 __all__ = ["BotConfigEntity"]
@@ -17,4 +17,4 @@ class BotConfigEntity:
     id: int
     guild_id: int
     prefix: str
-    allowed_channels: Set[int]
+    allowed_channels: Optional[Set[int]]
