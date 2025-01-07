@@ -26,10 +26,15 @@ class BotManager:
 
         docker_up = subprocess.run(["docker", "compose", "up"], check=True)
 
-        if docker_up.returncode == 0:
-            click.echo("Docker compose up successful")
-        else:
-            raise RuntimeError("Docker build failed")
+        if not docker_up.returncode == 0:
+            raise RuntimeError("Docker compose up failed")
+
+        applied_migrations = subprocess.run(["aerich", "upgrade"], check=True)
+
+        if not applied_migrations.returncode == 0:
+            raise RuntimeError("Aerich migrations failed")
+
+        click.echo("Bot started successfully")
 
     @cli.command()
     def build():  # pylint: disable=no-self-argument,no-method-argument
