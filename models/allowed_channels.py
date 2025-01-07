@@ -1,9 +1,10 @@
 from tortoise.models import Model
 from tortoise import fields
 
+__all__ = ["AllowedChannels"]
 
 class AllowedChannels(Model):
-    bot_config = fields.ForeignKeyField(
+    bot_config = fields.OneToOneField(
         "models.BotConfig", related_name="allowed_channels"
     )
     channel_id = fields.BigIntField()
