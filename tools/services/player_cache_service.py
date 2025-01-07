@@ -23,24 +23,37 @@ class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, Farm
         self.lock = Lock()
         self.player_repo = player_repo
 
-    async def get_or_add_player_entity(self, discord_user_id: int) -> Optional[Union[PlayerEntity, FarmEntity, tuple]]:
+    async def get_or_add_player_entity(
+        self, discord_user_id_or_entity: Union[int, Union[PlayerEntity, FarmEntity]]
+    ) -> Optional[Union[PlayerEntity, FarmEntity, tuple]]:
         """Gets or adds a player entity to the cache.
 
         Args:
-            discord_id (int): The Discord ID of the player.
+            discord_user_id_or_entity (Union[int, Union[PlayerEntity, FarmEntity]]): The Discord ID of the player or the
+                player entity to add.
+                
+            if its an entity, it will be added to the cache. Otherwise, it will be fetched from the database.
 
         Returns:
             Union[PlayerEntity, FarmPlayerEntity, tuple]: The player entity or both player and farm player entities.
         """
         async with self.lock:
-            player = self.__get_from_cache(discord_user_id, EntityFlag.PLAYER)
+            if isinstance(discord_user_id_or_entity, int):
+                player = self.__get_from_cache(discord_user_id_or_entity, EntityFlag.PLAYER)
 
-            if player:
-                return player
+                if player:
+                    return player
 
-            player = await self.__get_from_repository(discord_user_id, EntityFlag.PLAYER)
-            if player:
-                self.add_item(discord_user_id, {"PlayerEntity": player})
+                player = await self.__get_from_repository(discord_user_id_or_entity, EntityFlag.PLAYER)
+                if player:
+                    self.add_item(discord_user_id_or_entity, {EntityFlag.PLAYER.value: player})
+            elif isinstance(discord_user_id_or_entity, (PlayerEntity, FarmEntity)):
+                entity = discord_user_id_or_entity
+                player = self.add_item(
+                    entity.discord_user_id, {EntityFlag.PLAYER.value: entity}
+                )
+            else:
+                raise ValueError("Invalid entity type. Must be PlayerEntity or FarmPlayerEntity.")
             return player
 
     def __get_from_cache(  # pylint: disable=arguments-differ
@@ -58,7 +71,7 @@ class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, Farm
         cache_entry = super().get_item(discord_user_id)
 
         if cache_entry and entity_flag.value in cache_entry:
-            return cache_entry[entity_flag]
+            return cache_entry[entity_flag.value]
         return None
 
     async def __get_from_repository(
@@ -109,10 +122,10 @@ class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, Farm
 
                 if entity.discord_user_id in self._cache:
                     self.update_item(
-                        entity.discord_user_id, {"PlayerEntity": entity}  # Keeps the reference in the cache
+                        entity.discord_user_id, {EntityFlag.PLAYER.value: entity}  # Keeps the reference in the cache
                     )
                 else:
-                    self.add_item(entity.discord_user_id, {"PlayerEntity": entity})
+                    self.add_item(entity.discord_user_id, {EntityFlag.PLAYER.value: entity})
 
             elif isinstance(entity, FarmEntity):
                 pass

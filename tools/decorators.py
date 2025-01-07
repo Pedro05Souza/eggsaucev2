@@ -36,6 +36,7 @@ def database_user():
 
         if not player_entity:
             player_entity = await player_repo.create_player(ctx.author.id)
+            await player_cache.get_or_add_player_entity(player_entity)
 
         ctx.player_entity = player_entity
 
