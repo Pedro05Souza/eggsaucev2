@@ -4,7 +4,7 @@ from tools.constants import AMOUNT_PER_BANK_UPGRADE
 
 __all__ = ["player_model_to_entity"]
 
-async def player_model_to_entity(player: Player) -> PlayerEntity:
+def player_model_to_entity(player: Player) -> PlayerEntity:
 
     return PlayerEntity(
         id=player.id,
