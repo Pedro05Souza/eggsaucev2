@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional, NamedTuple
+from typing import Optional, NamedTuple, Union
 from collections import namedtuple
 from tortoise.transactions import in_transaction
 from entities import BotConfigEntity
@@ -14,7 +14,9 @@ class ChannelFlag(Enum):
     UNCHANGED = "UNCHANGED"
     NONE = "NONE"
 
+
 __all__ = ["BotConfigCacheService"]
+
 
 class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=SingletonMeta):
 
@@ -24,7 +26,9 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
         super().__init__(max_size, expiration_time)
         self.bot_config_repository = bot_config_repository
 
-    async def get_or_add_guild_config_entity(self, discord_guild_id: int) -> Optional[BotConfigEntity]:
+    async def get_or_add_guild_config_entity(
+        self, discord_guild_id_or_entity: Union[int, BotConfigEntity]
+    ) -> Optional[BotConfigEntity]:
         """Gets or adds a guild config entity to the cache.
 
         Args:
@@ -33,15 +37,22 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
         Returns:
             BotConfigEntity: The guild config entity.
         """
-        guild_config = self.get_item(discord_guild_id)
+        if isinstance(discord_guild_id_or_entity, int):
+            discord_guild_id = discord_guild_id_or_entity
 
-        if guild_config:
-            return guild_config
+            guild_config = self.get_item(discord_guild_id)
 
-        guild_config = await self.bot_config_repository.get_guild_config_by_discord_guild_id(discord_guild_id)
+            if guild_config:
+                return guild_config
 
-        if guild_config:
-            self.add_item(discord_guild_id, guild_config)
+            guild_config = await self.bot_config_repository.get_guild_config_by_discord_guild_id(discord_guild_id)
+
+            if guild_config:
+                self.add_item(discord_guild_id, guild_config)
+
+        elif isinstance(discord_guild_id_or_entity, BotConfigEntity):
+            guild_config = discord_guild_id_or_entity
+            self.add_item(guild_config.guild_id, guild_config)
 
         return guild_config
 
@@ -57,17 +68,20 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
         """
         cache_entry = self.get_item(guild_id)
 
-        ChannelStateChange = namedtuple("channel_state", ["changed_channels"])
+        ChannelStateChange = namedtuple("ChannelStateChange", ["channel_state", "changed_channels"])
 
         if not cache_entry:
             return ChannelStateChange(ChannelFlag.NONE, [])
 
-        if len(cache_entry.allowed_channels) > len(bot_config_entity.allowed_channels):
+        cache_entry_channels_size = len(cache_entry.allowed_channels) if cache_entry.allowed_channels else 0
+        bot_config_channels_size = len(bot_config_entity.allowed_channels) if bot_config_entity.allowed_channels else 0
+
+        if cache_entry_channels_size > bot_config_channels_size:
             return ChannelStateChange(
                 ChannelFlag.DELETED, cache_entry.allowed_channels - bot_config_entity.allowed_channels
             )
 
-        if len(cache_entry.allowed_channels) < len(bot_config_entity.allowed_channels):
+        if cache_entry_channels_size < bot_config_channels_size:
             return ChannelStateChange(
                 ChannelFlag.ADDED, bot_config_entity.allowed_channels - cache_entry.allowed_channels
             )

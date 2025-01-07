@@ -18,10 +18,10 @@ class EntityFlag(Enum):
 
 class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, FarmEntity]]], metaclass=SingletonMeta):
 
-    def __init__(self, player_repo: PlayerRepository, max_size: int = 250, expiration_time: int = 3600) -> None:
+    def __init__(self, player_repository: PlayerRepository, max_size: int = 250, expiration_time: int = 3600) -> None:
         super().__init__(max_size, expiration_time)
         self.lock = Lock()
-        self.player_repo = player_repo
+        self.player_repository = player_repository
 
     async def get_or_add_player_entity(
         self, discord_user_id_or_entity: Union[int, Union[PlayerEntity, FarmEntity]]
@@ -39,15 +39,16 @@ class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, Farm
         """
         async with self.lock:
             if isinstance(discord_user_id_or_entity, int):
-                player = self.__get_from_cache(discord_user_id_or_entity, EntityFlag.PLAYER)
+                discord_user_id = discord_user_id_or_entity
+                player = self.__get_from_cache(discord_user_id, EntityFlag.PLAYER)
 
                 if player:
                     return player
 
-                player = await self.__get_from_repository(discord_user_id_or_entity, EntityFlag.PLAYER)
+                player = await self.__get_from_repository(discord_user_id, EntityFlag.PLAYER)
                 if player:
-                    self.add_item(discord_user_id_or_entity, {EntityFlag.PLAYER.value: player})
-            elif isinstance(discord_user_id_or_entity, (PlayerEntity, FarmEntity)):
+                    self.add_item(discord_user_id, {EntityFlag.PLAYER.value: player})
+            elif isinstance(discord_user_id, (PlayerEntity, FarmEntity)):
                 entity = discord_user_id_or_entity
                 player = self.add_item(
                     entity.discord_user_id, {EntityFlag.PLAYER.value: entity}
@@ -78,13 +79,13 @@ class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, Farm
         self, discord_user_id: int, entity_flag: EntityFlag
     ) -> Union[PlayerEntity, FarmEntity, tuple, None]:
         if entity_flag == EntityFlag.PLAYER:
-            return await self.player_repo.get_player_by_discord_id(discord_user_id)
+            return await self.player_repository.get_player_by_discord_id(discord_user_id)
 
         if entity_flag == EntityFlag.FARM:
             pass
 
         if entity_flag == EntityFlag.ALL:
-            player = await self.player_repo.get_player_by_discord_id(discord_user_id)
+            player = await self.player_repository.get_player_by_discord_id(discord_user_id)
             farm_player = None
 
             return player, farm_player
@@ -113,12 +114,12 @@ class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, Farm
         """
         async with in_transaction():
             if isinstance(entity, PlayerEntity):
-                await self.player_repo.update_player(entity)
+                await self.player_repository.update_player(entity)
 
                 has_to_update_bank = await self.__has_to_update_bank(entity.discord_user_id, entity)
 
                 if has_to_update_bank:
-                    await self.player_repo.update_player_bank(entity)
+                    await self.player_repository.update_player_bank(entity)
 
                 if entity.discord_user_id in self._cache:
                     self.update_item(
