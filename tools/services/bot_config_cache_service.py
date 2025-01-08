@@ -1,19 +1,11 @@
-from copy import deepcopy
-from enum import Enum
-from typing import Optional, NamedTuple, Union
-from collections import namedtuple
+from typing import Optional, Union
 from tortoise.transactions import in_transaction
 from entities import BotConfigEntity
+from tools.constants import NotInCacheException, NoUpdateRequiredException
 from repositories import BotConfigRepository
 from .cache_service import CacheService
 from ._singleton_meta import SingletonMeta
-
-
-class ChannelFlag(Enum):
-    DELETED = "DELETED"
-    ADDED = "ADDED"
-    UNCHANGED = "UNCHANGED"
-    NONE = "NONE"
+from ._proxy_objects import ImmutableProxy, MutableProxy
 
 
 __all__ = ["BotConfigCacheService"]
@@ -27,13 +19,15 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
         super().__init__(max_size, expiration_time)
         self.bot_config_repository = bot_config_repository
 
-    async def get_or_add_bot_config_entity(
-        self, discord_guild_id_or_entity: Union[int, BotConfigEntity]
+    async def get_or_fetch_bot_config_entity(
+        self, discord_guild_id_or_entity: Union[int, BotConfigEntity], is_readonly: bool = False
     ) -> Optional[BotConfigEntity]:
-        """Gets or adds a guild config entity to the cache. Returns a copy of the entity.
+        """Gets or fetches a guild config entity from the cache. If the entity is not in the cache,
+        it will be fetched from the database.
 
         Args:
             discord_guild_id (int): The Discord ID of the guild.
+            is_readonly (bool, optional): If True, the entity will be returned as a reference. Defaults to False.
 
         Returns:
             BotConfigEntity: The guild config entity.
@@ -44,7 +38,7 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
             guild_config = self.get_item(discord_guild_id)
 
             if guild_config:
-                return deepcopy(guild_config)
+                return ImmutableProxy(guild_config) if is_readonly else MutableProxy(guild_config)
 
             guild_config = await self.bot_config_repository.get_guild_config_by_discord_guild_id(discord_guild_id)
 
@@ -55,9 +49,14 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
             guild_config = discord_guild_id_or_entity
             self.add_item(guild_config.guild_id, guild_config)
 
-        return deepcopy(guild_config) if guild_config else None
+        if not guild_config:
+            return None
 
-    async def __has_changed_channels(self, guild_id: int, bot_config_entity: BotConfigEntity) -> NamedTuple:
+        return ImmutableProxy(guild_config) if is_readonly else MutableProxy(guild_config)
+
+    async def _has_changed_channels(
+        self, cache_entry: BotConfigEntity, bot_config_proxy: MutableProxy[BotConfigEntity]
+    ) -> None:
         """Checks if the bot config entity has deleted channels.
 
         Args:
@@ -67,26 +66,41 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
         Returns:
             bool: NameTuple containing the changed channels if any and the flag.
         """
-        cache_entry = self.get_item(guild_id)
+        proxy_allowed_channels = bot_config_proxy.modified_fields.get("allowed_channels")
 
-        ChannelStateChange = namedtuple("ChannelStateChange", ["channel_state", "changed_channels"])
+        if not proxy_allowed_channels:
+            return
 
-        if not cache_entry:
-            return ChannelStateChange(ChannelFlag.NONE, [])
+        if len(cache_entry.allowed_channels) > len(proxy_allowed_channels):
+            deleted_channel = proxy_allowed_channels - cache_entry.allowed_channels
+            cache_entry.allowed_channels.remove(deleted_channel)
 
-        if len(cache_entry.allowed_channels) > len(bot_config_entity.allowed_channels):
-            return ChannelStateChange(
-                ChannelFlag.DELETED, cache_entry.allowed_channels - bot_config_entity.allowed_channels
+            return await self.bot_config_repository.delete_allowed_channel(
+                cache_entry.allowed_channels - proxy_allowed_channels
             )
 
-        if len(cache_entry.allowed_channels) < len(bot_config_entity.allowed_channels):
-            return ChannelStateChange(
-                ChannelFlag.ADDED, bot_config_entity.allowed_channels - cache_entry.allowed_channels
-            )
+        if len(cache_entry.allowed_channels) < len(proxy_allowed_channels):
+            created_channel = proxy_allowed_channels - cache_entry.allowed_channels
+            cache_entry.allowed_channels.add(created_channel)
 
-        return ChannelStateChange(ChannelFlag.UNCHANGED, [])
+            return await self.bot_config_repository.create_allowed_channel(cache_entry.id, created_channel)
 
-    async def __is_update_needed(self, guild_id: int, bot_config_entity: BotConfigEntity) -> bool:
+    async def _update_bot_config(
+        self, cache_entry: BotConfigEntity, bot_config_proxy: MutableProxy[BotConfigEntity]
+    ) -> None:
+        """Updates the bot config entity.
+
+        Args:
+            guild_id (int): The Discord ID of the guild.
+            bot_config_entity (BotConfigEntity): The bot config entity to update.
+        """
+        prefix = bot_config_proxy.modified_fields.get("prefix")
+
+        if prefix and prefix != cache_entry.prefix:
+            cache_entry.prefix = prefix
+            await self.bot_config_repository.update_bot_config(cache_entry)
+
+    async def _update_bot_config_checks(self, bot_config_proxy: MutableProxy[BotConfigEntity]) -> bool:
         """
         Checks if the bot config entity has changed.
 
@@ -96,40 +110,29 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
 
         Returns:
             bool: True if the bot config entity has changed, False otherwise.
+
+        Raises:
+            NotInCacheException: If the entity is not in the cache.
         """
-        cache_entry = self.get_item(guild_id)
+        if not bot_config_proxy.is_updated_required:
+            raise NoUpdateRequiredException()
+
+        cache_entry = self.get_item(bot_config_proxy.guild_id)
 
         if not cache_entry:
-            return True
+            raise NotInCacheException()
 
-        return cache_entry != bot_config_entity
+        await self._has_changed_channels(cache_entry, bot_config_proxy)
+        await self._update_bot_config(cache_entry, bot_config_proxy)
 
-    async def bot_config_synchronizer(self, bot_config_entity: BotConfigEntity) -> None:
+    async def bot_config_synchronizer(self, bot_config_proxy: MutableProxy[BotConfigEntity]) -> None:
         """Synchronizes the bot config entity with the cache and the database.
 
         Args:
             bot_config_entity (BotConfigEntity): The bot config entity to synchronize.
+
+        Raises:
+            NoUpdateRequiredException: If no update is required
         """
         async with in_transaction():
-            channel_state_change = await self.__has_changed_channels(bot_config_entity.guild_id, bot_config_entity)
-
-            if channel_state_change.channel_state == ChannelFlag.NONE:
-                self.add_item(bot_config_entity.guild_id, bot_config_entity)
-                return
-
-            if channel_state_change.channel_state == ChannelFlag.UNCHANGED:
-                is_update_needed = await self.__is_update_needed(bot_config_entity.guild_id, bot_config_entity)
-
-                if not is_update_needed:
-                    return
-
-                await self.bot_config_repository.update_bot_config(bot_config_entity)
-                return
-
-            if channel_state_change.channel_state == ChannelFlag.DELETED:
-                for channel_id in channel_state_change.changed_channels:
-                    await self.bot_config_repository.delete_allowed_channel(bot_config_entity.id, channel_id)
-
-            if channel_state_change.channel_state == ChannelFlag.ADDED:
-                for channel_id in channel_state_change.changed_channels:
-                    await self.bot_config_repository.create_allowed_channel(bot_config_entity.id, channel_id)
+            await self._update_bot_config_checks(bot_config_proxy)
