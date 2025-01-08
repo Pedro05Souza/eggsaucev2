@@ -20,7 +20,7 @@ class BotConfigRepository:
     async def create_allowed_channel(self, bot_config_id: str, discord_channel_id: int) -> BotConfigEntity:
         await AllowedChannels.create(bot_config_id=bot_config_id, channel_id=discord_channel_id)
         return BotConfigEntity
-    
+
     async def delete_allowed_channel(self, bot_config_id: str, discord_channel_id: int) -> BotConfigEntity:
         await AllowedChannels.filter(guild_id=bot_config_id, channel_id=discord_channel_id).delete()
         return BotConfigEntity
