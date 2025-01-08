@@ -10,7 +10,7 @@ def player_model_to_entity(player: Player) -> PlayerEntity:
         id=player.id,
         discord_user_id=player.discord_user_id,
         balance=player.balance,
-        roles=player.role_values,
+        last_bought_title=player.last_bought_title,
         last_salary_time=player.last_salary_time,
         bank_balance=player.bank_player.balance,
         bank_capacity=player.bank_player.upgrade_level * AMOUNT_PER_BANK_UPGRADE,

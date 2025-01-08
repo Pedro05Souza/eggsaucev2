@@ -6,4 +6,4 @@ from .gain_points_usecase import *
 from .spin_usecase import *
 from .upgrade_bank_usecase import *
 from .slots_usecase import *
-from .set_prefix_usecase import *
+from .bot_config import *
