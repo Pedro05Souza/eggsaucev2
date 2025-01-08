@@ -32,11 +32,11 @@ def database_user():
         player_cache: PlayerCacheService = ctx.cog.player_cache
         player_repo: PlayerRepository = player_cache.player_repository
 
-        player_entity = await player_cache.get_or_add_player_entity(ctx.author.id)
+        player_entity = await player_cache.get_or_fetch_player_entity(ctx.author.id)
 
         if not player_entity:
-            player_entity = await player_repo.create_player(ctx.author.id)
-            await player_cache.get_or_add_player_entity(player_entity)
+            player_entity_database = await player_repo.create_player(ctx.author.id)
+            player_entity = await player_cache.get_or_fetch_player_entity(player_entity_database)
 
         ctx.player_entity = player_entity
 
@@ -56,11 +56,11 @@ def database_config():
         bot_config_cache: BotConfigCacheService = ctx.cog.bot_config_cache
         bot_config_repo = bot_config_cache.bot_config_repository
 
-        bot_config_entity = await bot_config_cache.get_or_add_bot_config_entity(ctx.guild.id)
+        bot_config_entity = await bot_config_cache.get_or_fetch_bot_config_entity(ctx.guild.id)
 
         if not bot_config_entity:
-            bot_config_entity= await bot_config_repo.create_guild_config(ctx.guild.id)
-            await bot_config_cache.get_or_add_bot_config_entity(bot_config_entity)
+            bot_config_entity_database = await bot_config_repo.create_guild_config(ctx.guild.id)
+            bot_config_entity = await bot_config_cache.get_or_fetch_bot_config_entity(bot_config_entity_database)
 
         ctx.guild_config_entity = bot_config_entity
 

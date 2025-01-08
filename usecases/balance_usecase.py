@@ -16,7 +16,7 @@ class BalanceUsecase:
         self.player_cache = player_cache
 
     async def get_player_balance(self) -> None:
-        player_entity = await self.player_cache.get_or_add_player_entity(self.discord_member.id)
+        player_entity = await self.player_cache.get_or_fetch_player_entity(self.discord_member.id, is_readonly=True)
 
         if not player_entity:
             return await send_failed_embed(
