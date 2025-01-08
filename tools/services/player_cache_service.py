@@ -21,7 +21,8 @@ class PlayerCacheService(CacheService[int, Mapping[str, PlayerEntity]], metaclas
     async def get_or_fetch_player_entity(
         self, discord_user_id_or_entity: Union[int, PlayerEntity], is_readonly: bool = False
     ) -> Optional[PlayerEntity]:
-        """Gets or fetches a player entity to from cache. If the entity is not in the cache, it will be fetched from the database.
+        """Gets or fetches a player entity to from cache. 
+        If the entity is not in the cache, it will be fetched from the database.
 
         Args:
             discord_user_id_or_entity (Union[int, Union[PlayerEntity]): The Discord ID of the player or the

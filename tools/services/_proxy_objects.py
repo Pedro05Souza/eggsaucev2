@@ -36,7 +36,7 @@ class MutableProxy(Generic[T]):
         if name in {"_obj", "_is_updated_required", "_modified_fields"}:
             super().__setattr__(name, value)
             return
-        
+
         if getattr(self._obj, name) != value:
             self._is_updated_required = True
             self._modified_fields[name] = value

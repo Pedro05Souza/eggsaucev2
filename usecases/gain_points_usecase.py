@@ -3,6 +3,7 @@ from tools import PointsService, PlayerCacheService
 
 __all__ = ("GainPointsUsecase",)
 
+
 class GainPointsUsecase:
 
     async def calculate_points_message(
@@ -12,13 +13,11 @@ class GainPointsUsecase:
         points_service: PointsService,
     ) -> None:
         player_entity = await player_cache.get_or_fetch_player_entity(discord_user_id)
-        
+
         if not player_entity:
             return
 
-        calculated_points = points_service.calculate_points_message(
-            player_entity.discord_user_id
-        )
+        calculated_points = points_service.calculate_points_message(player_entity.discord_user_id)
 
         if calculated_points == 0:
             return
@@ -40,9 +39,7 @@ class GainPointsUsecase:
         if not player_entity:
             return
 
-        calculated_points = points_service.calculate_points_voice(
-            player_entity.discord_user_id, before, after
-        )
+        calculated_points = points_service.calculate_points_voice(player_entity.discord_user_id, before, after)
 
         if calculated_points == 0:
             return
@@ -50,4 +47,3 @@ class GainPointsUsecase:
         player_entity.balance += calculated_points
 
         await player_cache.player_synchronizer(player_entity)
-    
