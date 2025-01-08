@@ -56,13 +56,13 @@ def database_config():
         bot_config_cache: BotConfigCacheService = ctx.cog.bot_config_cache
         bot_config_repo = bot_config_cache.bot_config_repository
 
-        player_entity = await bot_config_cache.get_or_add_guild_config_entity(ctx.guild.id)
+        bot_config_entity = await bot_config_cache.get_or_add_bot_config_entity(ctx.guild.id)
 
-        if not player_entity:
-            player_entity = await bot_config_repo.create_guild_config(ctx.guild.id)
-            await bot_config_cache.get_or_add_guild_config_entity(player_entity)
+        if not bot_config_entity:
+            bot_config_entity= await bot_config_repo.create_guild_config(ctx.guild.id)
+            await bot_config_cache.get_or_add_bot_config_entity(bot_config_entity)
 
-        ctx.guild_config_entity = player_entity
+        ctx.guild_config_entity = bot_config_entity
 
         return True
 

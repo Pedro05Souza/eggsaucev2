@@ -52,5 +52,5 @@ class Eggsauce(Bot):
         super().run(discord_token_key)
 
     async def __get_bot_prefix(self, _: Bot, message: Message) -> str:
-        bot_config = await self.bot_config_cache.get_or_add_guild_config_entity(message.guild.id)
+        bot_config = await self.bot_config_cache.get_or_add_bot_config_entity(message.guild.id)
         return bot_config.prefix
