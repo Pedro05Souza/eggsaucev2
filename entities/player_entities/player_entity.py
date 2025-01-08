@@ -12,7 +12,7 @@ class PlayerEntity:
         "id",
         "discord_user_id",
         "balance",
-        "roles",
+        "last_bought_title",
         "last_salary_time",
         "bank_balance",
         "bank_capacity",
@@ -22,7 +22,7 @@ class PlayerEntity:
     id: str
     discord_user_id: str
     balance: int
-    roles: str
+    last_bought_title: str
     last_salary_time: Optional[datetime]
     bank_balance: int
     bank_capacity: int
