@@ -1,3 +1,4 @@
+from copy import deepcopy
 from enum import Enum
 from typing import Mapping, Union, Optional
 from asyncio import Lock
@@ -26,12 +27,12 @@ class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, Farm
     async def get_or_add_player_entity(
         self, discord_user_id_or_entity: Union[int, Union[PlayerEntity, FarmEntity]]
     ) -> Optional[Union[PlayerEntity, FarmEntity, tuple]]:
-        """Gets or adds a player entity to the cache.
+        """Gets or adds a player entity to the cache. Returns a copy of the entity.
 
         Args:
             discord_user_id_or_entity (Union[int, Union[PlayerEntity, FarmEntity]]): The Discord ID of the player or the
                 player entity to add.
-                
+
             if its an entity, it will be added to the cache. Otherwise, it will be fetched from the database.
 
         Returns:
@@ -43,19 +44,19 @@ class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, Farm
                 player = self.__get_from_cache(discord_user_id, EntityFlag.PLAYER)
 
                 if player:
-                    return player
+                    return deepcopy(player)
 
                 player = await self.__get_from_repository(discord_user_id, EntityFlag.PLAYER)
+
                 if player:
                     self.add_item(discord_user_id, {EntityFlag.PLAYER.value: player})
+
             elif isinstance(discord_user_id, (PlayerEntity, FarmEntity)):
                 entity = discord_user_id_or_entity
-                player = self.add_item(
-                    entity.discord_user_id, {EntityFlag.PLAYER.value: entity}
-                )
+                player = self.add_item(entity.discord_user_id, {EntityFlag.PLAYER.value: entity})
             else:
                 raise ValueError("Invalid entity type. Must be PlayerEntity or FarmPlayerEntity.")
-            return player
+            return deepcopy(player)
 
     def __get_from_cache(  # pylint: disable=arguments-differ
         self, discord_user_id: int, entity_flag: EntityFlag
@@ -102,6 +103,21 @@ class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, Farm
         if cache_entry.upgrade_level != player_entity.upgrade_level:
             return True
 
+    async def __is_update_needed(self, discord_user_id: int, entity: Union[PlayerEntity, FarmEntity]) -> bool:
+        entity_flag = None
+
+        if isinstance(entity, PlayerEntity):
+            entity_flag = EntityFlag.PLAYER
+        else:
+            entity_flag = EntityFlag.FARM
+
+        cache_entry = self.__get_from_cache(discord_user_id, entity_flag)
+
+        if not cache_entry:
+            return True
+
+        return cache_entry != entity
+
     async def player_synchronizer(self, entity: Union[PlayerEntity, FarmEntity]) -> None:
         """Synchronizes the player entity with the cache and database.
 
@@ -114,12 +130,18 @@ class PlayerCacheService(CacheService[int, Mapping[str, Union[PlayerEntity, Farm
         """
         async with in_transaction():
             if isinstance(entity, PlayerEntity):
-                await self.player_repository.update_player(entity)
 
                 has_to_update_bank = await self.__has_to_update_bank(entity.discord_user_id, entity)
 
                 if has_to_update_bank:
                     await self.player_repository.update_player_bank(entity)
+
+                is_update_needed = await self.__is_update_needed(entity.discord_user_id, entity)
+
+                if not is_update_needed:
+                    return
+
+                await self.player_repository.update_player(entity)
 
                 if entity.discord_user_id in self._cache:
                     self.update_item(
