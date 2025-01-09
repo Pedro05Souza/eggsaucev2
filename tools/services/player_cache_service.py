@@ -120,7 +120,7 @@ class PlayerCacheService(CacheService[int, Mapping[str, PlayerEntity]], metaclas
         Raises:
             NoUpdateRequiredException: If the entity does not need to be updated.
         """
-        if not proxy_entity.is_updated_required:
+        if not proxy_entity.is_update_required:
             raise NoUpdateRequiredException()
 
         cache_entry = self._get_from_cache(proxy_entity.discord_user_id)

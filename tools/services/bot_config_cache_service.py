@@ -1,7 +1,7 @@
 from typing import Optional, Union
 from tortoise.transactions import in_transaction
 from entities import BotConfigEntity
-from tools.constants import NotInCacheException, NoUpdateRequiredException
+from tools.constants import NotInCacheException
 from repositories import BotConfigRepository
 from .cache_service import CacheService
 from ._singleton_meta import SingletonMeta
@@ -30,7 +30,8 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
             is_readonly (bool, optional): If True, the entity will be returned as a reference. Defaults to False.
 
         Returns:
-            BotConfigEntity: The guild config entity.
+            Optional[BotConfigEntity]: The guild config entity if it exists, None otherwise. This will return a
+            proxy object (ImmutableProxy or MutableProxy) based on the is_readonly flag.
         """
         if isinstance(discord_guild_id_or_entity, int):
             discord_guild_id = discord_guild_id_or_entity
@@ -68,19 +69,22 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
         """
         proxy_allowed_channels = bot_config_proxy.modified_fields.get("allowed_channels")
 
-        if not proxy_allowed_channels:
+        if proxy_allowed_channels is None:
+            return
+
+        if proxy_allowed_channels == cache_entry.allowed_channels:
             return
 
         if len(cache_entry.allowed_channels) > len(proxy_allowed_channels):
-            deleted_channel = proxy_allowed_channels - cache_entry.allowed_channels
+            deleted_channel = cache_entry.allowed_channels.difference(proxy_allowed_channels)
+            deleted_channel = deleted_channel.pop()
             cache_entry.allowed_channels.remove(deleted_channel)
 
-            return await self.bot_config_repository.delete_allowed_channel(
-                cache_entry.allowed_channels - proxy_allowed_channels
-            )
+            return await self.bot_config_repository.delete_allowed_channel(cache_entry.id, deleted_channel)
 
         if len(cache_entry.allowed_channels) < len(proxy_allowed_channels):
-            created_channel = proxy_allowed_channels - cache_entry.allowed_channels
+            created_channel = cache_entry.allowed_channels.difference(proxy_allowed_channels)
+            created_channel = created_channel.pop()
             cache_entry.allowed_channels.add(created_channel)
 
             return await self.bot_config_repository.create_allowed_channel(cache_entry.id, created_channel)
@@ -114,9 +118,6 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
         Raises:
             NotInCacheException: If the entity is not in the cache.
         """
-        if not bot_config_proxy.is_updated_required:
-            raise NoUpdateRequiredException()
-
         cache_entry = self.get_item(bot_config_proxy.guild_id)
 
         if not cache_entry:
