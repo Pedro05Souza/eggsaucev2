@@ -28,9 +28,3 @@ class CacheService(Generic[K, V]):
         if key in self._cache:
             return self._cache[key]
         return None
-
-    def update_item(self, key: K, value: V) -> None:
-        if key in self._cache:
-            self._cache.update({key: value})
-        else:
-            self.add_item(key, value)

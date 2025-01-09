@@ -1,6 +1,6 @@
 from tortoise.models import Model
 from tortoise import fields
-from .model_enums import ChickenRarityEnum
+from tools.constants import ChickenRarityEnum
 
 __all__ = ["Chicken"]
 

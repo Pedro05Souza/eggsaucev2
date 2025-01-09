@@ -24,7 +24,7 @@ class SlotsUsecase:
         if self.amount_betted > self.player_entity.balance:
             return await send_failed_embed(self.ctx, REASON_INSUFFICIENT_BALANCE)
 
-        fruits = self.__get_fruits()
+        fruits = self._get_fruits()
         random_fruits = choices(fruits, k=3)
 
         title = "🎰 Slot Machine 🎰"
@@ -33,7 +33,7 @@ class SlotsUsecase:
         row3 = "| {} | {} | {} |".format(*choices(fruits, k=3))  # pylint: disable=consider-using-f-string
         description = "```\n{}\n{}\n{}\n```".format(row1, row2, row3)  # pylint: disable=consider-using-f-string
         fruits_frequency = Counter(random_fruits)
-        possible_jackpots = self.__get_jackpots()
+        possible_jackpots = self._get_jackpots()
 
         if len(fruits_frequency) == 1:
             jackpot = possible_jackpots.get("".join(random_fruits), 0)
@@ -55,10 +55,10 @@ class SlotsUsecase:
         await self.player_cache.player_synchronizer(self.player_entity)
         return await send_bot_embed(ctx=self.ctx, title=title, description=description)
 
-    def __get_fruits(self) -> list[str]:
+    def _get_fruits(self) -> list[str]:
         return ["🍇", "🍋", "🍒", "🍊", "🍉"]
 
-    def __get_jackpots(self) -> dict:
+    def _get_jackpots(self) -> dict:
         return {
             "🍇🍇🍇": 12,
             "🍋🍋🍋": 9,

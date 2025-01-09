@@ -1,6 +1,28 @@
 from enum import Enum
 
 
+class ChickenRarityEnum(str, Enum):
+    DEAD = "dead"
+    COMMON = "common"
+    UNCOMMON = "uncommon"
+    RARE = "rare"
+    EXCEPTIONAL = "exceptional"
+    EPIC = "epic"
+    LEGENDARY = "legendary"
+    MYTHICAL = "mythical"
+    ULTIMATE = "ultimate"
+    COSMIC = "cosmic"
+    DIVINE = "divine"
+    GALATIC = "galactic"
+    OMINOUS = "ominous"
+    CELESTIAL = "celestial"
+    IMMORTAL = "immortal"
+    CHOSEN = "chosen"
+    ASCENDED = "ascended"
+    BETA = "beta"
+    ETHEREAL = "ethereal"
+
+
 class RaritiesProbability(Enum):
     COMMON = 5000
     UNCOMMON = 2500

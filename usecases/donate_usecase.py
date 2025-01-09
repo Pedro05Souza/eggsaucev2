@@ -29,7 +29,7 @@ class DonateUsecase:
         self.player_cache = player_cache
 
     async def donate(self) -> None:
-        recipient_entity = await self.player_cache.get_or_add_player_entity(self.recipient.id)
+        recipient_entity = await self.player_cache.get_or_fetch_player_entity(self.recipient.id)
 
         if not recipient_entity:
             return await send_failed_embed(self.ctx, REASON_INVALID_USER)

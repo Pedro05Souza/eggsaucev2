@@ -11,8 +11,13 @@ class BotManager:
         pass
 
     @cli.command()
-    @click.option("--env", type=click.Choice(["dev", "prod"]), default="dev")
-    def run(env):  # pylint: disable=no-self-argument,no-method-argument
+    @click.option(
+        "--env",
+        type=click.Choice(["dev", "prod"]),
+        default="dev",
+        help="🚀 Run the bot in the specified environment (dev or prod)",
+    )
+    def run(env) -> None:  # pylint: disable=no-self-argument,no-method-argument
         os.environ["ENVIRONMENT"] = env.upper()  # pylint: disable=no-member
         load_dotenv()
 
@@ -26,13 +31,32 @@ class BotManager:
 
         docker_up = subprocess.run(["docker", "compose", "up"], check=True)
 
-        if docker_up.returncode == 0:
-            click.echo("Docker compose up successful")
-        else:
-            raise RuntimeError("Docker build failed")
+        if not docker_up.returncode == 0:
+            raise RuntimeError("Docker compose up failed")
+
+        click.echo("Bot started successfully")
 
     @cli.command()
-    def build():  # pylint: disable=no-self-argument,no-method-argument
+    @click.option("-name", required=True, help="🛠️ Generate a new migration with the given name")
+    def migrate(name: str) -> None:  # pylint: disable=no-self-argument,no-method-argument
+        generate_migration = subprocess.run(
+            ["docker", "exec", "eggsauce-bot-1", "aerich", "migrate", "--name", name], check=True
+        )
+
+        if not generate_migration.returncode == 0:
+            raise RuntimeError("Failed to generate migration")
+
+        click.echo("Migration generated successfully")
+
+        apply_migration = subprocess.run(["docker", "exec", "eggsauce-bot-1", "aerich", "upgrade"], check=True)
+
+        if not apply_migration.returncode == 0:
+            raise RuntimeError("Failed to apply migration")
+
+        click.echo("Migration applied successfully")
+
+    @cli.command()
+    def build() -> None:  # pylint: disable=no-self-argument,no-method-argument
         docker_build = subprocess.run(["docker", "compose", "build"], check=True)
 
         if docker_build.returncode == 0:

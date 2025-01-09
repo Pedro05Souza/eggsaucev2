@@ -1,3 +1,4 @@
+from typing import Set
 from dataclasses import dataclass
 
 __all__ = ["BotConfigEntity"]
@@ -7,15 +8,13 @@ __all__ = ["BotConfigEntity"]
 class BotConfigEntity:
 
     __slots__ = [
-        "config_id",
+        "id",
         "guild_id",
-        "toggled_modules",
         "prefix",
         "allowed_channels",
     ]
 
-    config_id: int
+    id: int
     guild_id: int
-    toggled_modules: str
     prefix: str
-    allowed_channels: list[int]
+    allowed_channels: Set[int]

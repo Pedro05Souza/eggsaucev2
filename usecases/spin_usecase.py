@@ -1,12 +1,18 @@
+from enum import Enum
 from typing import NamedTuple
 from random import Random
 from collections import namedtuple
 from discord.ext.commands import Context
 from entities import PlayerEntity
-from tools import PlayerCacheService, SpinColorEnum, send_failed_embed, send_bot_embed
+from tools import PlayerCacheService, send_failed_embed, send_bot_embed
 from tools.constants import REASON_INSUFFICIENT_BALANCE, REASON_INVALID_AMOUNT, MINIMUM_AMOUNT_SPIN
 
 __all__ = ["SpinUsecase"]
+
+class SpinColorEnum(Enum):
+    RED = "red"
+    GREEN = "green"
+    BLACK = "black"
 
 
 class SpinUsecase:
@@ -39,7 +45,7 @@ class SpinUsecase:
             await send_failed_embed(self.ctx, f"The minimum amount to spin is **{MINIMUM_AMOUNT_SPIN}** eggbux.")
             return
 
-        spin_data = await self.__calculate_spin_result()
+        spin_data = await self._calculate_spin_result()
 
         color_emoji = await self.__color_emoji_dict(spin_data.color)
 
@@ -64,7 +70,7 @@ class SpinUsecase:
             description=embed_description,
         )
 
-    async def __calculate_spin_result(self) -> NamedTuple:
+    async def _calculate_spin_result(self) -> NamedTuple:
         random_value = self.random.random()
         random_color = None
 

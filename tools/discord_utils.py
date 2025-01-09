@@ -116,7 +116,7 @@ async def send_user_dm(ctx: Union[Context, Interaction], embed: Embed) -> None:
         return
 
 
-async def send_failed_embed(context: Union[Context, Interaction], description: str) -> None:
+async def send_failed_embed(ctx: Union[Context, Interaction], description: str) -> None:
     """This function is responsable for sending an embed when a command fails.
     This works the same as the `send_bot_embed` coroutine, but with a predefined title.
 
@@ -125,7 +125,7 @@ async def send_failed_embed(context: Union[Context, Interaction], description: s
         description (str): The description of the embed.
     """
     return await send_bot_embed(
-        ctx=context,
+        ctx=ctx,
         title="❌ Command failed",
         description=description,
     )
