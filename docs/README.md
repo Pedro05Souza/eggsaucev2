@@ -6,15 +6,10 @@
 <details>
   <summary>Table of Contents</summary>
   <ol>
-    <li><a href="#built-with">Built With</a></li>
     <li><a href="#project-dependencies">Project Dependencies</a></li>
     <li><a href="#running-the-bot">Running the Bot</a></li>
   </ol>
 </details>
-
-## Built With
-
-![Static Badge](https://img.shields.io/badge/discord.py-7289DA?style=for-the-badge&logo=discord&logoColor=white)
 
 ## 🔧 Setting Up Project Dependencies
 
@@ -72,7 +67,7 @@ pip install -r requirements.txt
 docker --version
 ```
 
-### Installing and Running the `eggsauce CLI`
+### Installing and Running the CLI
 
 Once Docker is successfully installed, follow these steps to set up and run the `eggsauce CLI`:
 
@@ -94,3 +89,21 @@ Once Docker is successfully installed, follow these steps to set up and run the 
 
   * `dev`: Development environment (default).
   * `prod`: Production enviroment.
+
+### Additional Commands in the CLI
+
+#### Migrate
+Use the migrate command to generate and apply database migrations.
+  * Run this command to create a migration:
+    ```bash
+    eggsauce migrate --name <migration_name>
+    ```
+    Replace <migration_name> with your desired migration name.
+  * The migration is automatically applied after this generation.
+
+#### Build
+  * Run this command to build the containers:
+    ```bash
+    eggsauce build
+    ```
+  This will execute docker compose build and create the necessary application images.

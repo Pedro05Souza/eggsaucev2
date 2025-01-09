@@ -1,9 +1,10 @@
 from tortoise import Tortoise, run_async
-from .constants import TORTOISE_ORM
+from ..constants import TORTOISE_ORM
+from ._singleton_meta import SingletonMeta
 
-__all__ = ['DatabaseStarter']
+__all__ = ['DatabaseStarterService']
 
-class DatabaseStarter:
+class DatabaseStarterService(metaclass=SingletonMeta):
 
     def __init__(self) -> None:
         run_async(self.__setup())

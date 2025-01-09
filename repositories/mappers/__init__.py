@@ -1,1 +1,2 @@
-from .player_to_entity import player_model_to_entity
+from .player_to_entity import *
+from .bot_config_to_entity import *

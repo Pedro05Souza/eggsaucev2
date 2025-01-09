@@ -34,7 +34,7 @@ class StealUsecase:
         if self.target.id == self.stealer.id:
             return await send_failed_embed(self.ctx, REASON_CANT_ACTION_SELF)
 
-        target_entity = await self.player_cache.get_or_add_player_entity(self.target.id)
+        target_entity = await self.player_cache.get_or_fetch_player_entity(self.target.id)
 
         if not target_entity or target_entity.id == self.stealer.id:
             return await send_failed_embed(self.ctx, REASON_INVALID_USER)
