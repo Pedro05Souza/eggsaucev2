@@ -1,5 +1,5 @@
 from discord.ext.commands import Bot, Cog, command, Context
-from usecases import SetChannelUsecase, SetPrefixUsecase
+from usecases import SetChannelUsecase, SetPrefixUsecase, UnsetChannelUsecase
 from tools import BotConfigCacheService, admin_only, database_config, GlobalBotConfigCache
 
 
@@ -22,6 +22,13 @@ class BotConfigController(Cog):
     async def set_channel(self, ctx: Context) -> None:
         set_channel_usecase = SetChannelUsecase(ctx, ctx.channel.id, ctx.guild_config_entity, self.bot_config_cache)
         await set_channel_usecase.set_channel()
+        
+    @command(name="unsetchannel")
+    @admin_only()
+    @database_config()
+    async def unset_channel(self, ctx: Context) -> None:
+        unset_channel_usecase = UnsetChannelUsecase(ctx, ctx.channel.id, ctx.guild_config_entity, self.bot_config_cache)
+        await unset_channel_usecase.unset_channel()
 
 
 async def setup(bot: Bot) -> None:

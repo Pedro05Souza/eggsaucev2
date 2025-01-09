@@ -14,17 +14,17 @@ class BotConfigRepository:
         return await bot_config_model_to_entity(bot_config)
 
     async def update_bot_config(self, bot_config: BotConfigEntity) -> BotConfigEntity:
-        await BotConfig.filter(guild_id=bot_config.guild_id).update(prefix=bot_config.prefix)
+        await BotConfig.filter(id=bot_config.guild_id).update(prefix=bot_config.prefix)
         return BotConfigEntity
 
-    async def create_allowed_channel(self, bot_config_id: str, discord_channel_id: int) -> BotConfigEntity:
+    async def create_allowed_channel(self, bot_config_id: str, discord_channel_id: int) -> BotConfigEntity: 
         await AllowedChannels.create(bot_config_id=bot_config_id, channel_id=discord_channel_id)
         return BotConfigEntity
 
     async def delete_allowed_channel(self, bot_config_id: str, discord_channel_id: int) -> BotConfigEntity:
-        await AllowedChannels.filter(guild_id=bot_config_id, channel_id=discord_channel_id).delete()
+        await AllowedChannels.filter(bot_config_id=bot_config_id, channel_id=discord_channel_id).delete()
         return BotConfigEntity
 
     async def create_guild_config(self, discord_guild_id: int) -> BotConfigEntity:
-        bot_config = await BotConfig.create(guild_id=discord_guild_id)
+        bot_config = await BotConfig.create(id=discord_guild_id)
         return await bot_config_model_to_entity(bot_config)
