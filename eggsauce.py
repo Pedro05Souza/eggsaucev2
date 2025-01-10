@@ -49,12 +49,14 @@ class Eggsauce(Bot):
         else:
             discord_token_key = get_env_var("DISCORD_BOT_TOKEN_PROD")
 
-        super().run(discord_token_key, *args, **kwargs) # type: ignore
+        super().run(discord_token_key, *args, **kwargs)  # type: ignore
 
     async def __get_bot_prefix(self, _: Bot, message: Message) -> str:
 
         if not message.guild:
             return "!"
 
-        bot_config = await self.bot_config_cache.get_or_fetch_bot_config_entity(message.guild.id)  # type: ignore
-        return bot_config.prefix # type: ignore
+        bot_config = await self.bot_config_cache.get_or_fetch_bot_config_entity(message.guild.id)
+        if not bot_config:
+            bot_config = await self.bot_config_cache.create_bot_config(message.guild.id)
+        return bot_config.prefix

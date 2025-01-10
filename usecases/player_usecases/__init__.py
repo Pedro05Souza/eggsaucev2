@@ -7,3 +7,4 @@ from .spin_usecase import *
 from .upgrade_bank_usecase import *
 from .slots_usecase import *
 from .buy_title_usecase import *
+from .withdraw_usecase import *
