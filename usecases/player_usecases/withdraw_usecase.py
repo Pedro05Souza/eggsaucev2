@@ -25,17 +25,17 @@ class WithdrawUsecase:
 
         if self.amount < 0:
             return await send_failed_embed(self.ctx, REASON_INVALID_AMOUNT)
-        
+
         if self.amount > self.player_entity.bank_balance:
             return await send_failed_embed(self.ctx, REASON_INSUFFICIENT_BALANCE)
 
         self.player_entity.bank_balance -= self.amount
         self.player_entity.balance += self.amount
-        
+
         await self.player_cache.player_synchronizer(self.player_entity)
-        
+
         return await send_bot_embed(
             ctx=self.ctx,
-            title="✅ Sucess!",
+            title="✅ Success!",
             description=f"You withdrew **{self.amount}** eggbux from the bank.",
         )
