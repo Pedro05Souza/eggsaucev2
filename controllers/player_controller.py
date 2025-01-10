@@ -75,12 +75,13 @@ class PlayerController(Cog):
         upgrade_bank_limit_usecase = UpgradeBankUsecase(ctx, ctx.player_entity, self.player_cache)
         await upgrade_bank_limit_usecase.upgrade_bank_limit()
 
-    @hybrid_command(name="withdraw", aliases=["with"], description="💸 Withdraw money from your bank account")
+    @hybrid_command(name="withdraw", aliases=["with"], description="💸 Withdraw money from your bank account!")
     @cooldown(1, REGULAR_COMMAND_COOLDOWN)
     @database_user()
     async def withdraw(self, ctx: Context, amount: int) -> None:
         withdraw_usecase = WithdrawUsecase(ctx, ctx.player_entity, self.player_cache, amount)
         await withdraw_usecase.withdraw()
+
     @hybrid_command(name="buytitle", aliases=["bt"], description="🏆 Buy a new title to earn hourly income!")
     @cooldown(1, REGULAR_COMMAND_COOLDOWN)
     @database_user()
