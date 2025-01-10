@@ -9,22 +9,31 @@ __all__ = ["BalanceUsecase"]
 
 class BalanceUsecase:
 
-    def __init__(self, ctx: Context, discord_member: Member, player_cache: PlayerCacheService) -> None:
+    def __init__(self, ctx: Context, discord_member: Member | None, player_cache: PlayerCacheService) -> None:
         self._ctx = ctx
         self._discord_member = discord_member
         self._player_cache = player_cache
 
     async def get_player_balance(self) -> None:
-        player_entity = await self._player_cache.get_or_fetch_player_entity(self._discord_member.id, is_readonly=True)
+
+        avatar_to_send = None
+
+        if self._discord_member:
+            player_entity = await self._player_cache.get_or_fetch_player_entity(
+                self._discord_member.id, is_readonly=True
+            )
+            avatar_to_send = self._discord_member.display_avatar.url
+        else:
+            player_entity = await self._player_cache.get_or_fetch_player_entity(self._ctx.author.id, is_readonly=True)
+            avatar_to_send = self._ctx.author.display_avatar.url
 
         if not player_entity:
-            if self._discord_member.id != self._ctx.author.id:
-                player_entity = await self._player_cache.create_player(self._discord_member.id, is_readonly=True)
-            else:
+            if self._discord_member:
                 return await send_failed_embed(
                     self._ctx,
                     REASON_INVALID_USER,
                 )
+            player_entity = await self._player_cache.create_player(self._ctx.author.id)
 
         description = (
             f"💸 Wallet: **{player_entity.balance}**"
@@ -41,5 +50,5 @@ class BalanceUsecase:
             ctx=self._ctx,
             title=f"💼 {self._ctx.author.display_name}'s balance",
             description=description,
-            thumbnail_url=self._discord_member.display_avatar.url,
+            thumbnail_url=avatar_to_send,
         )
