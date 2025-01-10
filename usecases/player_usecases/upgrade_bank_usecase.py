@@ -5,7 +5,6 @@ from tools import (
     send_failed_embed,
     send_bot_embed,
     confirmation_popup,
-    embed_builder,
     get_balance_diff,
     deduct_from_balance_and_bank,
 )
@@ -22,12 +21,9 @@ class UpgradeBankUsecase:
     async def upgrade_bank_limit(self) -> None:
         bank_upgrade_price = self._player_entity.bank_capacity
 
-        embed = embed_builder(
-            title="🏦 Upgrade bank limit",
-            description=f"Would you like to upgrade your bank limit for **{bank_upgrade_price}** eggbux?",
+        has_confirmed = await confirmation_popup(
+            self._ctx, description=f"Would you like to upgrade your bank limit for **{bank_upgrade_price}** eggbux?"
         )
-
-        has_confirmed = await confirmation_popup(self._ctx, embed)
 
         if not has_confirmed:
             return

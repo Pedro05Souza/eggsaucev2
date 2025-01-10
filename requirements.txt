@@ -9,3 +9,5 @@ cachetools
 pylint
 click
 setuptools
+mypy
+types-cachetools

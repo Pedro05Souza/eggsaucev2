@@ -46,7 +46,7 @@ class BuyTitleUsecase:
         )
 
         if has_confirmed:
-            title_price = self._get_title_price(next_title)
+            title_price: int = self._get_titles_prices[next_title]  # type: ignore
 
             if title_price > self._player_entity.balance + self._player_entity.bank_balance:
                 await send_failed_embed(self._ctx, REASON_INSUFFICIENT_BALANCE)
@@ -72,31 +72,11 @@ class BuyTitleUsecase:
         return title_names[next_title_index + 1]
 
     def _format_title(self, title: str) -> str:
-        if not title:
-            return None
-
-        title_price = self._get_title_price(title)
-        title_income = self._get_title_income(title)
-        title_emoji = self._get_title_emoji(title)
+        title_price = self._get_titles_prices.get(title)
+        title_income = self._get_titles_income.get(title)
+        title_emoji = self._get_titles_emojis.get(title)
 
         if not title_price or not title_income or not title_emoji:
-            return None
+            raise ValueError("Invalid title")
 
         return f"{title_emoji} **{title}**\nPrice: {title_price} eggbux\nIncome: {title_income} 💸"
-
-    def _get_title_price(self, title: Optional[str]) -> int:
-        if title:
-            return self._get_titles_prices.get(title)
-        return self._get_titles_prices.get("Egg Novice")
-
-    def _get_title_income(self, title: Optional[str]) -> int:
-        if title in self._get_titles_income:
-            return self._get_titles_income.get(title)
-
-        return self._get_titles_income.get("Egg Novice")
-
-    def _get_title_emoji(self, title: Optional[str]) -> str:
-        if title in self._get_titles_emojis:
-            return self._get_titles_emojis.get(title)
-
-        return None

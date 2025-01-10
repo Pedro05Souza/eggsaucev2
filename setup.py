@@ -12,7 +12,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "eggsauce=tools.scripts_cli:BotManager.cli"
+            "eggsauce=tools.scripts_cli:cli"
         ]
     }
 )

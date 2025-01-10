@@ -20,9 +20,9 @@ class PlayerEntity:
     ]
 
     id: str
-    discord_user_id: str
+    discord_user_id: int
     balance: int
-    last_bought_title: str
+    last_bought_title: Optional[str]
     next_salary_time: Optional[datetime]
     bank_balance: int
     bank_capacity: int

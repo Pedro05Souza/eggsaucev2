@@ -5,13 +5,11 @@ __all__ = ["bot_config_model_to_entity"]
 
 
 async def bot_config_model_to_entity(bot_config: BotConfig) -> BotConfigEntity:
-    allowed_channels = await bot_config.allowed_channels.all() if bot_config.allowed_channels else None
-    
+    allowed_channels = await bot_config.allowed_channels.all() if bot_config.allowed_channels else None  # type: ignore
+
     return BotConfigEntity(
-        id=bot_config.id,
+        id=str(bot_config.id),
         guild_id=bot_config.guild_id,
         prefix=bot_config.prefix,
-        allowed_channels=(
-            set(channel.channel_id for channel in allowed_channels) if allowed_channels else set()
-        ),
+        allowed_channels=(set(channel.channel_id for channel in allowed_channels) if allowed_channels else set()),
     )

@@ -1,6 +1,7 @@
+from typing import Optional
 from datetime import datetime
 from discord.ext.commands import Cog, hybrid_command, Bot, Context, cooldown
-from discord import Member, Message, VoiceState, app_commands
+from discord import Member, Message, VoiceState, app_commands, User
 from tools import (
     database_user,
     PointsService,
@@ -29,12 +30,14 @@ class PlayerController(Cog):
         self.player_cache = player_cache
         self.points_service = points_service
 
-    @hybrid_command(
+    @hybrid_command(  # type: ignore
         name="balance", aliases=["bal", "points", "p"], description="💰 Check your balance or another user's!"
     )
     @cooldown(1, REGULAR_COMMAND_COOLDOWN)
-    async def balance(self, ctx: Context, member: Member = None) -> None:
-        member = member if member else ctx.author
+    async def balance(self, ctx: Context, member: Optional[Member] = None) -> None:
+        if isinstance(ctx.author, User):
+            return
+        member = member or ctx.author
         balance_usecase = BalanceUsecase(ctx, member, self.player_cache)
         await balance_usecase.get_player_balance()
 

@@ -1,10 +1,9 @@
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, Any
 
 
 T = TypeVar("T")
 
-__all__ = ["ImmutableProxy"]
-
+__all__ = ["ImmutableProxy", "MutableProxy"]
 
 class ImmutableProxy(Generic[T]):
     def __init__(self, obj: T):
@@ -28,9 +27,9 @@ class MutableProxy(Generic[T]):
     def __init__(self, obj: T):
         self._obj = obj
         self.is_update_required = False
-        self.modified_fields = {}
+        self.modified_fields: dict[str, Any] = {}
 
-    def __getattr__(self, name):
+    def __getattr__(self, name) -> Any:
         if name in {"_obj", "is_update_required", "modified_fields"}:
             return self.__dict__[name]
 
@@ -69,5 +68,5 @@ class MutableProxy(Generic[T]):
         """Return the underlying object."""
         return self._obj
 
-    def __eq__(self, other: T):
+    def __eq__(self, other: object):
         return self._obj == other

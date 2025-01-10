@@ -1,3 +1,5 @@
+from typing import TypedDict
+
 AMOUNT_PER_BANK_UPGRADE = 10000
 SECONDS_TO_SALARY_DROP = 3600
 MAX_PERCETANGE_TO_STEAL = 0.25
@@ -8,13 +10,27 @@ MINIMUM_AMOUNT_TO_STEAL = 100
 REGULAR_COMMAND_COOLDOWN = 5
 
 
-def get_titles_prices() -> dict:
-    return {"Egg Novice": 1500, "Egg Apprentice": 3000, "Egg Wizard": 5000, "Egg King": 10000}
+class TitleProperties(TypedDict):
+    Egg_Novice: int
+    Egg_Apprentice: int
+    Egg_Wizard: int
+    Egg_King: int
 
 
-def get_titles_income() -> dict:
-    return {"Egg Novice": 25, "Egg Apprentice": 50, "Egg Wizard": 100, "Egg King": 150}
+class TitleEmojis(TypedDict):
+    Egg_Novice: str
+    Egg_Apprentice: str
+    Egg_Wizard: str
+    Egg_King: str
 
 
-def get_titles_emojis() -> dict:
-    return {"Egg Novice": "🥚", "Egg Apprentice": "🍳", "Egg Wizard": "🪄", "Egg King": "👑"}
+def get_titles_prices() -> TitleProperties:
+    return {"Egg_Novice": 1500, "Egg_Apprentice": 3000, "Egg_Wizard": 5000, "Egg_King": 10000}
+
+
+def get_titles_income() -> TitleProperties:
+    return {"Egg_Novice": 25, "Egg_Apprentice": 50, "Egg_Wizard": 100, "Egg_King": 150}
+
+
+def get_titles_emojis() -> TitleEmojis:
+    return {"Egg_Novice": "🥚", "Egg_Apprentice": "🍳", "Egg_Wizard": "🪄", "Egg_King": "👑"}

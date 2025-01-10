@@ -22,7 +22,7 @@ class SpinUsecase:
         ctx: Context,
         player_entity: PlayerEntity,
         player_cache: PlayerCacheService,
-        color_choice: SpinColorEnum,
+        color_choice: str,
         amount_betted: int,
     ) -> None:
         self._player_entity = player_entity
@@ -83,7 +83,7 @@ class SpinUsecase:
         else:
             random_color = SpinColorEnum.BLACK.value
 
-        SpinData = namedtuple("spin_data", ["amount_result", "color"])
+        SpinData = namedtuple("SpinData", ["amount_result", "color"])
 
         if random_color == self._color_choice:
             match self._color_choice:
@@ -93,6 +93,8 @@ class SpinUsecase:
                     return SpinData(self._amount_betted * 14, random_color)
                 case SpinColorEnum.BLACK.value:
                     return SpinData(self._amount_betted * 2, random_color)
+                case _:
+                    raise ValueError("Invalid color")
         else:
             return SpinData(0, random_color)
 
@@ -104,3 +106,5 @@ class SpinUsecase:
                 return "🟩"
             case SpinColorEnum.BLACK.value:
                 return "⬛"
+            case _:
+                raise ValueError("Invalid color")

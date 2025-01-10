@@ -32,6 +32,7 @@ class BalanceUsecase:
         )
 
         if player_entity.next_salary_time:
+            description += f"\n🏆Current Title: **{player_entity.last_bought_title}**"
             description += f"\n⏰Next salary in: **{format_dt(player_entity.next_salary_time, 'R')}**"
 
         description += f"\n\n🥚 Total: **{player_entity.balance + player_entity.bank_balance}** eggbux."

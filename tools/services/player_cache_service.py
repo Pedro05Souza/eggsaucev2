@@ -1,4 +1,4 @@
-from typing import Mapping, Union, Optional
+from typing import Union, Optional
 from asyncio import Lock
 from tortoise.transactions import in_transaction
 from entities import PlayerEntity
@@ -11,7 +11,7 @@ from ._proxy_objects import ImmutableProxy, MutableProxy
 __all__ = ["PlayerCacheService"]
 
 
-class PlayerCacheService(CacheService[int, Mapping[str, PlayerEntity]], metaclass=SingletonMeta):
+class PlayerCacheService(CacheService[int, PlayerEntity], metaclass=SingletonMeta):
 
     def __init__(self, player_repository: PlayerRepository, max_size: int = 250, expiration_time: int = 3600) -> None:
         super().__init__(max_size, expiration_time)
@@ -21,7 +21,7 @@ class PlayerCacheService(CacheService[int, Mapping[str, PlayerEntity]], metaclas
     async def get_or_fetch_player_entity(
         self, discord_user_id_or_entity: Union[int, PlayerEntity], is_readonly: bool = False
     ) -> Optional[PlayerEntity]:
-        """Gets or fetches a player entity to from cache. 
+        """Gets or fetches a player entity to from cache.
         If the entity is not in the cache, it will be fetched from the database.
 
         Args:
@@ -40,7 +40,7 @@ class PlayerCacheService(CacheService[int, Mapping[str, PlayerEntity]], metaclas
                 player = self._get_from_cache(discord_user_id)
 
                 if player:
-                    return ImmutableProxy(player) if is_readonly else MutableProxy(player)
+                    return ImmutableProxy(player) if is_readonly else MutableProxy(player)  # type: ignore
 
                 player = await self.player_repository.get_player_by_discord_id(discord_user_id)
 
@@ -56,8 +56,8 @@ class PlayerCacheService(CacheService[int, Mapping[str, PlayerEntity]], metaclas
             if not player:
                 return None
 
-            return ImmutableProxy(player) if is_readonly else MutableProxy(player)
-        
+            return ImmutableProxy(player) if is_readonly else MutableProxy(player)  # type: ignore
+
     async def create_player(self, discord_user_id: int, is_readonly: bool = False) -> PlayerEntity:
         """Creates a player in the database and adds it to the cache.
 
@@ -69,7 +69,7 @@ class PlayerCacheService(CacheService[int, Mapping[str, PlayerEntity]], metaclas
         """
         player = await self.player_repository.create_player(discord_user_id)
         self.add_item(player.discord_user_id, player)
-        return ImmutableProxy(player) if is_readonly else MutableProxy(player)
+        return ImmutableProxy(player) if is_readonly else MutableProxy(player)  # type: ignore
 
     def _get_from_cache(self, discord_user_id: int) -> Optional[PlayerEntity]:
         """Gets a player entity from the cache.
@@ -103,7 +103,7 @@ class PlayerCacheService(CacheService[int, Mapping[str, PlayerEntity]], metaclas
                 do_update = True
 
         if do_update:
-            await self.player_repository.update_player(cache_entry)
+            await self.player_repository.update_player_bank(cache_entry)
 
     async def _update_player_entity(self, cache_entry: PlayerEntity, player_proxy: MutableProxy[PlayerEntity]) -> None:
         """Updates the player entity if needed.
@@ -144,7 +144,7 @@ class PlayerCacheService(CacheService[int, Mapping[str, PlayerEntity]], metaclas
         await self._update_player_bank_entity(cache_entry, proxy_entity)
         await self._update_player_entity(cache_entry, proxy_entity)
 
-    async def player_synchronizer(self, entity_proxy: MutableProxy[PlayerEntity]) -> None:
+    async def player_synchronizer(self, entity_proxy: PlayerEntity) -> None:
         """Synchronizes the player entity with the cache and database.
 
         Args:
@@ -152,4 +152,5 @@ class PlayerCacheService(CacheService[int, Mapping[str, PlayerEntity]], metaclas
             entity_proxy (MutableProxy[PlayerEntity]): The player proxy object.
         """
         async with in_transaction():
-            await self._update_player_checks(entity_proxy)
+            if isinstance(entity_proxy, MutableProxy):
+                await self._update_player_checks(entity_proxy)

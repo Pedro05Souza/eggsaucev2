@@ -39,7 +39,7 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
             guild_config = self.get_item(discord_guild_id)
 
             if guild_config:
-                return ImmutableProxy(guild_config) if is_readonly else MutableProxy(guild_config)
+                return ImmutableProxy(guild_config) if is_readonly else MutableProxy(guild_config)  # type: ignore
 
             guild_config = await self.bot_config_repository.get_guild_config_by_discord_guild_id(discord_guild_id)
 
@@ -53,8 +53,8 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
         if not guild_config:
             return None
 
-        return ImmutableProxy(guild_config) if is_readonly else MutableProxy(guild_config)
-    
+        return ImmutableProxy(guild_config) if is_readonly else MutableProxy(guild_config)  # type: ignore
+
     async def create_bot_config(self, discord_guild_id: int) -> BotConfigEntity:
         """Creates a guild config entity in the cache and the database.
 
@@ -91,17 +91,14 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
 
         if len(cache_entry.allowed_channels) > len(proxy_allowed_channels):
             deleted_channel = cache_entry.allowed_channels.difference(proxy_allowed_channels)
-            deleted_channel = deleted_channel.pop()
-            cache_entry.allowed_channels.remove(deleted_channel)
-
-            return await self.bot_config_repository.delete_allowed_channel(cache_entry.id, deleted_channel)
+            cache_entry.allowed_channels.remove(deleted_channel.pop())
+            await self.bot_config_repository.delete_allowed_channel(cache_entry.id, deleted_channel.pop())
 
         if len(cache_entry.allowed_channels) < len(proxy_allowed_channels):
             created_channel = cache_entry.allowed_channels.difference(proxy_allowed_channels)
-            created_channel = created_channel.pop()
-            cache_entry.allowed_channels.add(created_channel)
+            cache_entry.allowed_channels.add(created_channel.pop())
 
-            return await self.bot_config_repository.create_allowed_channel(cache_entry.id, created_channel)
+            await self.bot_config_repository.create_allowed_channel(cache_entry.id, created_channel.pop())
 
     async def _update_bot_config(
         self, cache_entry: BotConfigEntity, bot_config_proxy: MutableProxy[BotConfigEntity]
@@ -112,22 +109,18 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
             guild_id (int): The Discord ID of the guild.
             bot_config_entity (BotConfigEntity): The bot config entity to update.
         """
-        prefix = bot_config_proxy.modified_fields.get("prefix")
+        prefix: Optional[str] = bot_config_proxy.modified_fields.get("prefix")
 
         if prefix and prefix != cache_entry.prefix:
             cache_entry.prefix = prefix
             await self.bot_config_repository.update_bot_config(cache_entry)
 
-    async def _update_bot_config_checks(self, bot_config_proxy: MutableProxy[BotConfigEntity]) -> bool:
+    async def _update_bot_config_checks(self, bot_config_proxy: MutableProxy[BotConfigEntity]) -> None:
         """
         Checks if the bot config entity has changed.
 
         Args:
-            guild_id (int): The Discord ID of the guild.
             bot_config_entity (BotConfigEntity): The bot config entity to check.
-
-        Returns:
-            bool: True if the bot config entity has changed, False otherwise.
 
         Raises:
             NotInCacheException: If the entity is not in the cache.
@@ -140,7 +133,7 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
         await self._has_changed_channels(cache_entry, bot_config_proxy)
         await self._update_bot_config(cache_entry, bot_config_proxy)
 
-    async def bot_config_synchronizer(self, bot_config_proxy: MutableProxy[BotConfigEntity]) -> None:
+    async def bot_config_synchronizer(self, bot_config_proxy: BotConfigEntity) -> None:
         """Synchronizes the bot config entity with the cache and the database.
 
         Args:
@@ -150,4 +143,5 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
             NoUpdateRequiredException: If no update is required
         """
         async with in_transaction():
-            await self._update_bot_config_checks(bot_config_proxy)
+            if isinstance(bot_config_proxy, MutableProxy):
+                await self._update_bot_config_checks(bot_config_proxy)

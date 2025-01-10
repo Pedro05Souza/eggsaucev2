@@ -1,6 +1,6 @@
 from typing import Union, Optional
 from discord.ext.commands import Context
-from discord import Interaction, Color, Embed, Forbidden, ButtonStyle
+from discord import Interaction, Embed, Forbidden, ButtonStyle
 from discord.ui import View, Button
 from .constants import REASON_DM_FAILURE
 
@@ -16,7 +16,7 @@ __all__ = [
 
 
 async def send_bot_embed(
-    ctx: Union[Context, Interaction],
+    ctx: Context | Interaction,
     color: str = "#FEE75C",
     footer_text: Optional[str] = None,
     ephemeral: bool = False,
@@ -47,25 +47,35 @@ async def send_bot_embed(
     if ephemeral and is_dm:
         raise ValueError("Cannot have both ephemeral and is_dm as True")
 
-    is_interaction = hasattr(ctx, "interaction") and ctx.interaction is not None
+    embed = embed_builder(color=color, footer_text=footer_text, thumbnail_url=thumbnail_url, **kwargs)
 
-    if is_interaction:
-        if not ctx.interaction.response.is_done():
-            return await ctx.interaction.response.send_message(
-                embed=embed_builder(color=color, footer_text=footer_text, thumbnail_url=thumbnail_url, **kwargs),
-                ephemeral=ephemeral,
-                view=view,
-            )
+    if isinstance(ctx, Interaction):
+        await _handle_interaction_respose(ctx, embed, ephemeral, view)
+        return
 
-        return await ctx.interaction.followup.send(
-            embed=embed_builder(color=color, footer_text=footer_text, thumbnail_url=thumbnail_url, **kwargs),
-            ephemeral=ephemeral,
-            view=view,
-        )
+    if ctx.interaction is not None:
+        await _handle_interaction_respose(ctx.interaction, embed, ephemeral, view)
+        return
 
-    return await ctx.send(
-        embed=embed_builder(color=color, footer_text=footer_text, thumbnail_url=thumbnail_url, **kwargs), view=view
-    )
+    if view is not None:
+        await ctx.send(embed=embed, ephemeral=ephemeral, view=view)
+    else:
+        await ctx.send(embed=embed, ephemeral=ephemeral)
+
+
+async def _handle_interaction_respose(
+    interaction: Interaction, embed: Embed, ephemeral: bool, view: Optional[View]
+) -> None:
+    if not interaction.response.is_done():
+        if view is not None:
+            await interaction.response.send_message(embed=embed, ephemeral=ephemeral, view=view)
+        else:
+            await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
+
+    if view is not None:
+        await interaction.followup.send(embed=embed, ephemeral=ephemeral, view=view)
+    else:
+        await interaction.followup.send(embed=embed, ephemeral=ephemeral)
 
 
 def embed_builder(
@@ -92,18 +102,21 @@ def embed_builder(
     return embed
 
 
-async def send_user_dm(ctx: Union[Context, Interaction], embed: Embed) -> None:
+async def send_user_dm(ctx: Context | Interaction, embed: Embed) -> None:
     """This function is responsable for sending a message to the user's DM.
 
     Args:
         ctx (Union[Context, Interaction]): The context of the command.
         embed (Embed): The embed that will be sent to the user.
     """
-    is_interaction = isinstance(ctx, Interaction)
 
     try:
-        if is_interaction:
+        if isinstance(ctx, Interaction):
             await ctx.user.send(embed=embed)
+
+        elif ctx.interaction:
+            await ctx.interaction.user.send(embed=embed)
+
         else:
             await ctx.author.send(embed=embed)
     except Forbidden:
@@ -111,7 +124,7 @@ async def send_user_dm(ctx: Union[Context, Interaction], embed: Embed) -> None:
             ctx,
             title="Error",
             description=REASON_DM_FAILURE,
-            color=Color.red(),
+            color="#FF0000.",
             ephemeral=True,
         )
         return
@@ -185,12 +198,17 @@ async def confirmation_popup(
 
     view = view_button_builder(cancel_button, confirm_button)
 
-    is_interaction = isinstance(ctx, Interaction)
-
     await send_bot_embed(ctx, ephemeral=ephemeral, is_dm=is_dm, view=view, description=description, title=title)
 
-    client = ctx.client if is_interaction else ctx.bot  # Interaction and Context have different names for the bot.
-    author = ctx.user if is_interaction else ctx.author  # Interaction and Context have different names for the author.
+    if isinstance(ctx, Interaction):
+        client = ctx.client
+        author = ctx.user
+    elif ctx.interaction:
+        client = ctx.interaction.client
+        author = ctx.interaction.user
+    else:
+        client = ctx.bot
+        author = ctx.author
 
     try:
         interaction = await client.wait_for("interaction", check=lambda i: i.user.id == author.id, timeout=60)
