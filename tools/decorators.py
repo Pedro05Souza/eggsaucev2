@@ -17,7 +17,7 @@ def dev_only():
 
         return True
 
-    return commands.check(predicate)
+    return check(predicate)
 
 
 def database_user():
