@@ -212,8 +212,7 @@ async def confirmation_popup(
 
     try:
         interaction = await client.wait_for("interaction", check=lambda i: i.user.id == author.id, timeout=60)
-        await interaction.response.defer()
-
+        await interaction.response.defer(ephemeral=ephemeral)
         if interaction.data["custom_id"] == "confirm":
             return True
         return False
