@@ -18,8 +18,8 @@ from usecases import (
     SpinUsecase,
     UpgradeBankUsecase,
     SlotsUsecase,
+    BuyTitleUsecase,
 )
-
 
 
 class PlayerController(Cog):
@@ -73,6 +73,13 @@ class PlayerController(Cog):
     async def upgrade_bank_limit(self, ctx: Context) -> None:
         upgrade_bank_limit_usecase = UpgradeBankUsecase(ctx, ctx.player_entity, self.player_cache)
         await upgrade_bank_limit_usecase.upgrade_bank_limit()
+
+    @hybrid_command(name="buytitle", aliases=["bt"], description="🏆 Buy a new title to earn hourly income!")
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN)
+    @database_user()
+    async def buy_title(self, ctx: Context) -> None:
+        buy_title_usecase = BuyTitleUsecase(ctx, ctx.player_entity, self.player_cache)
+        await buy_title_usecase.buy_title()
 
     @Cog.listener()
     async def on_message(self, message: Message) -> None:
