@@ -13,7 +13,7 @@ class PlayerEntity:
         "discord_user_id",
         "balance",
         "last_bought_title",
-        "last_salary_time",
+        "next_salary_time",
         "bank_balance",
         "bank_capacity",
         "upgrade_level",
@@ -23,7 +23,7 @@ class PlayerEntity:
     discord_user_id: str
     balance: int
     last_bought_title: str
-    last_salary_time: Optional[datetime]
+    next_salary_time: Optional[datetime]
     bank_balance: int
     bank_capacity: int
     upgrade_level: int
