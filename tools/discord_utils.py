@@ -71,6 +71,7 @@ async def _handle_interaction_respose(
             await interaction.response.send_message(embed=embed, ephemeral=ephemeral, view=view)
         else:
             await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
+        return
 
     if view is not None:
         await interaction.followup.send(embed=embed, ephemeral=ephemeral, view=view)
