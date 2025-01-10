@@ -1,10 +1,9 @@
 from discord.ext.commands import Context, check
 from discord.app_commands import Choice
 from discord.ext import commands
-from discord import Interaction
+from discord import Interaction, User
 from tools.services import PlayerCacheService, BotConfigCacheService
 from tools.constants import get_env_var
-from repositories import PlayerRepository
 
 __all__ = ["dev_only", "database_user", "spin_command_autocomplete", "admin_only", "database_config"]
 
@@ -29,16 +28,14 @@ def database_user():
     """
 
     async def predicate(ctx: Context) -> bool:
-        player_cache: PlayerCacheService = ctx.cog.player_cache
-        player_repo: PlayerRepository = player_cache.player_repository
+        player_cache: PlayerCacheService = ctx.cog.player_cache  # type: ignore
 
         player_entity = await player_cache.get_or_fetch_player_entity(ctx.author.id)
 
         if not player_entity:
-            player_entity_database = await player_repo.create_player(ctx.author.id)
-            player_entity = await player_cache.get_or_fetch_player_entity(player_entity_database)
+            player_entity = await player_cache.create_player(ctx.author.id)  # type: ignore
 
-        ctx.player_entity = player_entity
+        ctx.player_entity = player_entity  # type: ignore
 
         return True
 
@@ -53,16 +50,17 @@ def database_config():
     """
 
     async def predicate(ctx: Context) -> bool:
-        bot_config_cache: BotConfigCacheService = ctx.cog.bot_config_cache
-        bot_config_repo = bot_config_cache.bot_config_repository
+        if not ctx.guild:
+            return False
+
+        bot_config_cache: BotConfigCacheService = ctx.cog.bot_config_cache  # type: ignore
 
         bot_config_entity = await bot_config_cache.get_or_fetch_bot_config_entity(ctx.guild.id)
 
         if not bot_config_entity:
-            bot_config_entity_database = await bot_config_repo.create_guild_config(ctx.guild.id)
-            bot_config_entity = await bot_config_cache.get_or_fetch_bot_config_entity(bot_config_entity_database)
+            bot_config_entity = await bot_config_cache.create_bot_config(ctx.guild.id)  # type: ignore
 
-        ctx.guild_config_entity = bot_config_entity
+        ctx.guild_config_entity = bot_config_entity  # type: ignore
 
         return True
 
@@ -77,6 +75,9 @@ def admin_only():
     """
 
     async def predicate(ctx: Context) -> bool:
+        if isinstance(ctx.author, User):
+            return False
+
         if ctx.author.guild_permissions.administrator:
             return True
         return False

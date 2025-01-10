@@ -22,7 +22,7 @@ class BotConfigController(Cog):
     async def set_channel(self, ctx: Context) -> None:
         set_channel_usecase = SetChannelUsecase(ctx, ctx.channel.id, ctx.guild_config_entity, self.bot_config_cache)
         await set_channel_usecase.set_channel()
-        
+
     @command(name="unsetchannel")
     @admin_only()
     @database_config()

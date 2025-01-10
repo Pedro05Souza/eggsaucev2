@@ -1,3 +1,4 @@
+from typing import Optional
 from datetime import datetime
 from discord.ext.commands import Cog, hybrid_command, Bot, Context, cooldown
 from discord import Member, Message, VoiceState, app_commands
@@ -19,6 +20,7 @@ from usecases import (
     UpgradeBankUsecase,
     SlotsUsecase,
     WithdrawUsecase,
+    BuyTitleUsecase,
 )
 
 
@@ -29,12 +31,11 @@ class PlayerController(Cog):
         self.player_cache = player_cache
         self.points_service = points_service
 
-    @hybrid_command(
+    @hybrid_command(  # type: ignore
         name="balance", aliases=["bal", "points", "p"], description="💰 Check your balance or another user's!"
     )
     @cooldown(1, REGULAR_COMMAND_COOLDOWN)
-    async def balance(self, ctx: Context, member: Member = None) -> None:
-        member = member if member else ctx.author
+    async def balance(self, ctx: Context, member: Optional[Member] = None) -> None:
         balance_usecase = BalanceUsecase(ctx, member, self.player_cache)
         await balance_usecase.get_player_balance()
 
@@ -80,6 +81,12 @@ class PlayerController(Cog):
     async def withdraw(self, ctx: Context, amount: int) -> None:
         withdraw_usecase = WithdrawUsecase(ctx, ctx.player_entity, self.player_cache, amount)
         await withdraw_usecase.withdraw()
+    @hybrid_command(name="buytitle", aliases=["bt"], description="🏆 Buy a new title to earn hourly income!")
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN)
+    @database_user()
+    async def buy_title(self, ctx: Context) -> None:
+        buy_title_usecase = BuyTitleUsecase(ctx, ctx.player_entity, self.player_cache)
+        await buy_title_usecase.buy_title()
 
     @Cog.listener()
     async def on_message(self, message: Message) -> None:

@@ -12,17 +12,17 @@ class SlotsUsecase:
     def __init__(
         self, ctx: Context, player_entity: PlayerEntity, player_cache: PlayerCacheService, amount_betted: int
     ) -> None:
-        self.ctx = ctx
-        self.player_entity = player_entity
-        self.player_cache = player_cache
-        self.amount_betted = amount_betted
+        self._ctx = ctx
+        self._player_entity = player_entity
+        self._player_cache = player_cache
+        self._amount_betted = amount_betted
 
     async def slots(self) -> None:
-        if self.amount_betted < 1:
-            return await send_failed_embed(self.ctx, REASON_INVALID_AMOUNT)
+        if self._amount_betted < 1:
+            return await send_failed_embed(self._ctx, REASON_INVALID_AMOUNT)
 
-        if self.amount_betted > self.player_entity.balance:
-            return await send_failed_embed(self.ctx, REASON_INSUFFICIENT_BALANCE)
+        if self._amount_betted > self._player_entity.balance:
+            return await send_failed_embed(self._ctx, REASON_INSUFFICIENT_BALANCE)
 
         fruits = self._get_fruits()
         random_fruits = choices(fruits, k=3)
@@ -37,23 +37,23 @@ class SlotsUsecase:
 
         if len(fruits_frequency) == 1:
             jackpot = possible_jackpots.get("".join(random_fruits), 0)
-            balance_diff = self.amount_betted * jackpot
-            self.player_entity.balance += balance_diff
+            balance_diff = self._amount_betted * jackpot
+            self._player_entity.balance += balance_diff
             description += f"\n\n🎉 **JACKPOT** 🎉\nYou won **{balance_diff}** eggbux!"
 
         elif len(fruits_frequency) == 2:
             higher_frequency_fruit = fruits_frequency.most_common(1)[0][0]
             higher_frequency_fruit = higher_frequency_fruit * 2
-            balance_diff = self.amount_betted * possible_jackpots.get(higher_frequency_fruit, 0)
-            self.player_entity.balance += balance_diff
+            balance_diff = self._amount_betted * possible_jackpots.get(higher_frequency_fruit, 0)
+            self._player_entity.balance += balance_diff
             description += f"\n\n🎉 **WIN** 🎉\nYou won **{balance_diff}** eggbux!"
 
         else:
-            self.player_entity.balance -= self.amount_betted
-            description += f"\n\n❌ **LOSE** ❌\nYou lost **{self.amount_betted}** eggbux!"
+            self._player_entity.balance -= self._amount_betted
+            description += f"\n\n❌ **LOSE** ❌\nYou lost **{self._amount_betted}** eggbux!"
 
-        await self.player_cache.player_synchronizer(self.player_entity)
-        return await send_bot_embed(ctx=self.ctx, title=title, description=description)
+        await self._player_cache.player_synchronizer(self._player_entity)
+        return await send_bot_embed(ctx=self._ctx, title=title, description=description)
 
     def _get_fruits(self) -> list[str]:
         return ["🍇", "🍋", "🍒", "🍊", "🍉"]

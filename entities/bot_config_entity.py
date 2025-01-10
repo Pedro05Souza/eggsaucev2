@@ -14,7 +14,7 @@ class BotConfigEntity:
         "allowed_channels",
     ]
 
-    id: int
+    id: str
     guild_id: int
     prefix: str
     allowed_channels: Set[int]
