@@ -17,7 +17,7 @@ class BotConfigRepository:
         await BotConfig.filter(id=bot_config.guild_id).update(prefix=bot_config.prefix)
         return BotConfigEntity
 
-    async def create_allowed_channel(self, bot_config_id: str, discord_channel_id: int) -> BotConfigEntity: 
+    async def create_allowed_channel(self, bot_config_id: str, discord_channel_id: int) -> BotConfigEntity:
         await AllowedChannels.create(bot_config_id=bot_config_id, channel_id=discord_channel_id)
         return BotConfigEntity
 
