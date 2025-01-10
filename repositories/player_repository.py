@@ -27,7 +27,7 @@ class PlayerRepository:
 
     async def update_player(self, player: PlayerEntity) -> PlayerEntity:
         await Player.filter(id=player.id).update(
-            balance=player.balance, last_bought_title=player.last_bought_title, last_salary_time=player.last_salary_time
+            balance=player.balance, last_bought_title=player.last_bought_title, next_salary_time=player.next_salary_time
         )
         return player
 
