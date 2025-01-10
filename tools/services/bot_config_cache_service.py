@@ -54,6 +54,20 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
             return None
 
         return ImmutableProxy(guild_config) if is_readonly else MutableProxy(guild_config)
+    
+    async def create_bot_config(self, discord_guild_id: int) -> BotConfigEntity:
+        """Creates a guild config entity in the cache and the database.
+
+        Args:
+            discord_guild_id (int): The Discord ID of the guild.
+
+        Returns:
+            BotConfigEntity: The created guild config entity.
+        """
+        bot_config_entity = await self.bot_config_repository.create_guild_config(discord_guild_id)
+        self.add_item(discord_guild_id, bot_config_entity)
+
+        return bot_config_entity
 
     async def _has_changed_channels(
         self, cache_entry: BotConfigEntity, bot_config_proxy: MutableProxy[BotConfigEntity]

@@ -57,6 +57,19 @@ class PlayerCacheService(CacheService[int, Mapping[str, PlayerEntity]], metaclas
                 return None
 
             return ImmutableProxy(player) if is_readonly else MutableProxy(player)
+        
+    async def create_player(self, discord_user_id: int, is_readonly: bool = False) -> PlayerEntity:
+        """Creates a player in the database and adds it to the cache.
+
+        Args:
+            discord_user_id (int): The Discord ID of the player.
+
+        Returns:
+            PlayerEntity: The player entity.
+        """
+        player = await self.player_repository.create_player(discord_user_id)
+        self.add_item(player.discord_user_id, player)
+        return ImmutableProxy(player) if is_readonly else MutableProxy(player)
 
     def _get_from_cache(self, discord_user_id: int) -> Optional[PlayerEntity]:
         """Gets a player entity from the cache.
