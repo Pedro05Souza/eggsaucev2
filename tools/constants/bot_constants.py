@@ -6,3 +6,15 @@ SECONDS_PER_POINT = 10
 MINIMUM_AMOUNT_SPIN = 100
 MINIMUM_AMOUNT_TO_STEAL = 100
 REGULAR_COMMAND_COOLDOWN = 5
+
+
+def get_titles_prices() -> dict:
+    return {"Egg Novice": 1500, "Egg Apprentice": 3000, "Egg Wizard": 5000, "Egg King": 10000}
+
+
+def get_titles_income() -> dict:
+    return {"Egg Novice": 25, "Egg Apprentice": 50, "Egg Wizard": 100, "Egg King": 150}
+
+
+def get_titles_emojis() -> dict:
+    return {"Egg Novice": "🥚", "Egg Apprentice": "🍳", "Egg Wizard": "🪄", "Egg King": "👑"}
