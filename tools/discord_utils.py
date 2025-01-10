@@ -47,25 +47,24 @@ async def send_bot_embed(
     if ephemeral and is_dm:
         raise ValueError("Cannot have both ephemeral and is_dm as True")
 
-    is_interaction = isinstance(ctx, Interaction)
+    is_interaction = hasattr(ctx, "interaction") and ctx.interaction is not None
 
     if is_interaction:
-        if not ctx.response.is_done():
-            return await ctx.response.send_message(
+        if not ctx.interaction.response.is_done():
+            return await ctx.interaction.response.send_message(
                 embed=embed_builder(color=color, footer_text=footer_text, thumbnail_url=thumbnail_url, **kwargs),
                 ephemeral=ephemeral,
                 view=view,
             )
 
-        return await ctx.followup.send(
+        return await ctx.interaction.followup.send(
             embed=embed_builder(color=color, footer_text=footer_text, thumbnail_url=thumbnail_url, **kwargs),
             ephemeral=ephemeral,
             view=view,
         )
 
     return await ctx.send(
-        embed=embed_builder(color=color, footer_text=footer_text, thumbnail_url=thumbnail_url, **kwargs),
-        view=view
+        embed=embed_builder(color=color, footer_text=footer_text, thumbnail_url=thumbnail_url, **kwargs), view=view
     )
 
 
@@ -118,7 +117,7 @@ async def send_user_dm(ctx: Union[Context, Interaction], embed: Embed) -> None:
         return
 
 
-async def send_failed_embed(ctx: Union[Context, Interaction], description: str) -> None:
+async def send_failed_embed(ctx: Union[Context, Interaction], description: str, ephemeral: bool = True) -> None:
     """This function is responsable for sending an embed when a command fails.
     This works the same as the `send_bot_embed` coroutine, but with a predefined title.
 
@@ -128,7 +127,7 @@ async def send_failed_embed(ctx: Union[Context, Interaction], description: str) 
     """
     return await send_bot_embed(
         ctx=ctx,
-        ephemeral=True,
+        ephemeral=ephemeral,
         title="❌ Command failed",
         description=description,
     )
@@ -168,7 +167,7 @@ def view_button_builder(*buttons) -> View:
 async def confirmation_popup(
     ctx: Context | Interaction,
     description: str,
-    title: str ="🔔 Please Confirm Your Action",
+    title: str = "🔔 Please Confirm Your Action",
     ephemeral=True,
     is_dm=False,
 ) -> bool:
@@ -188,9 +187,7 @@ async def confirmation_popup(
 
     is_interaction = isinstance(ctx, Interaction)
 
-    await send_bot_embed(
-        ctx, ephemeral=ephemeral, is_dm=is_dm, view=view, description=description, title=title
-    )
+    await send_bot_embed(ctx, ephemeral=ephemeral, is_dm=is_dm, view=view, description=description, title=title)
 
     client = ctx.client if is_interaction else ctx.bot  # Interaction and Context have different names for the bot.
     author = ctx.user if is_interaction else ctx.author  # Interaction and Context have different names for the author.

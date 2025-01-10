@@ -42,7 +42,7 @@ class BuyTitleUsecase:
         description += f"\n\n The titles give a salary every **{SECONDS_TO_SALARY_DROP // 60}** minutes."
 
         has_confirmed = await confirmation_popup(
-            self._ctx, title=f"Do you want to buy the title ``{next_title}``?", description=description
+            self._ctx, ephemeral=False, title=f"Do you want to buy the title ``{next_title}``?", description=description
         )
 
         if has_confirmed:
