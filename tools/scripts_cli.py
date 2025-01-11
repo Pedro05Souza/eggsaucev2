@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 def cli():  # pylint: disable=no-self-argument,no-method-argument
     pass
 
+
 @cli.command()
 @click.option(
     "--env",
@@ -32,7 +33,13 @@ def run(env) -> None:  # pylint: disable=no-self-argument,no-method-argument
     if not docker_up.returncode == 0:
         raise RuntimeError("Docker compose up failed")
 
+    apply_migrations = subprocess.run(["docker", "exec", "eggsauce-bot-1", "aerich", "upgrade"], check=True)
+
+    if not apply_migrations == 0:
+        raise RuntimeError("Apply migrations failed")
+
     click.echo("Bot started successfully")
+
 
 @cli.command()
 @click.option("-name", required=True, help="🛠️ Generate a new migration with the given name")
@@ -52,6 +59,7 @@ def migrate(name: str) -> None:  # pylint: disable=no-self-argument,no-method-ar
         raise RuntimeError("Failed to apply migration")
 
     click.echo("Migration applied successfully")
+
 
 @cli.command()
 def build() -> None:  # pylint: disable=no-self-argument,no-method-argument

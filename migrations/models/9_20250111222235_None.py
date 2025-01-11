@@ -6,8 +6,13 @@ async def upgrade(db: BaseDBAsyncClient) -> str:
         CREATE TABLE IF NOT EXISTS "bot_config" (
     "id" UUID NOT NULL  PRIMARY KEY,
     "guild_id" BIGINT NOT NULL,
-    "toggled_modules" VARCHAR(5) NOT NULL,
-    "prefix" VARCHAR(5) NOT NULL
+    "prefix" VARCHAR(5) NOT NULL  DEFAULT '$'
+);
+CREATE TABLE IF NOT EXISTS "allowed_channels" (
+    "id" SERIAL NOT NULL PRIMARY KEY,
+    "channel_id" BIGINT NOT NULL,
+    "bot_config_id" UUID NOT NULL UNIQUE REFERENCES "bot_config" ("id") ON DELETE CASCADE,
+    CONSTRAINT "uid_allowed_cha_bot_con_d695b9" UNIQUE ("bot_config_id", "channel_id")
 );
 CREATE TABLE IF NOT EXISTS "chicken" (
     "id" UUID NOT NULL  PRIMARY KEY,
@@ -23,9 +28,10 @@ CREATE TABLE IF NOT EXISTS "player" (
     "id" UUID NOT NULL  PRIMARY KEY,
     "discord_user_id" BIGINT NOT NULL,
     "balance" INT NOT NULL  DEFAULT 0,
-    "role_values" VARCHAR(5),
-    "last_salary_time" TIMESTAMPTZ
+    "last_bought_title" VARCHAR(14),
+    "next_salary_time" TIMESTAMPTZ
 );
+COMMENT ON COLUMN "player"."last_bought_title" IS 'EGG_NOVICE: Egg Novice\nEGG_APPRENTICE: Egg Apprentice\nEGG_WIZARD: Egg Wizard\nEGG_KING: Egg King';
 CREATE TABLE IF NOT EXISTS "bank_player" (
     "balance" INT NOT NULL  DEFAULT 0,
     "upgrade_level" INT NOT NULL  DEFAULT 1,
