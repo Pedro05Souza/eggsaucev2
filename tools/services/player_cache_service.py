@@ -10,7 +10,6 @@ from ._proxy_objects import ImmutableProxy, MutableProxy
 
 __all__ = ["PlayerCacheService"]
 
-
 class PlayerCacheService(CacheService[int, PlayerEntity], metaclass=SingletonMeta):
 
     def __init__(self, player_repository: PlayerRepository, max_size: int = 250, expiration_time: int = 3600) -> None:
@@ -96,9 +95,8 @@ class PlayerCacheService(CacheService[int, PlayerEntity], metaclass=SingletonMet
             player_proxy (MutableProxy[PlayerEntity]): The player proxy object.
         """
         do_update = False
-
         for key, value in player_proxy.modified_fields.items():
-            if getattr(cache_entry, key) != value:
+            if getattr(cache_entry, key) != value and key in {"bank_balance", "bank_capacity", "upgrade_level"}:
                 setattr(cache_entry, key, value)
                 do_update = True
 
