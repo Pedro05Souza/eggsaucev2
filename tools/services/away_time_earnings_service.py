@@ -41,6 +41,6 @@ class AwayTimeEarningsService:
         self.player_entity.next_salary_time = now + timedelta(seconds=SECONDS_TO_SALARY_DROP)
         self.player_entity.balance += total_gained_salary
         self._earnings_data["salary"] = total_gained_salary
-        
+
     async def check_away_time(self) -> None:
         self._check_away_time_salary()
