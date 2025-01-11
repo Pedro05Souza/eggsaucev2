@@ -19,7 +19,8 @@ class PlayerRepository:
     async def create_player(self, discord_id: int) -> PlayerEntity:
         player = await Player.create(discord_user_id=discord_id)
         await self.__create_bank_player(player)
-        player = await Player.filter(id=player.id).select_related("bank_player").first()
+        player: Optional[Player] = await Player.filter(id=player.id).select_related("bank_player").first()
+
         return player_model_to_entity(player)
 
     async def __create_bank_player(self, player: Player) -> BankPlayer:
@@ -27,7 +28,7 @@ class PlayerRepository:
 
     async def update_player(self, player: PlayerEntity) -> PlayerEntity:
         await Player.filter(id=player.id).update(
-            balance=player.balance, last_bought_title=player.last_bought_title, last_salary_time=player.last_salary_time
+            balance=player.balance, last_bought_title=player.last_bought_title, next_salary_time=player.next_salary_time
         )
         return player
 

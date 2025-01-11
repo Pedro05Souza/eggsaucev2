@@ -10,7 +10,7 @@ V = TypeVar("V")
 class CacheService(Generic[K, V]):
 
     def __init__(self, max_size: int = 100, expiration_time: int = 3600) -> None:
-        self._cache = TTLCache(maxsize=int(max_size), ttl=int(expiration_time))
+        self._cache: TTLCache[K, V] = TTLCache(maxsize=int(max_size), ttl=int(expiration_time))
 
     def add_item(self, key: K, value: V) -> bool:
         if key not in self._cache:

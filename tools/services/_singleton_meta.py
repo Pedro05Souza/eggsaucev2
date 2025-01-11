@@ -1,8 +1,9 @@
+from typing import Optional
 from threading import Lock
 
 
 class SingletonMeta(type):
-    _instance = None
+    _instance: Optional["SingletonMeta"] = None
     _lock = Lock()
 
     def __call__(cls, *args, **kwargs):

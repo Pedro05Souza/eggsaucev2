@@ -39,7 +39,7 @@ class Eggsauce(Bot):
     async def setup_hook(self):
         await self.__load_cogs()
 
-    def run(self) -> None:
+    def run(self, *args, **kwargs) -> None:
         workspace_env = get_env_var("ENVIRONMENT")
 
         discord_token_key = None
@@ -49,8 +49,14 @@ class Eggsauce(Bot):
         else:
             discord_token_key = get_env_var("DISCORD_BOT_TOKEN_PROD")
 
-        super().run(discord_token_key)
+        super().run(discord_token_key, *args, **kwargs)  # type: ignore
 
     async def __get_bot_prefix(self, _: Bot, message: Message) -> str:
+
+        if not message.guild:
+            return "!"
+
         bot_config = await self.bot_config_cache.get_or_fetch_bot_config_entity(message.guild.id)
+        if not bot_config:
+            bot_config = await self.bot_config_cache.create_bot_config(message.guild.id)
         return bot_config.prefix

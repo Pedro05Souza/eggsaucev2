@@ -1,5 +1,6 @@
 services:
   bot:
+    container_name: eggsauce_bot
     build: .
     command: python3 app.py
     volumes:

@@ -2,7 +2,11 @@ from logging import Logger, config, getLogger
 from entities import PlayerEntity
 from .constants import LOGGING_CONFIG
 
-__all__ = ["get_logger", "get_balance_diff", "deduct_from_balance_and_bank"]
+__all__ = [
+    "get_logger",
+    "get_balance_diff",
+    "deduct_from_balance_and_bank",
+]
 
 
 def get_logger(name: str) -> Logger:
