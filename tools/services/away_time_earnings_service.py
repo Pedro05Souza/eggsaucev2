@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from math import ceil
 from entities import PlayerEntity
 from tools.constants import SECONDS_TO_SALARY_DROP
-from tools import get_salary_from_title
+from tools.utils import get_salary_from_title
 
 
 class _EarningsType(TypedDict):
