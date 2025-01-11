@@ -22,14 +22,21 @@ class DepositUsecase:
         self.amount = amount
 
     async def deposit(self) -> None:
+
         if self.amount <= 0:
             return await send_failed_embed(self.ctx, REASON_INVALID_AMOUNT)
 
         if self.amount > self.player_entity.balance:
             return await send_failed_embed(self.ctx, REASON_INSUFFICIENT_BALANCE)
 
-        if self.amount >= self.player_entity.bank_capacity:
-            return await send_failed_embed(self.ctx, REASON_INSUFFICIENT_BANK_CAPACITY)
+        reached_capacity = self.amount + self.player_entity.bank_balance
+
+        if self.player_entity.bank_capacity < reached_capacity:
+
+            if self.player_entity.bank_capacity == self.player_entity.bank_balance:
+                return await send_failed_embed(self.ctx, REASON_INSUFFICIENT_BANK_CAPACITY)
+            else:
+                self.amount = self.player_entity.bank_capacity - self.player_entity.bank_balance
 
         self.player_entity.bank_balance += self.amount
 
