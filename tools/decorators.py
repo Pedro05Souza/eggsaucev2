@@ -5,7 +5,7 @@ from discord import Interaction, User
 from tools.services import PlayerCacheService, BotConfigCacheService
 from tools.constants import get_env_var
 
-__all__ = ["dev_only", "database_user", "spin_command_autocomplete", "admin_only", "database_config"]
+__all__ = ["dev_only", "database_user", "spin_command_autocomplete", "admin_only", "fetch_database_config"]
 
 
 def dev_only():
@@ -42,29 +42,22 @@ def database_user():
     return check(predicate)
 
 
-def database_config():
-    """Fetches the player entity from the cache or database and attaches it to the context.
+async def fetch_database_config(ctx: Context, bot_config_cache: BotConfigCacheService) -> None:
+    """Fetches or creates the bot config entity from the cache or database and attaches it to the context.
 
     Args:
-        player_repo (PlayerRepository): The repository that will be used to fetch the player entity.
+        ctx (Context): The context object.
+        bot_config_cache (BotConfigCacheService): The cache service that will be used to fetch the bot config entity.
     """
+    if not ctx.guild:
+        return
 
-    async def predicate(ctx: Context) -> bool:
-        if not ctx.guild:
-            return False
+    bot_config_entity = await bot_config_cache.get_or_fetch_bot_config_entity(ctx.guild.id)
 
-        bot_config_cache: BotConfigCacheService = ctx.cog.bot_config_cache  # type: ignore
+    if not bot_config_entity:
+        bot_config_entity = await bot_config_cache.create_bot_config(ctx.guild.id)
 
-        bot_config_entity = await bot_config_cache.get_or_fetch_bot_config_entity(ctx.guild.id)
-
-        if not bot_config_entity:
-            bot_config_entity = await bot_config_cache.create_bot_config(ctx.guild.id)  # type: ignore
-
-        ctx.guild_config_entity = bot_config_entity  # type: ignore
-
-        return True
-
-    return check(predicate)
+    ctx.guild_config_entity = bot_config_entity  # type: ignore
 
 
 def admin_only():
