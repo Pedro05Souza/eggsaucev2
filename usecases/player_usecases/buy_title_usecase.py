@@ -11,7 +11,7 @@ from tools import (
 )
 from tools.constants import (
     get_titles_prices,
-    get_titles_income,
+    get_titles_salaries,
     get_titles_emojis,
     SECONDS_TO_SALARY_DROP,
     REASON_INSUFFICIENT_BALANCE,
@@ -27,7 +27,7 @@ class BuyTitleUsecase:
         self._player_entity = player_entity
         self._player_cache = player_cache
         self._get_titles_prices = get_titles_prices()
-        self._get_titles_income = get_titles_income()
+        self._get_titles_income = get_titles_salaries()
         self._get_titles_emojis = get_titles_emojis()
 
     async def buy_title(self) -> None:
@@ -53,7 +53,7 @@ class BuyTitleUsecase:
                 return
 
             self._player_entity.last_bought_title = next_title
-            self._player_entity.next_salary_time = datetime.now() + timedelta(hours=SECONDS_TO_SALARY_DROP // 3600)
+            self._player_entity.next_salary_time = datetime.now() + timedelta(seconds=SECONDS_TO_SALARY_DROP)
             deduct_from_balance_and_bank(self._player_entity, title_price)
             await self._player_cache.player_synchronizer(self._player_entity)
             await send_bot_embed(self._ctx, description=f"Title **{next_title}** has been bought successfully.")

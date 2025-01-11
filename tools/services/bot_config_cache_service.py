@@ -90,15 +90,17 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
             return
 
         if len(cache_entry.allowed_channels) > len(proxy_allowed_channels):
-            deleted_channel = cache_entry.allowed_channels.difference(proxy_allowed_channels)
-            cache_entry.allowed_channels.remove(deleted_channel.pop())
-            await self.bot_config_repository.delete_allowed_channel(cache_entry.id, deleted_channel.pop())
+            deleted_channel_set = cache_entry.allowed_channels.difference(proxy_allowed_channels)
+            deleted_channel = deleted_channel_set.pop()
+            cache_entry.allowed_channels.remove(deleted_channel)
+            await self.bot_config_repository.delete_allowed_channel(cache_entry.id, deleted_channel)
 
         if len(cache_entry.allowed_channels) < len(proxy_allowed_channels):
-            created_channel = cache_entry.allowed_channels.difference(proxy_allowed_channels)
-            cache_entry.allowed_channels.add(created_channel.pop())
+            created_channel_set = proxy_allowed_channels.difference(cache_entry.allowed_channels)
+            created_channel = created_channel_set.pop()
+            cache_entry.allowed_channels.add(created_channel)
 
-            await self.bot_config_repository.create_allowed_channel(cache_entry.id, created_channel.pop())
+            await self.bot_config_repository.create_allowed_channel(cache_entry.id, created_channel)
 
     async def _update_bot_config(
         self, cache_entry: BotConfigEntity, bot_config_proxy: MutableProxy[BotConfigEntity]

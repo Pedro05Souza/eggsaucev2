@@ -14,7 +14,7 @@ def get_titles_prices() -> dict[str, int]:
     return {"Egg Novice": 1500, "Egg Apprentice": 3000, "Egg Wizard": 5000, "Egg King": 10000}
 
 
-def get_titles_income() -> dict[str, int]:
+def get_titles_salaries() -> dict[str, int]:
     return {"Egg Novice": 25, "Egg Apprentice": 50, "Egg Wizard": 100, "Egg King": 150}
 
 

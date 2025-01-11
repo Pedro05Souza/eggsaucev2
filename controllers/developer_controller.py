@@ -22,6 +22,5 @@ class DeveloperController(Cog):
         await self.bot.tree.sync()
         self.logger.info("Synced tree.")
 
-
 async def setup(bot: Bot) -> None:
     await bot.add_cog(DeveloperController(bot))
