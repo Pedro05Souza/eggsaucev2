@@ -23,7 +23,7 @@ class WithdrawUsecase:
 
     async def withdraw(self) -> None:
 
-        if self.amount <= 0:
+        if self.amount < 0:
             return await send_failed_embed(self.ctx, REASON_INVALID_AMOUNT)
 
         if self.amount > self.player_entity.bank_balance:
