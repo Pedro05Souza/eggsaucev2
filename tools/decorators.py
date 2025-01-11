@@ -21,7 +21,7 @@ def dev_only():
 
 
 def database_user():
-    """Fetches the player entity from the cache or database and attaches it to the context.
+    """Fetches or creates the player entity from the cache or database and attaches it to the context.
 
     Args:
         player_repo (PlayerRepository): The repository that will be used to fetch the player entity.
