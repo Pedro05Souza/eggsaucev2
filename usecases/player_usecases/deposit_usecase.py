@@ -33,9 +33,7 @@ class DepositUsecase:
 
         self.player_entity.bank_balance += self.amount
         self.player_entity.balance -= self.amount
-        
         await self.player_cache.player_synchronizer(self.player_entity)
-        
         return await send_bot_embed(
             ctx=self.ctx,
             title="✅ Deposit was sucessfull",
