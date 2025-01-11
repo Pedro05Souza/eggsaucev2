@@ -35,5 +35,5 @@ class BotConfigRepository:
         return await self.get_by_id(bot_config_id)
 
     async def create_guild_config(self, discord_guild_id: int) -> BotConfigEntity:
-        bot_config = await BotConfig.create(id=discord_guild_id)
+        bot_config = await BotConfig.create(guild_id=discord_guild_id)
         return await bot_config_model_to_entity(bot_config)
