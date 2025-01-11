@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import TypedDict, Optional
 from datetime import datetime, timedelta
 from math import ceil
 from entities import PlayerEntity
@@ -11,18 +11,15 @@ class _EarningsType(TypedDict):
     farm: int
     cornfield: int
 
+__all__ = ["AwayTimeEarningsService"]
 
 class AwayTimeEarningsService:
-    def __init__(self, player_entity: PlayerEntity) -> None:
-        self.player_entity = player_entity
-        self._earnings_data: _EarningsType = {"salary": 0, "farm": 0, "cornfield": 0}
-
-    def _check_away_time_salary(self) -> None:
-        if not self.player_entity.last_bought_title or not self.player_entity.next_salary_time:
+    def _check_away_time_salary(self, player_entity: PlayerEntity, earnings_data: _EarningsType) -> None:
+        if not player_entity.last_bought_title or not player_entity.next_salary_time:
             return
 
         now = datetime.now()
-        next_salary_time = self.player_entity.next_salary_time
+        next_salary_time = player_entity.next_salary_time
 
         time_diffence = next_salary_time - now
 
@@ -34,13 +31,22 @@ class AwayTimeEarningsService:
         if hours_passed < 1:
             return
 
-        hourly_salary = get_salary_from_title(self.player_entity.last_bought_title)
+        hourly_salary = get_salary_from_title(player_entity.last_bought_title)
 
         total_gained_salary = hourly_salary * hours_passed
 
-        self.player_entity.next_salary_time = now + timedelta(seconds=SECONDS_TO_SALARY_DROP)
-        self.player_entity.balance += total_gained_salary
-        self._earnings_data["salary"] = total_gained_salary
+        player_entity.next_salary_time = now + timedelta(seconds=SECONDS_TO_SALARY_DROP)
+        player_entity.balance += total_gained_salary
+        earnings_data["salary"] = total_gained_salary
 
-    async def check_away_time(self) -> None:
-        self._check_away_time_salary()
+    async def calculate_away_time(self, player_entity: PlayerEntity) -> Optional[_EarningsType]:
+        earnings_data: _EarningsType = {"salary": 0, "farm": 0, "cornfield": 0}
+        self._check_away_time_salary(player_entity, earnings_data)
+
+        # TODO: Implement the rest of the logic to calculate the earnings, aka farm and cornfield
+
+        is_earning_data_empty = all(value == 0 for value in earnings_data.values())
+        if is_earning_data_empty:
+            return None
+
+        return earnings_data
