@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from discord.ext.commands import Context
 from entities import PlayerEntity
@@ -54,6 +54,7 @@ class BuyTitleUsecase:
 
             self._player_entity.last_bought_title = next_title
             self._player_entity.next_salary_time = datetime.now() + timedelta(seconds=SECONDS_TO_SALARY_DROP)
+            self._player_entity.next_salary_time = self._player_entity.next_salary_time.replace(tzinfo=timezone.utc)
             deduct_from_balance_and_bank(self._player_entity, title_price)
             await self._player_cache.player_synchronizer(self._player_entity)
             await send_bot_embed(self._ctx, description=f"Title **{next_title}** has been bought successfully.")
