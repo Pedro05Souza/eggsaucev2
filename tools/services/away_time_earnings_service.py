@@ -22,7 +22,7 @@ class AwayTimeEarningsService:
 
         now = datetime.now(timezone.utc)
         next_salary_time = player_entity.next_salary_time
-
+        
         time_diffence = next_salary_time - now
 
         if time_diffence.total_seconds() > 0:
