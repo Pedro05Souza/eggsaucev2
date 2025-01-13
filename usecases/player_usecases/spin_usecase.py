@@ -1,7 +1,6 @@
 from enum import Enum
 from typing import NamedTuple
 from random import Random
-from collections import namedtuple
 from discord.ext.commands import Context
 from entities import PlayerEntity
 from tools import PlayerCacheService, send_failed_embed, send_bot_embed
@@ -9,11 +8,14 @@ from tools.constants import REASON_INSUFFICIENT_BALANCE, REASON_INVALID_AMOUNT, 
 
 __all__ = ["SpinUsecase"]
 
-class SpinColorEnum(Enum):
+class _SpinColorEnum(Enum):
     RED = "red"
     GREEN = "green"
     BLACK = "black"
 
+class _SpinData(NamedTuple):
+    amount_result: int
+    color: str
 
 class SpinUsecase:
 
@@ -47,7 +49,7 @@ class SpinUsecase:
 
         spin_data = await self._calculate_spin_result()
 
-        color_emoji = await self.__color_emoji_dict(spin_data.color)
+        color_emoji = await self.__color_emoji_dict(_SpinColorEnum(spin_data.color))
 
         embed_description = (
             f"🎡 **The roulette landed on **" f"{color_emoji} **{spin_data.color.upper()}!**"
@@ -70,41 +72,39 @@ class SpinUsecase:
             description=embed_description,
         )
 
-    async def _calculate_spin_result(self) -> NamedTuple:
+    async def _calculate_spin_result(self) -> _SpinData:
         random_value = self._random.random()
         random_color = None
 
         if random_value < 0.5:
-            random_color = SpinColorEnum.RED.value
+            random_color = _SpinColorEnum.RED.value
 
         elif 0.5 <= random_value <= 0.52:
-            random_color = SpinColorEnum.GREEN.value
+            random_color = _SpinColorEnum.GREEN.value
 
         else:
-            random_color = SpinColorEnum.BLACK.value
-
-        SpinData = namedtuple("SpinData", ["amount_result", "color"])
+            random_color = _SpinColorEnum.BLACK.value
 
         if random_color == self._color_choice:
             match self._color_choice:
-                case SpinColorEnum.RED.value:
-                    return SpinData(self._amount_betted * 2, random_color)
-                case SpinColorEnum.GREEN.value:
-                    return SpinData(self._amount_betted * 14, random_color)
-                case SpinColorEnum.BLACK.value:
-                    return SpinData(self._amount_betted * 2, random_color)
+                case _SpinColorEnum.RED.value:
+                    return _SpinData(self._amount_betted * 2, random_color)
+                case _SpinColorEnum.GREEN.value:
+                    return _SpinData(self._amount_betted * 14, random_color)
+                case _SpinColorEnum.BLACK.value:
+                    return _SpinData(self._amount_betted * 2, random_color)
                 case _:
                     raise ValueError("Invalid color")
         else:
-            return SpinData(0, random_color)
+            return _SpinData(0, random_color)
 
-    async def __color_emoji_dict(self, color: SpinColorEnum) -> str:
+    async def __color_emoji_dict(self, color: _SpinColorEnum) -> str:
         match color:
-            case SpinColorEnum.RED.value:
+            case _SpinColorEnum.RED.value:
                 return "🟥"
-            case SpinColorEnum.GREEN.value:
+            case _SpinColorEnum.GREEN.value:
                 return "🟩"
-            case SpinColorEnum.BLACK.value:
+            case _SpinColorEnum.BLACK.value:
                 return "⬛"
             case _:
                 raise ValueError("Invalid color")

@@ -46,7 +46,7 @@ class BuyTitleUsecase:
         )
 
         if has_confirmed:
-            title_price: int = self._get_titles_prices[next_title]  # type: ignore
+            title_price: int = self._get_titles_prices[next_title]
 
             if title_price > self._player_entity.balance + self._player_entity.bank_balance:
                 await send_failed_embed(self._ctx, REASON_INSUFFICIENT_BALANCE)

@@ -21,7 +21,7 @@ class PlayerRepository:
         await self.__create_bank_player(player)
         player: Optional[Player] = await Player.filter(id=player.id).select_related("bank_player").first()
 
-        return player_model_to_entity(player)
+        return player_model_to_entity(player) # type: ignore
 
     async def __create_bank_player(self, player: Player) -> BankPlayer:
         return await BankPlayer.create(player=player)

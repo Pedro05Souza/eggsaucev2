@@ -6,7 +6,7 @@ __all__ = [
     "get_logger",
     "get_balance_diff",
     "deduct_from_balance_and_bank",
-    'get_salary_from_title'
+    'get_salary_from_title',
 ]
 
 

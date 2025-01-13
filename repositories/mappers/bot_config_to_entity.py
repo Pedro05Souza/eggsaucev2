@@ -5,7 +5,7 @@ __all__ = ["bot_config_model_to_entity"]
 
 
 async def bot_config_model_to_entity(bot_config: BotConfig) -> BotConfigEntity:
-    allowed_channels = await bot_config.allowed_channels.all() if bot_config.allowed_channels else None  # type: ignore
+    allowed_channels = await bot_config.allowed_channels.all() if bot_config.allowed_channels else None
 
     return BotConfigEntity(
         id=str(bot_config.id),

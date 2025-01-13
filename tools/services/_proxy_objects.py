@@ -3,25 +3,7 @@ from typing import Generic, TypeVar, Any
 
 T = TypeVar("T")
 
-__all__ = ["ImmutableProxy", "MutableProxy"]
-
-class ImmutableProxy(Generic[T]):
-    def __init__(self, obj: T):
-        self._obj = obj
-
-    def __getattr__(self, name):
-        return getattr(self._obj, name)
-
-    def __setattr__(self, name, value):
-        if name == "_obj":
-            super().__setattr__(name, value)
-            return
-
-        raise AttributeError("This object is read-only.")
-
-    def __repr__(self):
-        return f"<ImutableProxy {self._obj}>"
-
+__all__ = ["MutableProxy"]
 
 class MutableProxy(Generic[T]):
     def __init__(self, obj: T):

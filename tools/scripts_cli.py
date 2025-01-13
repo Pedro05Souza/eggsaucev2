@@ -33,11 +33,6 @@ def run(env) -> None:  # pylint: disable=no-self-argument,no-method-argument
     if not docker_up.returncode == 0:
         raise RuntimeError("Docker compose up failed")
 
-    apply_migrations = subprocess.run(["docker", "exec", "eggsauce-bot-1", "aerich", "upgrade"], check=True)
-
-    if not apply_migrations == 0:
-        raise RuntimeError("Apply migrations failed")
-
     click.echo("Bot started successfully")
 
 
@@ -53,6 +48,16 @@ def migrate(name: str) -> None:  # pylint: disable=no-self-argument,no-method-ar
 
     click.echo("Migration generated successfully")
 
+    apply_migration = subprocess.run(["docker", "exec", "eggsauce-bot-1", "aerich", "upgrade"], check=True)
+
+    if not apply_migration.returncode == 0:
+        raise RuntimeError("Failed to apply migration")
+
+    click.echo("Migration applied successfully")
+
+
+@cli.command()
+def apply_migrations() -> None:
     apply_migration = subprocess.run(["docker", "exec", "eggsauce-bot-1", "aerich", "upgrade"], check=True)
 
     if not apply_migration.returncode == 0:

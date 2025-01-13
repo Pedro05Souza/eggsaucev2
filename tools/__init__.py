@@ -4,3 +4,4 @@ from .discord_utils import *
 from .services import *
 from .scripts_cli import *
 from .global_cache import *
+from .update_player_utils import *

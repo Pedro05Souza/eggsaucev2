@@ -5,7 +5,7 @@ from tools.constants import NotInCacheException
 from repositories import BotConfigRepository
 from .cache_service import CacheService
 from ._singleton_meta import SingletonMeta
-from ._proxy_objects import ImmutableProxy, MutableProxy
+from ._proxy_objects import MutableProxy
 
 
 __all__ = ["BotConfigCacheService"]
@@ -20,7 +20,7 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
         self.bot_config_repository = bot_config_repository
 
     async def get_or_fetch_bot_config_entity(
-        self, discord_guild_id_or_entity: Union[int, BotConfigEntity], is_readonly: bool = False
+        self, discord_guild_id_or_entity: Union[int, BotConfigEntity]
     ) -> Optional[BotConfigEntity]:
         """Gets or fetches a guild config entity from the cache. If the entity is not in the cache,
         it will be fetched from the database.
@@ -39,7 +39,7 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
             guild_config = self.get_item(discord_guild_id)
 
             if guild_config:
-                return ImmutableProxy(guild_config) if is_readonly else MutableProxy(guild_config)  # type: ignore
+                return MutableProxy(guild_config)  # type: ignore
 
             guild_config = await self.bot_config_repository.get_guild_config_by_discord_guild_id(discord_guild_id)
 
@@ -53,7 +53,7 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
         if not guild_config:
             return None
 
-        return ImmutableProxy(guild_config) if is_readonly else MutableProxy(guild_config)  # type: ignore
+        return MutableProxy(guild_config)  # type: ignore
 
     async def create_bot_config(self, discord_guild_id: int) -> BotConfigEntity:
         """Creates a guild config entity in the cache and the database.

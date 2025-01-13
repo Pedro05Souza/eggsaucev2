@@ -1,18 +1,17 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(
-    name="eggsauce",
-    version="0.1.0",
-    packages=find_packages(),
+    name="eggsauce-cli",
+    version="0.1.2",
+    py_modules=['scripts_cli'],
+    package_dir={'': 'tools'},
     install_requires=[
-        "discord.py",
         "python-dotenv",
         "click",
-        "pylint",
     ],
     entry_points={
         "console_scripts": [
-            "eggsauce=tools.scripts_cli:cli"
+            "eggsauce=scripts_cli:cli"
         ]
-    }
+    },
 )
