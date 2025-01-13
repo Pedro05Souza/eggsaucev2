@@ -6,8 +6,7 @@ python-dotenv
 aerich==0.8.1
 tomlkit==0.13.2
 cachetools==5.5.0
-pylint==3.3.3
 click==8.1.8
 setuptools==5.5.0
-mypy==1.14.1
-types-cachetools==5.5.0.20240820
+pylint==3.3.3
+pyright==1.1.391
