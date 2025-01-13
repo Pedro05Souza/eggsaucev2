@@ -38,6 +38,7 @@ class SlotsUsecase:
         if len(fruits_frequency) == 1:
             jackpot = possible_jackpots.get("".join(random_fruits), 0)
             balance_diff = self._amount_betted * jackpot
+            balance_diff = int(balance_diff)
             self._player_entity.balance += balance_diff
             description += f"\n\n🎉 **JACKPOT** 🎉\nYou won **{balance_diff}** eggbux!"
 
@@ -45,6 +46,7 @@ class SlotsUsecase:
             higher_frequency_fruit = fruits_frequency.most_common(1)[0][0]
             higher_frequency_fruit = higher_frequency_fruit * 2
             balance_diff = self._amount_betted * possible_jackpots.get(higher_frequency_fruit, 0)
+            balance_diff = int(balance_diff)
             self._player_entity.balance += balance_diff
             description += f"\n\n🎉 **WIN** 🎉\nYou won **{balance_diff}** eggbux!"
 
@@ -58,7 +60,7 @@ class SlotsUsecase:
     def _get_fruits(self) -> list[str]:
         return ["🍇", "🍋", "🍒", "🍊", "🍉"]
 
-    def _get_jackpots(self) -> dict:
+    def _get_jackpots(self) -> dict[str, float]:
         return {
             "🍇🍇🍇": 12,
             "🍋🍋🍋": 9,
