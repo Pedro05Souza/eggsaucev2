@@ -31,6 +31,6 @@ jobs:
             with:
               python-version: "3.12"
 
-          - name: Run mypy
+          - name: Run pyright
             run: |
-              mypy .
+              pyright .
