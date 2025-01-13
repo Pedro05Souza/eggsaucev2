@@ -57,6 +57,8 @@ class Eggsauce(Bot):
             return "!"
 
         bot_config = await self.bot_config_cache.get_or_fetch_bot_config_entity(message.guild.id)
+
         if not bot_config:
             bot_config = await self.bot_config_cache.create_bot_config(message.guild.id)
+
         return bot_config.prefix
