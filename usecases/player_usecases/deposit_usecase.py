@@ -35,8 +35,7 @@ class DepositUsecase:
 
             if self.player_entity.bank_capacity == self.player_entity.bank_balance:
                 return await send_failed_embed(self.ctx, REASON_INSUFFICIENT_BANK_CAPACITY)
-            else:
-                self.amount = self.player_entity.bank_capacity - self.player_entity.bank_balance
+            self.amount = self.player_entity.bank_capacity - self.player_entity.bank_balance
 
         self.player_entity.bank_balance += self.amount
 
