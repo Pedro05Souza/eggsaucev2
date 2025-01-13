@@ -1,6 +1,6 @@
 from discord.ext.commands import Bot, Cog, command, Context
 from usecases import SetChannelUsecase, SetPrefixUsecase, UnsetChannelUsecase
-from tools import BotConfigCacheService, admin_only, fetch_database_config, GlobalBotConfigCache
+from tools import BotConfigCacheService, admin_only, ensure_database_config, GlobalBotConfigCache
 
 
 class BotConfigController(Cog):
@@ -28,7 +28,7 @@ class BotConfigController(Cog):
         await unset_channel_usecase.unset_channel()
 
     async def cog_before_invoke(self, ctx: Context) -> None:
-        await fetch_database_config(ctx, self.bot_config_cache)
+        await ensure_database_config(ctx, self.bot_config_cache)
 
 
 async def setup(bot: Bot) -> None:
