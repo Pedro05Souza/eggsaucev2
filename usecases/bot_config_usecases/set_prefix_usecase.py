@@ -20,7 +20,7 @@ class SetPrefixUsecase:
 
     async def set_prefix(self) -> None:
         self._bot_config_entity.prefix = self._new_prefix
-        await self._bot_config_cache.bot_config_synchronizer(self._bot_config_entity)
+        await self._bot_config_cache.synchronizer(self._bot_config_entity)
         await send_bot_embed(
             ctx=self._ctx,
             title="✅ Prefix updated",

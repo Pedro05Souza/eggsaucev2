@@ -56,7 +56,7 @@ class BuyTitleUsecase:
             self._player_entity.next_salary_time = datetime.now() + timedelta(seconds=SECONDS_TO_SALARY_DROP)
             self._player_entity.next_salary_time = self._player_entity.next_salary_time.replace(tzinfo=timezone.utc)
             deduct_from_balance_and_bank(self._player_entity, title_price)
-            await self._player_cache.player_synchronizer(self._player_entity)
+            await self._player_cache.synchronizer(self._player_entity)
             await send_bot_embed(self._ctx, description=f"Title **{next_title}** has been bought successfully.")
 
     def _get_next_title(self, title_names: list[str]) -> Optional[str]:

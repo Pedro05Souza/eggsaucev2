@@ -37,7 +37,7 @@ class UpgradeBankUsecase:
         self._player_entity.upgrade_level += 1
         self._player_entity.bank_capacity += 10000
 
-        await self._player_cache.player_synchronizer(self._player_entity)
+        await self._player_cache.synchronizer(self._player_entity)
 
         return await send_bot_embed(
             ctx=self._ctx,

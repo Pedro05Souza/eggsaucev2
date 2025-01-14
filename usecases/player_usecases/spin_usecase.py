@@ -4,7 +4,7 @@ from random import Random
 from discord.ext.commands import Context
 from entities import PlayerEntity
 from tools import PlayerCacheService, send_failed_embed, send_bot_embed
-from tools.constants import REASON_INSUFFICIENT_BALANCE, REASON_INVALID_AMOUNT, MINIMUM_AMOUNT_SPIN
+from tools.constants import REASON_INSUFFICIENT_BALANCE, REASON_INVALID_AMOUNT, MIN_AMOUNT_SPIN
 
 __all__ = ["SpinUsecase"]
 
@@ -43,8 +43,8 @@ class SpinUsecase:
             await send_failed_embed(self._ctx, REASON_INVALID_AMOUNT)
             return
 
-        if self._amount_betted < MINIMUM_AMOUNT_SPIN:
-            await send_failed_embed(self._ctx, f"The minimum amount to spin is **{MINIMUM_AMOUNT_SPIN}** eggbux.")
+        if self._amount_betted < MIN_AMOUNT_SPIN:
+            await send_failed_embed(self._ctx, f"The minimum amount to spin is **{MIN_AMOUNT_SPIN}** eggbux.")
             return
 
         spin_data = await self._calculate_spin_result()
@@ -64,7 +64,7 @@ class SpinUsecase:
             self._player_entity.balance += spin_data.amount_result
             embed_description += f" You won **{spin_data.amount_result}** eggbux!"
 
-        await self._player_cache.player_synchronizer(self._player_entity)
+        await self._player_cache.synchronizer(self._player_entity)
 
         await send_bot_embed(
             ctx=self._ctx,

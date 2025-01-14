@@ -24,7 +24,7 @@ class GainPointsUsecase:
 
         player_entity.balance += calculated_points
 
-        await player_cache.player_synchronizer(player_entity)
+        await player_cache.synchronizer(player_entity)
 
     async def calculate_points_voice(
         self,
@@ -46,4 +46,4 @@ class GainPointsUsecase:
 
         player_entity.balance += calculated_points
 
-        await player_cache.player_synchronizer(player_entity)
+        await player_cache.synchronizer(player_entity)
