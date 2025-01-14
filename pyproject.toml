@@ -13,8 +13,9 @@ src_folder = "./."
 line-length = 120
 
 [tool.pyright]
-include = ["./*.py"]
-exclude = ["**/migrations/**", "**/venv/**", "**/build/**", "**/__init__.py"]
+include = ["**/*.py"]
+exclude = ["**/migrations/**", "**/venv/**", "**/build/**", "**/__init__.py", "**/__pycache__/**"]
+pythonVersion = "3.12"
 typeCheckingMode = "basic"
 reportMissingModuleSource = "none"
 reportUnnecessaryTypeIgnoreComment = "error"
