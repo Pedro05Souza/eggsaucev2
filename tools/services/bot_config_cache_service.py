@@ -1,7 +1,7 @@
 from typing import Optional, Union
 from tortoise.transactions import in_transaction
 from entities import BotConfigEntity
-from tools.constants import NotInCacheException
+from tools.constants import NotInCacheException, NoUpdateRequiredException
 from repositories import BotConfigRepository
 from .cache_service import CacheService
 from ._proxy_objects import MutableProxy
@@ -102,7 +102,7 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity]):
             previous_state = {"allowed_channels": cache_entry.allowed_channels.copy()}
             created_channel = created_channel_set.pop()
             cache_entry.allowed_channels.add(created_channel)
-            
+
             async with self._revert_if_exception(cache_entry, previous_state):
                 await self.bot_config_repository.create_allowed_channel(cache_entry.id, created_channel)
 
@@ -120,7 +120,7 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity]):
         if prefix and prefix != cache_entry.prefix:
             cache_entry.prefix = prefix
             previous_state = {"prefix": cache_entry.prefix}
-            
+
             async with self._revert_if_exception(cache_entry, previous_state):
                 await self.bot_config_repository.update_bot_config(cache_entry)
 
@@ -134,6 +134,9 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity]):
         Raises:
             NotInCacheException: If the entity is not in the cache.
         """
+        if not bot_config_proxy.is_update_required:
+            raise NoUpdateRequiredException()
+
         cache_entry = self.get_item(bot_config_proxy.guild_id)
 
         if not cache_entry:

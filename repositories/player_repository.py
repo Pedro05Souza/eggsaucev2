@@ -8,20 +8,20 @@ __all__ = ["PlayerRepository"]
 
 class PlayerRepository:
 
-    async def get_player_by_discord_id(self, discord_id: int) -> Optional[PlayerEntity]:
-        database_player = await Player.filter(discord_user_id=discord_id).select_related("bank_player").first()
+    async def get_player_by_discord_id(self, discord_user_id: int) -> Optional[PlayerEntity]:
+        database_player = await Player.get_or_none(discord_user_id=discord_user_id).select_related("bank_player")
 
         if not database_player:
             return None
 
         return player_model_to_entity(database_player)
 
-    async def create_player(self, discord_id: int) -> PlayerEntity:
-        player = await Player.create(discord_user_id=discord_id)
+    async def create_player(self, discord_user_id: int) -> PlayerEntity:
+        player = await Player.create(discord_user_id=discord_user_id)
         await self.__create_bank_player(player)
-        player: Optional[Player] = await Player.filter(id=player.id).select_related("bank_player").first()
+        player: Optional[Player] = await Player.get(id=player.id).select_related("bank_player")
 
-        return player_model_to_entity(player) # type: ignore
+        return player_model_to_entity(player)
 
     async def __create_bank_player(self, player: Player) -> BankPlayer:
         return await BankPlayer.create(player=player)

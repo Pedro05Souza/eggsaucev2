@@ -8,7 +8,7 @@ __all__ = ["FarmEntity"]
 @dataclass
 class FarmEntity:
     __slots__ = [
-        "farm_id",
+        "id",
         "player_id",
         "discord_user_id",
         "farm_title",
@@ -18,9 +18,9 @@ class FarmEntity:
         "chickens",
     ]
 
-    farm_id: str
+    id: str
     player_id: str
-    discord_user_id: int
+    discord_user_id: str
     farm_title: str
     farmer: str
     last_drop_time: datetime

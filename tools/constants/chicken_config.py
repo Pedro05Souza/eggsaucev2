@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class ChickenRarityEnum(str, Enum):
+class ChickenRaritiesEnum(str, Enum):
     DEAD = "dead"
     COMMON = "common"
     UNCOMMON = "uncommon"
@@ -23,7 +23,7 @@ class ChickenRarityEnum(str, Enum):
     ETHEREAL = "ethereal"
 
 
-class RaritiesProbability(Enum):
+class ChickenRaritiesProbabilities(Enum):
     COMMON = 5000
     UNCOMMON = 2500
     RARE = 1250
@@ -42,7 +42,7 @@ class RaritiesProbability(Enum):
     ASCENDED = 0.15
 
 
-class RarityEmoji(Enum):
+class ChickenRaritiesEmojis(Enum):
     DEAD = "☠️"
     COMMON = "🐔"
     UNCOMMON = "🐤"

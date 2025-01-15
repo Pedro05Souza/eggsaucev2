@@ -14,6 +14,6 @@ async def calculate_away_time_earnings(
         return
 
     if earnings_data["salary"] > 0:
-        await player_cache.player_synchronizer(player_entity)
+        await player_cache.synchronizer(player_entity)
 
     # TODO: Implement the rest of the logic to calculate the earnings, aka farm and cornfield
