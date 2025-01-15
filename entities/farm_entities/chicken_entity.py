@@ -5,9 +5,9 @@ __all__ = ["ChickenEntity"]
 
 @dataclass
 class ChickenEntity:
-    __slots__ = ["chicken_id", "eggs_generated", "upkeep_multiplier", "rarity", "status_code", "name", "happiness"]
+    __slots__ = ["id", "eggs_generated", "upkeep_multiplier", "rarity", "status_code", "name", "happiness"]
 
-    chicken_id: str
+    id: str
     eggs_generated: int
     upkeep_multiplier: float
     rarity: str

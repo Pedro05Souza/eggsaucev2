@@ -47,8 +47,8 @@ class DonateUsecase:
         recipient_entity.balance += self._donation_amount
 
         async with in_transaction():
-            await self._player_cache.player_synchronizer(self._donator)
-            await self._player_cache.player_synchronizer(recipient_entity)
+            await self._player_cache.synchronizer(self._donator)
+            await self._player_cache.synchronizer(recipient_entity)
             return await send_bot_embed(
                 ctx=self._ctx,
                 title="✅ Donation successful",

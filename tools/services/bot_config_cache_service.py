@@ -1,17 +1,16 @@
 from typing import Optional, Union
 from tortoise.transactions import in_transaction
 from entities import BotConfigEntity
-from tools.constants import NotInCacheException
+from tools.constants import NotInCacheException, NoUpdateRequiredException
 from repositories import BotConfigRepository
 from .cache_service import CacheService
-from ._singleton_meta import SingletonMeta
 from ._proxy_objects import MutableProxy
 
 
 __all__ = ["BotConfigCacheService"]
 
 
-class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=SingletonMeta):
+class BotConfigCacheService(CacheService[int, BotConfigEntity]):
 
     def __init__(
         self, bot_config_repository: BotConfigRepository, max_size: int = 100, expiration_time: int = 360
@@ -91,16 +90,21 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
 
         if len(cache_entry.allowed_channels) > len(proxy_allowed_channels):
             deleted_channel_set = cache_entry.allowed_channels.difference(proxy_allowed_channels)
+            previous_state = {"allowed_channels": cache_entry.allowed_channels.copy()}
             deleted_channel = deleted_channel_set.pop()
             cache_entry.allowed_channels.remove(deleted_channel)
-            await self.bot_config_repository.delete_allowed_channel(cache_entry.id, deleted_channel)
+
+            async with self._revert_if_exception(cache_entry, previous_state):
+                await self.bot_config_repository.delete_allowed_channel(cache_entry.id, deleted_channel)
 
         if len(cache_entry.allowed_channels) < len(proxy_allowed_channels):
             created_channel_set = proxy_allowed_channels.difference(cache_entry.allowed_channels)
+            previous_state = {"allowed_channels": cache_entry.allowed_channels.copy()}
             created_channel = created_channel_set.pop()
             cache_entry.allowed_channels.add(created_channel)
 
-            await self.bot_config_repository.create_allowed_channel(cache_entry.id, created_channel)
+            async with self._revert_if_exception(cache_entry, previous_state):
+                await self.bot_config_repository.create_allowed_channel(cache_entry.id, created_channel)
 
     async def _update_bot_config(
         self, cache_entry: BotConfigEntity, bot_config_proxy: MutableProxy[BotConfigEntity]
@@ -115,7 +119,10 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
 
         if prefix and prefix != cache_entry.prefix:
             cache_entry.prefix = prefix
-            await self.bot_config_repository.update_bot_config(cache_entry)
+            previous_state = {"prefix": cache_entry.prefix}
+
+            async with self._revert_if_exception(cache_entry, previous_state):
+                await self.bot_config_repository.update_bot_config(cache_entry)
 
     async def _update_bot_config_checks(self, bot_config_proxy: MutableProxy[BotConfigEntity]) -> None:
         """
@@ -127,6 +134,9 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
         Raises:
             NotInCacheException: If the entity is not in the cache.
         """
+        if not bot_config_proxy.is_update_required:
+            raise NoUpdateRequiredException()
+
         cache_entry = self.get_item(bot_config_proxy.guild_id)
 
         if not cache_entry:
@@ -135,7 +145,7 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
         await self._has_changed_channels(cache_entry, bot_config_proxy)
         await self._update_bot_config(cache_entry, bot_config_proxy)
 
-    async def bot_config_synchronizer(self, bot_config_proxy: BotConfigEntity) -> None:
+    async def synchronizer(self, entity: BotConfigEntity) -> None:
         """Synchronizes the bot config entity with the cache and the database.
 
         Args:
@@ -145,5 +155,5 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity], metaclass=Single
             NoUpdateRequiredException: If no update is required
         """
         async with in_transaction():
-            if isinstance(bot_config_proxy, MutableProxy):
-                await self._update_bot_config_checks(bot_config_proxy)
+            if isinstance(entity, MutableProxy):
+                await self._update_bot_config_checks(entity)

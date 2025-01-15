@@ -1,6 +1,6 @@
 from tortoise.models import Model
 from tortoise import fields
-from tools.constants import ChickenRarityEnum
+from tools.constants import ChickenRaritiesEnum
 
 __all__ = ["Chicken"]
 
@@ -10,7 +10,7 @@ class Chicken(Model):
     name = fields.CharField(max_length=25)
     eggs_generated = fields.IntField()
     upkeep_multiplier = fields.FloatField()
-    rarity = fields.CharEnumField(ChickenRarityEnum)
+    rarity = fields.CharEnumField(ChickenRaritiesEnum)
     status_code = fields.IntField()
     happiness = fields.IntField()
 

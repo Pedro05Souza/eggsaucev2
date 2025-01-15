@@ -5,12 +5,12 @@ from entities import PlayerEntity
 from tools.constants import NotInCacheException, NoUpdateRequiredException
 from repositories import PlayerRepository
 from .cache_service import CacheService
-from ._singleton_meta import SingletonMeta
 from ._proxy_objects import MutableProxy
 
 __all__ = ["PlayerCacheService"]
 
-class PlayerCacheService(CacheService[int, PlayerEntity], metaclass=SingletonMeta):
+
+class PlayerCacheService(CacheService[int, PlayerEntity]):
 
     def __init__(self, player_repository: PlayerRepository, max_size: int = 250, expiration_time: int = 3600) -> None:
         super().__init__(max_size, expiration_time)
@@ -49,8 +49,6 @@ class PlayerCacheService(CacheService[int, PlayerEntity], metaclass=SingletonMet
             elif isinstance(discord_user_id_or_entity, PlayerEntity):
                 entity = discord_user_id_or_entity
                 self.add_item(entity.discord_user_id, entity)
-            else:
-                raise ValueError("Invalid entity type. Must be PlayerEntity only.")
 
             if not player:
                 return None
@@ -94,13 +92,19 @@ class PlayerCacheService(CacheService[int, PlayerEntity], metaclass=SingletonMet
             cache_entry (PlayerEntity): The player entity to update.
             player_proxy (MutableProxy[PlayerEntity]): The player proxy object.
         """
-        do_update = False
+        possible_bank_upgrades = {"bank_balance", "bank_capacity", "upgrade_level"}
+
+        if not any(key in player_proxy.modified_fields for key in possible_bank_upgrades):
+            return
+
+        previous_state = {}
+
         for key, value in player_proxy.modified_fields.items():
             if getattr(cache_entry, key) != value and key in {"bank_balance", "bank_capacity", "upgrade_level"}:
+                previous_state[key] = getattr(cache_entry, key)
                 setattr(cache_entry, key, value)
-                do_update = True
 
-        if do_update:
+        async with self._revert_if_exception(cache_entry, previous_state):
             await self.player_repository.update_player_bank(cache_entry)
 
     async def _update_player_entity(self, cache_entry: PlayerEntity, player_proxy: MutableProxy[PlayerEntity]) -> None:
@@ -110,16 +114,18 @@ class PlayerCacheService(CacheService[int, PlayerEntity], metaclass=SingletonMet
             cache_entry (PlayerEntity): The player entity to update.
             player_proxy (MutableProxy[PlayerEntity]): The player proxy object.
         """
-
+        previous_state = {}
         do_update = False
 
         for key, value in player_proxy.modified_fields.items():
             if getattr(cache_entry, key) != value:
+                previous_state[key] = getattr(cache_entry, key)
                 setattr(cache_entry, key, value)
                 do_update = True
 
         if do_update:
-            await self.player_repository.update_player(cache_entry)
+            async with self._revert_if_exception(cache_entry, previous_state):
+                await self.player_repository.update_player(cache_entry)
 
     async def _update_player_checks(self, proxy_entity: MutableProxy[PlayerEntity]) -> None:
         """Updates the player entity if needed.
@@ -142,7 +148,7 @@ class PlayerCacheService(CacheService[int, PlayerEntity], metaclass=SingletonMet
         await self._update_player_bank_entity(cache_entry, proxy_entity)
         await self._update_player_entity(cache_entry, proxy_entity)
 
-    async def player_synchronizer(self, entity_proxy: PlayerEntity) -> None:
+    async def synchronizer(self, entity: PlayerEntity) -> None:
         """Synchronizes the player entity with the cache and database.
 
         Args:
@@ -150,5 +156,5 @@ class PlayerCacheService(CacheService[int, PlayerEntity], metaclass=SingletonMet
             entity_proxy (MutableProxy[PlayerEntity]): The player proxy object.
         """
         async with in_transaction():
-            if isinstance(entity_proxy, MutableProxy):
-                await self._update_player_checks(entity_proxy)
+            if isinstance(entity, MutableProxy):
+                await self._update_player_checks(entity)

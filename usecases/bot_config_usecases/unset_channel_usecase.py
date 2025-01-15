@@ -23,7 +23,7 @@ class UnsetChannelUsecase:
             return
 
         self._bot_config_entity.allowed_channels.remove(self._channel_id)
-        await self._bot_config_cache_service.bot_config_synchronizer(self._bot_config_entity)
+        await self._bot_config_cache_service.synchronizer(self._bot_config_entity)
         await send_bot_embed(
             self._ctx, title="✅ Channel unset successfully!", description="Channel unset successfully!"
         )

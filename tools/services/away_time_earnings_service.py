@@ -50,6 +50,7 @@ class AwayTimeEarningsService:
         # TODO: Implement the rest of the logic to calculate the earnings, aka farm and cornfield
 
         is_earning_data_empty = all(value == 0 for value in earnings_data.values())
+
         if is_earning_data_empty:
             return None
 

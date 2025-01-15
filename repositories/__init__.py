@@ -1,2 +1,3 @@
-from .player_repository import PlayerRepository
-from .bot_config_repository import BotConfigRepository
+from .player_repository import *
+from .bot_config_repository import *
+from .farm_repository import *

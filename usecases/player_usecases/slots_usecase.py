@@ -54,7 +54,7 @@ class SlotsUsecase:
             self._player_entity.balance -= self._amount_betted
             description += f"\n\n❌ **LOSE** ❌\nYou lost **{self._amount_betted}** eggbux!"
 
-        await self._player_cache.player_synchronizer(self._player_entity)
+        await self._player_cache.synchronizer(self._player_entity)
         return await send_bot_embed(ctx=self._ctx, title=title, description=description)
 
     def _get_fruits(self) -> list[str]:
