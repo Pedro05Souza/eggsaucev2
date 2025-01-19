@@ -1,9 +1,9 @@
-from typing import Union, Optional
+from typing import Optional
 from asyncio import Lock
 from tortoise.transactions import in_transaction
 from entities import PlayerEntity
 from tools.constants import NotInCacheException, NoUpdateRequiredException
-from tools.utils import player_entity_to_model
+from tools.utils import player_entity_to_model, get_logger
 from repositories import PlayerRepository
 from .cache_service import CacheService
 from ._proxy_objects import MutableProxy
@@ -18,10 +18,12 @@ class PlayerCacheService(CacheService[int, PlayerEntity]):
     ) -> None:
         super().__init__(track_evict, maxsize, expiration_time)
         self.lock = Lock()
+        self.logger = get_logger(__name__)
         self.player_repository = player_repository
 
     async def get_or_fetch_player_entity(
-        self, discord_user_id_or_entity: Union[int, PlayerEntity]
+        self,
+        discord_user_id: int,
     ) -> Optional[PlayerEntity]:
         """Gets or fetches a player entity to from cache.
         If the entity is not in the cache, it will be fetched from the database.
@@ -31,33 +33,25 @@ class PlayerCacheService(CacheService[int, PlayerEntity]):
                 player entity to add. if its an entity, it will be added to the cache.
                 Otherwise, it will be fetched from the database.
 
-            is_readonly (bool, optional): If True, a read-only entity will be returned. Defaults to False.
-
         Returns:
             Union[PlayerEntity]: The player entity
         """
         async with self.lock:
             await self.__save_expired_or_removed_items()
-            if isinstance(discord_user_id_or_entity, int):
-                discord_user_id = discord_user_id_or_entity
-                player = self._get_from_cache(discord_user_id)
 
-                if player:
-                    return MutableProxy(player)  # type: ignore
+            player = self._get_from_cache(discord_user_id)
 
-                player = await self.player_repository.get_player_by_discord_id(discord_user_id)
+            if player:
+                return MutableProxy(player)  # type: ignore
 
-                if player:
-                    self.add_item(discord_user_id, player)
+            player = await self.player_repository.get_player_by_discord_id(discord_user_id)
 
-            elif isinstance(discord_user_id_or_entity, PlayerEntity):
-                entity = discord_user_id_or_entity
-                self.add_item(entity.discord_user_id, entity)
+            if player:
+                self.add_item(discord_user_id, player)
+                return MutableProxy(player)  # type: ignore
 
             if not player:
                 return None
-
-            return MutableProxy(player)  # type: ignore
 
     async def create_player(self, discord_user_id: int) -> PlayerEntity:
         """Creates a player in the database and adds it to the cache.
@@ -97,6 +91,7 @@ class PlayerCacheService(CacheService[int, PlayerEntity]):
         items = [item[1] for item in items]
         items = [await player_entity_to_model(item) for item in items]
         await self.player_repository.bulk_update_players(items)
+        self.logger.info("Saved %s expired or removed items to the database.", len(items))
 
     async def _update_player_bank_entity(
         self, cache_entry: PlayerEntity, player_proxy: MutableProxy[PlayerEntity]
@@ -158,6 +153,9 @@ class PlayerCacheService(CacheService[int, PlayerEntity]):
         cache_entry = self._get_from_cache(proxy_entity.discord_user_id)
 
         if not cache_entry:
+            self.logger.error(
+                "Player with Discord ID %s not found in cache, should be present.", proxy_entity.discord_user_id
+            )
             raise NotInCacheException()
 
         if not save_to_db:
@@ -169,7 +167,7 @@ class PlayerCacheService(CacheService[int, PlayerEntity]):
         await self._update_player_entity(cache_entry, proxy_entity)
 
     async def synchronizer(self, entity: PlayerEntity, save_to_db: bool = True) -> None:
-        """Synchronizes the player entity with the cache and database.
+        """Synchronizes the player entity with the cache and database (if needed).
 
         Args:
             key (int): The Discord ID of the player.
