@@ -11,8 +11,22 @@ V = TypeVar("V")
 
 class CacheService(Generic[K, V]):
 
-    def __init__(self, max_size: int = 100, expiration_time: int = 3600) -> None:
-        self._cache: TTLCache[K, V] = TTLCache(maxsize=int(max_size), ttl=int(expiration_time))
+    class _TTLCache(TTLCache):
+
+        def __init__(self, *args, **kwargs):
+            self.evicted_items = []
+            super().__init__(*args, **kwargs)
+
+        def popitem(self):
+            key, value = super().popitem()
+            self.evicted_items.append((key, value))
+            return key, value
+
+    def __init__(self, track_evict: bool, maxsize: int = 250, expiration_time: float = 300) -> None:
+        if track_evict:
+            self._cache = self._TTLCache(maxsize=maxsize, ttl=expiration_time)
+        else:
+            self._cache = TTLCache(maxsize=maxsize, ttl=expiration_time)
         self.logger = get_logger(__name__)
 
     def add_item(self, key: K, value: V) -> bool:
@@ -26,6 +40,17 @@ class CacheService(Generic[K, V]):
             del self._cache[key]
         else:
             raise KeyError(f"Key {key} not found in cache")
+
+    async def _get_expired_or_removed_items(self):
+        if not hasattr(self._cache, "evicted_items"):
+            raise ValueError("This method is only available when track_evict is set to True")
+
+        items = self._cache.expire()
+
+        if len(self._cache.evicted_items) > 0:
+            items.extend(self._cache.evicted_items)
+            self._cache.evicted_items.clear()
+        return items
 
     def get_item(self, key: K) -> Optional[V]:
         if key in self._cache:

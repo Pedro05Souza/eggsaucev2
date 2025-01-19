@@ -1,6 +1,6 @@
 from typing import Optional
 from datetime import datetime
-from discord.ext.commands import Cog, hybrid_command, Bot, Context, cooldown, before_invoke
+from discord.ext.commands import Cog, hybrid_command, Bot, Context, cooldown, before_invoke, BucketType
 from discord import Member, Message, VoiceState, app_commands
 from tools import (
     AwayTimeEarningsService,
@@ -46,20 +46,20 @@ class PlayerController(Cog):
     @hybrid_command(
         name="balance", aliases=["bal", "points", "p"], description="💰 Check your balance or another user's!"
     )
-    @cooldown(1, REGULAR_COMMAND_COOLDOWN)
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
     async def balance(self, ctx: Context, member: Optional[Member] = None) -> None:
         balance_usecase = BalanceUsecase(ctx, member, self.player_cache, self.away_time_earnings_service)
         await balance_usecase.balance()
 
     @hybrid_command(name="donate", aliases=["give"], description="🤝 Share the love by donating eggbux to others!")
-    @cooldown(1, REGULAR_COMMAND_COOLDOWN)
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
     @before_invoke(_ensure_database_player_decorator)
     async def donate(self, ctx: Context, amount: int, recipient: Member) -> None:
         donate_usecase = DonateUsecase(ctx, ctx.player_entity, amount, recipient, self.player_cache)
         await donate_usecase.donate()
 
     @hybrid_command(name="steal", aliases=["rob"], description="🦹‍♂️ Steal some eggbux from another user!")
-    @cooldown(1, REGULAR_COMMAND_COOLDOWN)
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
     @before_invoke(_ensure_database_player_decorator)
     async def steal(self, ctx: Context, target: Member) -> None:
         steal_usecase = StealUsecase(ctx, ctx.player_entity, target, self.player_cache)
@@ -67,42 +67,42 @@ class PlayerController(Cog):
 
     @hybrid_command(name="spin", description="🎰 Spin the roulette wheel to win some eggbux!")
     @app_commands.autocomplete(color_choice=spin_command_autocomplete)
-    @cooldown(1, REGULAR_COMMAND_COOLDOWN)
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
     @before_invoke(_ensure_database_player_decorator)
     async def spin(self, ctx: Context, color_choice: str, amount: int) -> None:
         spin_usecase = SpinUsecase(ctx, ctx.player_entity, self.player_cache, color_choice, amount)
         await spin_usecase.spin()
 
     @hybrid_command(name="slots", description="🎰 Play the slot machine to win some eggbux!")
-    @cooldown(1, REGULAR_COMMAND_COOLDOWN)
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
     @before_invoke(_ensure_database_player_decorator)
     async def slots(self, ctx: Context, amount: int) -> None:
         slots_usecase = SlotsUsecase(ctx, ctx.player_entity, self.player_cache, amount)
         await slots_usecase.slots()
 
     @hybrid_command(name="upgradebank", aliases=["ub"], description="🏦 Upgrade your bank limit!")
-    @cooldown(1, REGULAR_COMMAND_COOLDOWN)
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
     @before_invoke(_ensure_database_player_decorator)
     async def upgrade_bank_limit(self, ctx: Context) -> None:
         upgrade_bank_limit_usecase = UpgradeBankUsecase(ctx, ctx.player_entity, self.player_cache)
         await upgrade_bank_limit_usecase.upgrade_bank_limit()
 
     @hybrid_command(name="withdraw", aliases=["with"], description="💸 Withdraw money from your bank account!")
-    @cooldown(1, REGULAR_COMMAND_COOLDOWN)
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
     @before_invoke(_ensure_database_player_decorator)
     async def withdraw(self, ctx: Context, amount: int) -> None:
         withdraw_usecase = WithdrawUsecase(ctx, ctx.player_entity, self.player_cache, amount)
         await withdraw_usecase.withdraw()
 
     @hybrid_command(name="deposit", aliases=["dep"], descriptiom="💸Deposit money in your bank account!")
-    @cooldown(1, REGULAR_COMMAND_COOLDOWN)
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
     @before_invoke(_ensure_database_player_decorator)
     async def deposit(self, ctx: Context, amount: int) -> None:
         deposit_usecase = DepositUsecase(ctx, ctx.player_entity, self.player_cache, amount)
         await deposit_usecase.deposit()
 
     @hybrid_command(name="buytitle", aliases=["bt"], description="🏆 Buy a new title to earn hourly income!")
-    @cooldown(1, REGULAR_COMMAND_COOLDOWN)
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
     @before_invoke(_ensure_database_player_decorator)
     async def buy_title(self, ctx: Context) -> None:
         buy_title_usecase = BuyTitleUsecase(ctx, ctx.player_entity, self.player_cache)
@@ -125,6 +125,6 @@ class PlayerController(Cog):
 
 
 async def setup(bot: Bot) -> None:
-    points_service = PointsService(CacheService[int, datetime])
+    points_service = PointsService(CacheService[int, datetime](track_evict=False))
     away_time_earnings_service = AwayTimeEarningsService()
     await bot.add_cog(PlayerController(bot, GlobalPlayerCache, points_service, away_time_earnings_service))

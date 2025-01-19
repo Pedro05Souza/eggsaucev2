@@ -37,3 +37,6 @@ class PlayerRepository:
             balance=player.bank_balance, upgrade_level=player.upgrade_level
         )
         return player
+
+    async def bulk_update_players(self, players: list[Player]) -> None:
+        await Player.bulk_update(players, ["balance", "last_bought_title", "next_salary_time"])

@@ -3,5 +3,5 @@ from .services import PlayerCacheService, BotConfigCacheService
 
 __all__ = ['GlobalPlayerCache', 'GlobalBotConfigCache']
 
-GlobalPlayerCache = PlayerCacheService(PlayerRepository())
-GlobalBotConfigCache = BotConfigCacheService(BotConfigRepository())
+GlobalPlayerCache = PlayerCacheService(True, PlayerRepository())
+GlobalBotConfigCache = BotConfigCacheService(False, BotConfigRepository())
