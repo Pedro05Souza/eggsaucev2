@@ -5,14 +5,14 @@ from ..constants import MAX_GENERATED_CHICKENS, ChickenRaritiesProbabilities, Ch
 
 __all__ = ["ChickenGeneratorService"]
 
-class _PartialChicken(TypedDict):
+class _GeneratedChicken(TypedDict):
     chicken_emoji: str
     name: str
 
 
 class ChickenGeneratorService:
 
-    async def generate_chickens(self) -> dict[str, _PartialChicken]:
+    async def generate_chickens(self) -> dict[str, _GeneratedChicken]:
         chicken_rarities_generated = {}
         roll_sum = sum(probability.value for probability in ChickenRaritiesProbabilities)
 
