@@ -13,9 +13,9 @@ __all__ = ["BotConfigCacheService"]
 class BotConfigCacheService(CacheService[int, BotConfigEntity]):
 
     def __init__(
-        self, bot_config_repository: BotConfigRepository, max_size: int = 100, expiration_time: int = 360
+        self, track_evict: bool, bot_config_repository: BotConfigRepository, max_size: int = 100, expiration_time: int = 300
     ) -> None:
-        super().__init__(max_size, expiration_time)
+        super().__init__(track_evict, max_size, expiration_time)
         self.bot_config_repository = bot_config_repository
 
     async def get_or_fetch_bot_config_entity(
