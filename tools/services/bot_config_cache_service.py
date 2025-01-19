@@ -13,7 +13,11 @@ __all__ = ["BotConfigCacheService"]
 class BotConfigCacheService(CacheService[int, BotConfigEntity]):
 
     def __init__(
-        self, track_evict: bool, bot_config_repository: BotConfigRepository, max_size: int = 100, expiration_time: int = 300
+        self,
+        track_evict: bool,
+        bot_config_repository: BotConfigRepository,
+        max_size: int = 100,
+        expiration_time: int = 300,
     ) -> None:
         super().__init__(track_evict, max_size, expiration_time)
         self.bot_config_repository = bot_config_repository

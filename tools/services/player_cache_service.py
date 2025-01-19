@@ -13,7 +13,9 @@ __all__ = ["PlayerCacheService"]
 
 class PlayerCacheService(CacheService[int, PlayerEntity]):
 
-    def __init__(self, track_evict: bool, player_repository: PlayerRepository, maxsize: int = 250, expiration_time: float = 300) -> None:
+    def __init__(
+        self, track_evict: bool, player_repository: PlayerRepository, maxsize: int = 250, expiration_time: float = 300
+    ) -> None:
         super().__init__(track_evict, maxsize, expiration_time)
         self.lock = Lock()
         self.player_repository = player_repository
