@@ -41,7 +41,7 @@ class CacheService(Generic[K, V]):
         else:
             raise KeyError(f"Key {key} not found in cache")
 
-    async def _get_expired_or_removed_items(self):
+    async def _get_expired_or_removed_items(self) -> list[tuple[K, V]]:
         if not hasattr(self._cache, "evicted_items"):
             raise ValueError("This method is only available when track_evict is set to True")
 
