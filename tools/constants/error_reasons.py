@@ -5,3 +5,5 @@ REASON_INSUFFICIENT_BALANCE = "Insufficient balance to complete the transaction.
 REASON_CANT_ACTION_SELF = "This action cannot be performed on yourself."
 REASON_STEAL_NO_MONEY = "The target user has no money to steal."
 REASON_INSUFFICIENT_BANK_CAPACITY = "Insufficient bank capacity to complete the transaction."
+REASON_NO_PERMISSION = "You do not have permission to perform this action."
+REASON_FARM_IS_FULL = "You can't perform this action because your farm is full."
