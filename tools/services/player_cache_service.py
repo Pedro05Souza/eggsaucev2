@@ -2,9 +2,9 @@ from typing import Optional
 from asyncio import Lock
 from tortoise.transactions import in_transaction
 from entities import PlayerEntity
+from repositories import PlayerRepositoryProtocol
 from tools.constants import NotInCacheException, NoUpdateRequiredException
-from tools.utils import player_entity_to_model, get_logger
-from repositories import PlayerRepository
+from tools.utils import player_entity_to_model
 from .cache_service import CacheService
 from ._proxy_objects import MutableProxy
 
@@ -14,11 +14,14 @@ __all__ = ["PlayerCacheService"]
 class PlayerCacheService(CacheService[int, PlayerEntity]):
 
     def __init__(
-        self, track_evict: bool, player_repository: PlayerRepository, maxsize: int = 250, expiration_time: float = 300
+        self,
+        track_evict: bool,
+        player_repository: PlayerRepositoryProtocol,
+        maxsize: int = 250,
+        expiration_time: float = 300,
     ) -> None:
         super().__init__(track_evict, maxsize, expiration_time)
-        self.lock = Lock()
-        self.logger = get_logger(__name__)
+        self._lock = Lock()
         self.player_repository = player_repository
 
     async def get_or_fetch_player_entity(
@@ -36,10 +39,10 @@ class PlayerCacheService(CacheService[int, PlayerEntity]):
         Returns:
             Union[PlayerEntity]: The player entity
         """
-        async with self.lock:
+        async with self._lock:
             await self.__save_expired_or_removed_items()
 
-            player = self._get_from_cache(discord_user_id)
+            player = self.get_item(discord_user_id)
 
             if player:
                 return MutableProxy(player)  # type: ignore
@@ -66,21 +69,6 @@ class PlayerCacheService(CacheService[int, PlayerEntity]):
         self.add_item(player.discord_user_id, player)
         return MutableProxy(player)  # type: ignore
 
-    def _get_from_cache(self, discord_user_id: int) -> Optional[PlayerEntity]:
-        """Gets a player entity from the cache.
-
-        Args:
-            discord_user_id (int): The Discord ID of the player.
-
-        Returns:
-            Union[PlayerEntity]: The player entity.
-        """
-        cache_entry = self.get_item(discord_user_id)
-
-        if cache_entry:
-            return cache_entry
-        return None
-
     async def __save_expired_or_removed_items(self):
         """Saves the expired or removed items to the database."""
         items = await self._get_expired_or_removed_items()
@@ -90,8 +78,10 @@ class PlayerCacheService(CacheService[int, PlayerEntity]):
 
         items = [item[1] for item in items]
         items = [await player_entity_to_model(item) for item in items]
-        await self.player_repository.bulk_update_players(items)
-        self.logger.info("Saved %s expired or removed items to the database.", len(items))
+
+        async with in_transaction():
+            await self.player_repository.bulk_update_players(items)
+        self._logger.info("Saved %s expired or removed items to the database.", len(items))
 
     async def _update_player_bank_entity(
         self, cache_entry: PlayerEntity, player_proxy: MutableProxy[PlayerEntity]
@@ -110,7 +100,7 @@ class PlayerCacheService(CacheService[int, PlayerEntity]):
         previous_state = {}
 
         for key, value in player_proxy.modified_fields.items():
-            if getattr(cache_entry, key) != value and key in possible_bank_upgrades:
+            if key in possible_bank_upgrades:
                 previous_state[key] = getattr(cache_entry, key)
                 setattr(cache_entry, key, value)
 
@@ -128,10 +118,13 @@ class PlayerCacheService(CacheService[int, PlayerEntity]):
         do_update = False
 
         for key, value in player_proxy.modified_fields.items():
-            if getattr(cache_entry, key) != value:
-                previous_state[key] = getattr(cache_entry, key)
-                setattr(cache_entry, key, value)
-                do_update = True
+
+            if getattr(cache_entry, key) == value:
+                continue
+
+            previous_state[key] = getattr(cache_entry, key)
+            setattr(cache_entry, key, value)
+            do_update = True
 
         if do_update:
             async with self._revert_if_exception(cache_entry, previous_state):
@@ -150,10 +143,10 @@ class PlayerCacheService(CacheService[int, PlayerEntity]):
         if not proxy_entity.is_update_required:
             raise NoUpdateRequiredException()
 
-        cache_entry = self._get_from_cache(proxy_entity.discord_user_id)
+        cache_entry = self.get_item(proxy_entity.discord_user_id)
 
         if not cache_entry:
-            self.logger.error(
+            self._logger.error(
                 "Player with Discord ID %s not found in cache, should be present.", proxy_entity.discord_user_id
             )
             raise NotInCacheException()
