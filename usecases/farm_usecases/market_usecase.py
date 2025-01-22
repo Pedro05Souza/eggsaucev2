@@ -146,8 +146,8 @@ class ChickenView(View):
         await send_bot_embed(
             interaction,
             description=f"✅ **{interaction.user.display_name}** has successfully bought a"
-            + f"{selected_chicken.emoji} **{selected_chicken.rarity} {selected_chicken.name}**" + 
-            f" for **{selected_chicken.price}** eggbux!",
+            + f"{selected_chicken.emoji} **{selected_chicken.rarity} {selected_chicken.name}**"
+            + f" for **{selected_chicken.price}** eggbux!",
         )
 
         async with in_transaction():
