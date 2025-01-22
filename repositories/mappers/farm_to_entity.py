@@ -6,7 +6,11 @@ __all__ = ["farm_model_to_entity"]
 
 
 async def farm_model_to_entity(farm: Farm) -> FarmEntity:
-    chickens = [await chicken_model_to_entity(chicken) for chicken in farm.chickens]
+    chickens = []
+
+    for chicken in farm.chickens:
+        chicken_entity = await chicken_model_to_entity(chicken)
+        chickens.append(chicken_entity)
 
     return FarmEntity(
         id=str(farm.id),
@@ -14,7 +18,8 @@ async def farm_model_to_entity(farm: Farm) -> FarmEntity:
         discord_user_id=farm.player.discord_user_id,
         farm_title=farm.farm_title,
         farmer=farm.farmer,
-        last_drop_time=farm.last_drop_time,
-        last_chicken_roll_time=farm.last_chicken_roll_time,
+        next_drop_time=farm.next_drop_time,
+        remaining_rolls=farm.remaining_rolls,
+        next_chicken_roll_time=farm.next_chicken_roll_time,
         chickens=chickens,
     )
