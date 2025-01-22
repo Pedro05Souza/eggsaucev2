@@ -1,7 +1,19 @@
 from enum import Enum
+from typing import NamedTuple
+
+BASE_CHICKEN_PRICE = 400
+FARM_MAX_CHICKENS = 8
+BENCH_MAX_CHICKENS = 5
 
 
-class ChickenRaritiesEnum(str, Enum):
+class ChickenLocationStatus(Enum):
+    FARM = "farm"
+    BENCH = "bench"
+    MARKET = "market"
+    REDEEMABLES = "redeemables"
+
+
+class ChickenRarities(str, Enum):
     DEAD = "dead"
     COMMON = "common"
     UNCOMMON = "uncommon"
@@ -13,7 +25,7 @@ class ChickenRaritiesEnum(str, Enum):
     ULTIMATE = "ultimate"
     COSMIC = "cosmic"
     DIVINE = "divine"
-    GALATIC = "galactic"
+    GALACTIC = "galactic"
     OMINOUS = "ominous"
     CELESTIAL = "celestial"
     IMMORTAL = "immortal"
@@ -21,6 +33,14 @@ class ChickenRaritiesEnum(str, Enum):
     ASCENDED = "ascended"
     BETA = "beta"
     ETHEREAL = "ethereal"
+
+
+class GeneratedChicken(NamedTuple):
+    position: int  # We need this to distinguish between chickens with the same rarity
+    rarity: str
+    emoji: str
+    name: str
+    price: int
 
 
 class ChickenRaritiesProbabilities(Enum):
@@ -34,7 +54,7 @@ class ChickenRaritiesProbabilities(Enum):
     ULTIMATE = 39
     COSMIC = 19.5
     DIVINE = 9.7
-    GALATIC = 4.8
+    GALACTIC = 4.8
     OMINOUS = 2.4
     CELESTIAL = 1.2
     IMMORTAL = 0.6
@@ -65,17 +85,15 @@ class ChickenRaritiesEmojis(Enum):
 
 
 class ChickenRarityRates(Enum):
-    HORRIFIC = 0.75
-    TERRIBLE = 0.7
-    AWFUL = 0.6
-    BAD = 0.5
-    NORMAL = 0.3
-    DECENT = 0.2
-    GOOD = 0.1
-    GREAT = 0.05
-    AMAZING = 0.02
-    AWESOME = 0.01
-    PERFECT = 0
+    HORRIFIC = 0.2
+    TERRIBLE = 0.3
+    BAD = 0.4
+    NORMAL = 0.5
+    GOOD = 0.6
+    GREAT = 0.7
+    AMAZING = 0.8
+    AWESOME = 0.9
+    PERFECT = 1.0
 
 
 class ChickenPricesMultiplier(Enum):
@@ -90,7 +108,7 @@ class ChickenPricesMultiplier(Enum):
     ULTIMATE = 8
     COSMIC = 9
     DIVINE = 10
-    GALATIC = 11
+    GALACTIC = 11
     OMINOUS = 12
     CELESTIAL = 13
     IMMORTAL = 14
@@ -112,7 +130,7 @@ class ChickenEggValue(Enum):
     ULTIMATE = 64
     COSMIC = 81
     DIVINE = 100
-    GALATIC = 121
+    GALACTIC = 121
     OMINOUS = 144
     CELESTIAL = 169
     BETA = 174
@@ -134,7 +152,7 @@ RARITIES = (
     "ULTIMATE",
     "COSMIC",
     "DIVINE",
-    "GALATIC",
+    "GALACTIC",
     "OMINOUS",
     "CELESTIAL",
     "BETA",
