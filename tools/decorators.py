@@ -4,7 +4,15 @@ from discord import User, Interaction
 from tools.services import PlayerCacheService, BotConfigCacheService
 from tools.constants import get_env_var
 
-__all__ = ["dev_only", "spin_command_autocomplete", "admin_only", "ensure_database_config", "ensure_database_user"]
+
+__all__ = [
+    "dev_only",
+    "spin_command_autocomplete",
+    "admin_only",
+    "ensure_database_config",
+    "ensure_database_user",
+    "is_valid_channel",
+]
 
 
 def dev_only():
@@ -69,6 +77,19 @@ def admin_only():
 
     return check(predicate)
 
+
+def is_valid_channel():
+    async def predicate(ctx: Context) -> bool:
+        bot_config_cache: BotConfigCacheService = ctx.cog.bot_config_cache # type: ignore
+        bot_config_entity = await bot_config_cache.get_or_fetch_bot_config_entity(ctx.channel.id)
+        if bot_config_entity is None:
+            return False
+        
+        for element in bot_config_entity.allowed_channels:
+            if ctx.channel.id == element:
+                return True
+        return False
+    return check(predicate)
 
 async def spin_command_autocomplete(_: Interaction, current_choice: str) -> list[Choice]:
     color = ["black", "red", "green"]
