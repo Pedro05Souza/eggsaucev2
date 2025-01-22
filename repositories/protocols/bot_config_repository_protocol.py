@@ -1,0 +1,22 @@
+from typing import Protocol, Optional
+from entities import BotConfigEntity
+
+__all__ = ["BotConfigRepositoryProtocol"]
+
+
+class BotConfigRepositoryProtocol(Protocol):
+    async def get_guild_config_by_discord_guild_id(self, discord_guild_id: int) -> Optional[BotConfigEntity]: ...
+
+    async def get_by_id(self, bot_config_id: str) -> Optional[BotConfigEntity]: ...
+
+    async def update_bot_config(self, bot_config: BotConfigEntity) -> BotConfigEntity: ...
+
+    async def create_allowed_channel(
+        self, bot_config_id: str, discord_channel_id: int
+    ) -> Optional[BotConfigEntity]: ...
+
+    async def delete_allowed_channel(
+        self, bot_config_id: str, discord_channel_id: int
+    ) -> Optional[BotConfigEntity]: ...
+
+    async def create_guild_config(self, discord_guild_id: int) -> BotConfigEntity: ...

@@ -1,10 +1,17 @@
 from discord.ext.commands import Context, check
 from discord.app_commands import Choice
 from discord import User, Interaction
-from tools.services import PlayerCacheService, BotConfigCacheService
+from tools.services import PlayerCacheService, BotConfigCacheService, FarmCacheService
 from tools.constants import get_env_var
 
-__all__ = ["dev_only", "spin_command_autocomplete", "admin_only", "ensure_database_config", "ensure_database_user"]
+__all__ = [
+    "dev_only",
+    "spin_command_autocomplete",
+    "admin_only",
+    "ensure_database_config",
+    "ensure_database_user",
+    "ensure_farm_user",
+]
 
 
 def dev_only():
@@ -32,6 +39,23 @@ async def ensure_database_user(ctx: Context, player_cache: PlayerCacheService) -
         player_entity = await player_cache.create_player(ctx.author.id)
 
     ctx.player_entity = player_entity
+
+
+async def ensure_farm_user(ctx: Context, farm_cache: FarmCacheService) -> None:
+    """Fetches or creates the farm entity from the cache or database and attaches it to the context.
+
+    Args:
+        ctx (Context): The context object.
+        farm_cache (FarmCacheService): The cache service that will be used to fetch the farm entity.
+    """
+    farm_entity = await farm_cache.get_or_fetch_farm_entity(ctx.author.id)
+
+    if farm_entity is None:
+        print("Creating farm")
+        farm_entity = await farm_cache.create_farm(ctx.author.id)
+        print("Farm created")
+
+    ctx.farm_entity = farm_entity
 
 
 async def ensure_database_config(ctx: Context, bot_config_cache: BotConfigCacheService) -> None:

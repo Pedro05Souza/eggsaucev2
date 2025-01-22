@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import NamedTuple
+from typing import NamedTuple, Literal
 from random import Random
 from discord.ext.commands import Context
 from entities import PlayerEntity
@@ -8,14 +8,17 @@ from tools.constants import REASON_INSUFFICIENT_BALANCE, REASON_INVALID_AMOUNT, 
 
 __all__ = ["SpinUsecase"]
 
+
 class _SpinColorEnum(Enum):
     RED = "red"
     GREEN = "green"
     BLACK = "black"
 
+
 class _SpinData(NamedTuple):
     amount_result: int
-    color: str
+    color: Literal["red", "green", "black"]
+
 
 class SpinUsecase:
 
@@ -51,15 +54,11 @@ class SpinUsecase:
 
         color_emoji = await self.__color_emoji_dict(_SpinColorEnum(spin_data.color))
 
-        embed_description = (
-            f"🎡 **The roulette landed on **" f"{color_emoji} **{spin_data.color.upper()}!**"
-        )
+        embed_description = f"🎡 **The roulette landed on **" f"{color_emoji} **{spin_data.color.upper()}!**"
 
         if spin_data.amount_result == 0:
             self._player_entity.balance -= self._amount_betted
-            embed_description += (
-                f" You lost **{self._amount_betted}** eggbux."
-            )
+            embed_description += f" You lost **{self._amount_betted}** eggbux."
         else:
             self._player_entity.balance += spin_data.amount_result
             embed_description += f" You won **{spin_data.amount_result}** eggbux!"
@@ -100,11 +99,9 @@ class SpinUsecase:
 
     async def __color_emoji_dict(self, color: _SpinColorEnum) -> str:
         match color:
-            case _SpinColorEnum.RED.value:
+            case _SpinColorEnum.RED:
                 return "🟥"
-            case _SpinColorEnum.GREEN.value:
+            case _SpinColorEnum.GREEN:
                 return "🟩"
-            case _SpinColorEnum.BLACK.value:
+            case _SpinColorEnum.BLACK:
                 return "⬛"
-            case _:
-                raise ValueError("Invalid color")

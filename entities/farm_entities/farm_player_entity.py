@@ -1,3 +1,4 @@
+from typing import Optional
 from dataclasses import dataclass
 from datetime import datetime
 from entities.farm_entities.chicken_entity import ChickenEntity
@@ -13,16 +14,18 @@ class FarmEntity:
         "discord_user_id",
         "farm_title",
         "farmer",
-        "last_drop_time",
-        "last_chicken_roll_time",
+        "next_drop_time",
+        "remaining_rolls",
+        "next_chicken_roll_time",
         "chickens",
     ]
 
     id: str
     player_id: str
-    discord_user_id: str
+    discord_user_id: int
     farm_title: str
     farmer: str
-    last_drop_time: datetime
-    last_chicken_roll_time: datetime
+    next_drop_time: datetime
+    remaining_rolls: int
+    next_chicken_roll_time: Optional[datetime]
     chickens: list[ChickenEntity]

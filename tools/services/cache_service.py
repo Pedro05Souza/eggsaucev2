@@ -8,10 +8,9 @@ __all__ = ["CacheService"]
 K = TypeVar("K")
 V = TypeVar("V")
 
-
 class CacheService(Generic[K, V]):
 
-    class _TTLCache(TTLCache):
+    class _TrackEvictCache(TTLCache):
 
         def __init__(self, *args, **kwargs):
             self.evicted_items = []
@@ -24,10 +23,10 @@ class CacheService(Generic[K, V]):
 
     def __init__(self, track_evict: bool, maxsize: int = 250, expiration_time: float = 300) -> None:
         if track_evict:
-            self._cache = self._TTLCache(maxsize=maxsize, ttl=expiration_time)
+            self._cache = self._TrackEvictCache(maxsize=maxsize, ttl=expiration_time)
         else:
             self._cache = TTLCache(maxsize=maxsize, ttl=expiration_time)
-        self.logger = get_logger(__name__)
+        self._logger = get_logger(__name__)
 
     def add_item(self, key: K, value: V) -> bool:
         if key not in self._cache:
@@ -73,4 +72,4 @@ class CacheService(Generic[K, V]):
         except Exception as e:
             for key, value in previous_state.items():
                 setattr(entity, key, value)
-            self.logger.exception("Failed to update cache: %s", e)
+            self._logger.exception("Failed to update cache: %s", e)

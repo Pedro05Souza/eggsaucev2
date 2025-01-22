@@ -1,13 +1,155 @@
+from datetime import timedelta, datetime
 from discord.ext.commands import Context
-from tools import ChickenGeneratorService
-from repositories import FarmRepository
+from discord.utils import format_dt
+from discord import SelectOption, Interaction
+from discord.ui import View, Select
+from tortoise.transactions import in_transaction
+from entities import FarmEntity
+from tools import (
+    ChickenGeneratorService,
+    FarmCacheService,
+    send_failed_embed,
+    embed_builder,
+    send_bot_embed,
+    PlayerCacheService,
+    generated_chicken_to_chicken_entity,
+)
+from tools.constants import (
+    REASON_NO_PERMISSION,
+    REASON_INSUFFICIENT_BALANCE,
+    REASON_FARM_IS_FULL,
+    FARM_MAX_CHICKENS,
+    SECONDS_TO_FARM_ROLL,
+    GeneratedChicken,
+)
+
+
+__all__ = ["MarketUsecase"]
 
 
 class MarketUsecase:
 
     def __init__(
-        self, ctx: Context, chicken_generator_service: ChickenGeneratorService, farm_repository: FarmRepository
+        self,
+        ctx: Context,
+        chicken_generator_service: ChickenGeneratorService,
+        farm_cache_service: FarmCacheService,
+        player_cache_service: PlayerCacheService,
     ) -> None:
         self.ctx = ctx
         self.chicken_generator_service = chicken_generator_service
-        self.farm_repository = farm_repository
+        self.farm_cache_service = farm_cache_service
+        self.player_cache_service = player_cache_service
+        self.farm_entity: FarmEntity = ctx.farm_entity
+
+    async def market(self) -> None:
+        if self.farm_entity.remaining_rolls == 0:
+            await send_failed_embed(
+                self.ctx,
+                "You have no rolls left. The next roll will be available in "
+                + f"{format_dt(self.farm_entity.next_chicken_roll_time, 'R')}.",  # type: ignore
+            )
+            return
+
+        self.farm_entity.remaining_rolls -= 1
+
+        if self.farm_entity.remaining_rolls == 0:
+            if not self.farm_entity.next_chicken_roll_time:
+                self.farm_entity.next_chicken_roll_time = datetime.now()
+
+            self.farm_entity.next_chicken_roll_time += timedelta(seconds=SECONDS_TO_FARM_ROLL)
+
+        generated_chickens = await self.chicken_generator_service.generate_chickens()
+
+        title = "Here are the chickens that were generated for you!"
+        description = "\n".join(
+            f"{chicken.emoji} **{chicken.rarity} {chicken.name}** - {chicken.price} eggbux"
+            for chicken in generated_chickens
+        )
+
+        view = ChickenView(self.farm_entity, generated_chickens, self.player_cache_service, self.farm_cache_service)
+        await send_bot_embed(self.ctx, title=title, description=description, view=view)
+        await self.farm_cache_service.synchronizer(self.farm_entity)
+
+
+class ChickenView(View):
+    def __init__(
+        self,
+        farm_entity: FarmEntity,
+        chickens: list[GeneratedChicken],
+        player_cache_service: PlayerCacheService,
+        farm_cache_service: FarmCacheService,
+    ):
+        super().__init__()
+        self.farm_entity = farm_entity
+        self.chickens = chickens
+        self.select = self.select_maker()
+        self.player_cache_service = player_cache_service
+        self.farm_cache_service = farm_cache_service
+        self.add_item(self.select)
+        self.select.callback = self.callback
+
+    def select_maker(self):
+        return Select(
+            placeholder="Select a chicken to buy",
+            min_values=1,
+            max_values=1,
+            options=[
+                SelectOption(
+                    label=f"{chicken.position} {chicken.rarity} {chicken.name} " + f"- {chicken.price} eggbux",
+                    value=str(chicken.position),
+                    emoji=chicken.emoji,
+                )
+                for chicken in self.chickens
+            ],
+        )
+
+    async def callback(self, interaction: Interaction) -> None:
+        if interaction.user.id != self.farm_entity.discord_user_id:
+            await send_failed_embed(interaction, REASON_NO_PERMISSION)
+            return
+
+        selected_position = int(interaction.data["values"][0])  # type: ignore
+        selected_chicken = self.chickens[selected_position - 1]
+
+        if len(self.farm_entity.chickens) >= FARM_MAX_CHICKENS:
+            await send_failed_embed(interaction, REASON_FARM_IS_FULL)
+            return
+
+        player_entity = await self.player_cache_service.get_or_fetch_player_entity(interaction.user.id)
+
+        if not player_entity:
+            return
+
+        if player_entity.balance < selected_chicken.price:
+            await send_failed_embed(interaction, REASON_INSUFFICIENT_BALANCE)
+            await interaction.message.edit(view=self)  # type: ignore
+            return
+
+        chicken_entity = generated_chicken_to_chicken_entity(selected_chicken, "farm")
+        self.farm_entity.chickens.append(chicken_entity)
+        player_entity.balance -= selected_chicken.price
+        self.chickens.remove(selected_chicken)
+        self.clear_items()
+        self.select = self.select_maker()
+        self.add_item(self.select)
+
+        embed = embed_builder(
+            title="Here are the chickens that were generated for you!",
+            description="\n".join(
+                f"{chicken.emoji} **{chicken.rarity} {chicken.name}** - {chicken.price} eggbux"
+                for chicken in self.chickens
+            ),
+        )
+
+        await interaction.message.edit(view=self, embed=embed)  # type: ignore
+        await send_bot_embed(
+            interaction,
+            description=f"✅ **{interaction.user.display_name}** has successfully bought a"
+            + f"{selected_chicken.emoji} **{selected_chicken.rarity} {selected_chicken.name}**"
+            + f" for **{selected_chicken.price}** eggbux!",
+        )
+
+        async with in_transaction():
+            await self.player_cache_service.synchronizer(player_entity)
+            await self.farm_cache_service.synchronizer(self.farm_entity)

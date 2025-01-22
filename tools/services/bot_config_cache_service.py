@@ -2,7 +2,7 @@ from typing import Optional, Union
 from tortoise.transactions import in_transaction
 from entities import BotConfigEntity
 from tools.constants import NotInCacheException, NoUpdateRequiredException
-from repositories import BotConfigRepository
+from repositories import BotConfigRepositoryProtocol
 from .cache_service import CacheService
 from ._proxy_objects import MutableProxy
 
@@ -15,7 +15,7 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity]):
     def __init__(
         self,
         track_evict: bool,
-        bot_config_repository: BotConfigRepository,
+        bot_config_repository: BotConfigRepositoryProtocol,
         max_size: int = 100,
         expiration_time: int = 300,
     ) -> None:

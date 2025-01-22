@@ -14,16 +14,6 @@ CREATE TABLE IF NOT EXISTS "allowed_channels" (
     "bot_config_id" UUID NOT NULL UNIQUE REFERENCES "bot_config" ("id") ON DELETE CASCADE,
     CONSTRAINT "uid_allowed_cha_bot_con_d695b9" UNIQUE ("bot_config_id", "channel_id")
 );
-CREATE TABLE IF NOT EXISTS "chicken" (
-    "id" UUID NOT NULL  PRIMARY KEY,
-    "name" VARCHAR(25) NOT NULL,
-    "eggs_generated" INT NOT NULL,
-    "upkeep_multiplier" DOUBLE PRECISION NOT NULL,
-    "rarity" VARCHAR(11) NOT NULL,
-    "status_code" INT NOT NULL,
-    "happiness" INT NOT NULL
-);
-COMMENT ON COLUMN "chicken"."rarity" IS 'DEAD: dead\nCOMMON: common\nUNCOMMON: uncommon\nRARE: rare\nEXCEPTIONAL: exceptional\nEPIC: epic\nLEGENDARY: legendary\nMYTHICAL: mythical\nULTIMATE: ultimate\nCOSMIC: cosmic\nDIVINE: divine\nGALATIC: galactic\nOMINOUS: ominous\nCELESTIAL: celestial\nIMMORTAL: immortal\nCHOSEN: chosen\nASCENDED: ascended\nBETA: beta\nETHEREAL: ethereal';
 CREATE TABLE IF NOT EXISTS "player" (
     "id" UUID NOT NULL  PRIMARY KEY,
     "discord_user_id" BIGINT NOT NULL,
@@ -40,17 +30,24 @@ CREATE TABLE IF NOT EXISTS "bank_player" (
 CREATE TABLE IF NOT EXISTS "farm_player" (
     "id" UUID NOT NULL  PRIMARY KEY,
     "farm_title" VARCHAR(50) NOT NULL,
-    "farmer" VARCHAR(50) NOT NULL,
-    "last_drop_time" TIMESTAMPTZ,
-    "last_chicken_roll_time" TIMESTAMPTZ,
-    "chickens_id" UUID NOT NULL REFERENCES "chicken" ("id") ON DELETE CASCADE,
+    "farmer" VARCHAR(50),
+    "next_drop_time" TIMESTAMPTZ,
+    "remaining_rolls" INT NOT NULL  DEFAULT 8,
+    "next_chicken_roll_time" TIMESTAMPTZ,
     "player_id" UUID NOT NULL UNIQUE REFERENCES "player" ("id") ON DELETE CASCADE
 );
-CREATE TABLE IF NOT EXISTS "chicken_bench" (
+CREATE TABLE IF NOT EXISTS "chicken" (
     "id" UUID NOT NULL  PRIMARY KEY,
-    "chickens_id" UUID NOT NULL REFERENCES "chicken" ("id") ON DELETE CASCADE,
-    "farm_id" UUID NOT NULL UNIQUE REFERENCES "farm_player" ("id") ON DELETE CASCADE
+    "name" VARCHAR(25) NOT NULL,
+    "eggs_generated" INT NOT NULL,
+    "quality" DOUBLE PRECISION NOT NULL,
+    "rarity" VARCHAR(11) NOT NULL,
+    "location_status" VARCHAR(11) NOT NULL,
+    "happiness" INT NOT NULL,
+    "farm_id" UUID NOT NULL REFERENCES "farm_player" ("id") ON DELETE CASCADE
 );
+COMMENT ON COLUMN "chicken"."rarity" IS 'DEAD: dead\nCOMMON: common\nUNCOMMON: uncommon\nRARE: rare\nEXCEPTIONAL: exceptional\nEPIC: epic\nLEGENDARY: legendary\nMYTHICAL: mythical\nULTIMATE: ultimate\nCOSMIC: cosmic\nDIVINE: divine\nGALATIC: galactic\nOMINOUS: ominous\nCELESTIAL: celestial\nIMMORTAL: immortal\nCHOSEN: chosen\nASCENDED: ascended\nBETA: beta\nETHEREAL: ethereal';
+COMMENT ON COLUMN "chicken"."location_status" IS 'FARM: farm\nBENCH: bench\nMARKET: market\nREDEEMABLES: redeemables';
 CREATE TABLE IF NOT EXISTS "farmcornfield" (
     "id" UUID NOT NULL  PRIMARY KEY,
     "cornfield_name" VARCHAR(50) NOT NULL,
@@ -67,10 +64,6 @@ CREATE TABLE IF NOT EXISTS "farm_offers" (
     "expires_at" TIMESTAMPTZ NOT NULL,
     "chicken_id" UUID NOT NULL REFERENCES "chicken" ("id") ON DELETE CASCADE,
     "farm_id" UUID NOT NULL UNIQUE REFERENCES "farm_player" ("id") ON DELETE CASCADE
-);
-CREATE TABLE IF NOT EXISTS "farm_redeemaables" (
-    "chicken_id" UUID NOT NULL REFERENCES "chicken" ("id") ON DELETE CASCADE,
-    "farm_id" UUID NOT NULL  PRIMARY KEY REFERENCES "farm_player" ("id") ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS "ranked_player" (
     "current_mmr" INT NOT NULL  DEFAULT 0,
