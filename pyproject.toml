@@ -9,6 +9,7 @@ disable = [
     "R0917",
     "R0902",
     "W0511",
+    "W0621"
 ]
 max-line-length = 120
 suggestion-mode = true
