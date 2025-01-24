@@ -2,11 +2,13 @@ from typing import Generic, TypeVar, Optional, Any, AsyncGenerator
 from contextlib import asynccontextmanager
 from cachetools import TTLCache
 from tools.utils import get_logger
+from ._proxy_objects import MutableProxy
 
 __all__ = ["CacheService"]
 
 K = TypeVar("K")
 V = TypeVar("V")
+
 
 class CacheService(Generic[K, V]):
 
@@ -57,7 +59,9 @@ class CacheService(Generic[K, V]):
         return None
 
     @asynccontextmanager
-    async def _revert_if_exception(self, entity: V, previous_state: dict[str, Any]) -> AsyncGenerator[None, Any]:
+    async def _revert_if_exception(
+        self, entity: V, previous_state: dict[str, Any], proxy_object: MutableProxy[V]
+    ) -> AsyncGenerator[None, Any]:
         """Reverts the entity to its previous state if an exception occurs.
 
         Args:
@@ -72,4 +76,6 @@ class CacheService(Generic[K, V]):
         except Exception as e:
             for key, value in previous_state.items():
                 setattr(entity, key, value)
+                print(proxy_object.modified_fields)
+                proxy_object.modified_fields.pop(key)
             self._logger.exception("Failed to update cache: %s", e)

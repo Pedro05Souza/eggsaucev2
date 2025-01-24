@@ -98,7 +98,7 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity]):
             deleted_channel = deleted_channel_set.pop()
             cache_entry.allowed_channels.remove(deleted_channel)
 
-            async with self._revert_if_exception(cache_entry, previous_state):
+            async with self._revert_if_exception(cache_entry, previous_state, bot_config_proxy):
                 await self.bot_config_repository.delete_allowed_channel(cache_entry.id, deleted_channel)
 
         if len(cache_entry.allowed_channels) < len(proxy_allowed_channels):
@@ -107,7 +107,7 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity]):
             created_channel = created_channel_set.pop()
             cache_entry.allowed_channels.add(created_channel)
 
-            async with self._revert_if_exception(cache_entry, previous_state):
+            async with self._revert_if_exception(cache_entry, previous_state, bot_config_proxy):
                 await self.bot_config_repository.create_allowed_channel(cache_entry.id, created_channel)
 
     async def _update_bot_config(
@@ -125,7 +125,7 @@ class BotConfigCacheService(CacheService[int, BotConfigEntity]):
             cache_entry.prefix = prefix
             previous_state = {"prefix": cache_entry.prefix}
 
-            async with self._revert_if_exception(cache_entry, previous_state):
+            async with self._revert_if_exception(cache_entry, previous_state, bot_config_proxy):
                 await self.bot_config_repository.update_bot_config(cache_entry)
 
     async def _update_bot_config_checks(self, bot_config_proxy: MutableProxy[BotConfigEntity]) -> None:
