@@ -23,6 +23,7 @@ class PlayerCacheService(CacheService[int, PlayerEntity]):
         super().__init__(track_evict, maxsize, expiration_time)
         self._lock = Lock()
         self.player_repository = player_repository
+        self._possible_bank_upgrades = {"bank_balance", "bank_capacity", "upgrade_level"}
 
     async def get_or_fetch_player_entity(
         self,
@@ -83,31 +84,29 @@ class PlayerCacheService(CacheService[int, PlayerEntity]):
             await self.player_repository.bulk_update_players(items)
         self._logger.info("Saved %s expired or removed items to the database.", len(items))
 
-    async def _update_player_bank_entity(
-        self, cache_entry: PlayerEntity, player_proxy: MutableProxy[PlayerEntity]
-    ) -> None:
+    async def _update_player_bank_entity(self, entity: PlayerEntity, player_proxy: MutableProxy[PlayerEntity]) -> None:
         """Updates the player bank entity if needed.
 
         Args:
             cache_entry (PlayerEntity): The player entity to update.
             player_proxy (MutableProxy[PlayerEntity]): The player proxy object.
         """
-        possible_bank_upgrades = {"bank_balance", "bank_capacity", "upgrade_level"}
-
-        if not any(key in player_proxy.modified_fields for key in possible_bank_upgrades):
+        if not any(key in player_proxy.modified_fields for key in self._possible_bank_upgrades):
             return
 
         previous_state = {}
 
         for key, value in player_proxy.modified_fields.items():
-            if key in possible_bank_upgrades:
-                previous_state[key] = getattr(cache_entry, key)
-                setattr(cache_entry, key, value)
+            if key in self._possible_bank_upgrades:
+                previous_state[key] = getattr(entity, key)
+                setattr(entity, key, value)
 
-        async with self._revert_if_exception(cache_entry, previous_state):
-            await self.player_repository.update_player_bank(cache_entry)
+        previous_state["balance"] = entity.balance
 
-    async def _update_player_entity(self, cache_entry: PlayerEntity, player_proxy: MutableProxy[PlayerEntity]) -> None:
+        async with self._revert_if_exception(entity, previous_state, player_proxy):
+            await self.player_repository.update_player_bank(entity)
+
+    async def _update_player_entity(self, entity: PlayerEntity, player_proxy: MutableProxy[PlayerEntity]) -> None:
         """Updates the player entity if needed.
 
         Args:
@@ -119,16 +118,16 @@ class PlayerCacheService(CacheService[int, PlayerEntity]):
 
         for key, value in player_proxy.modified_fields.items():
 
-            if getattr(cache_entry, key) == value:
+            if key in self._possible_bank_upgrades:
                 continue
 
-            previous_state[key] = getattr(cache_entry, key)
-            setattr(cache_entry, key, value)
+            previous_state[key] = getattr(entity, key)
+            setattr(entity, key, value)
             do_update = True
 
         if do_update:
-            async with self._revert_if_exception(cache_entry, previous_state):
-                await self.player_repository.update_player(cache_entry)
+            async with self._revert_if_exception(entity, previous_state, player_proxy):
+                await self.player_repository.update_player(entity)
 
     async def _update_player_checks(self, proxy_entity: MutableProxy[PlayerEntity], save_to_db: bool) -> None:
         """Updates the player entity if needed.

@@ -60,7 +60,7 @@ class FarmCacheService(CacheService[int, FarmEntity]):
 
         is_updated = not bool(generated_chickens)
 
-        async with self._revert_if_exception(cache_entry, previous_state):
+        async with self._revert_if_exception(cache_entry, previous_state, farm_entity_proxy):
             await self.farm_repository.bulk_upsert_farm_chicken(chicken_models, is_updated)
 
     async def _update_farm(self, cache_entry: FarmEntity, farm_entity_proxy: MutableProxy[FarmEntity]) -> None:
@@ -73,7 +73,7 @@ class FarmCacheService(CacheService[int, FarmEntity]):
             previous_state[key] = getattr(cache_entry, key)
             setattr(cache_entry, key, value)
 
-        async with self._revert_if_exception(cache_entry, previous_state):
+        async with self._revert_if_exception(cache_entry, previous_state, farm_entity_proxy):
             await self.farm_repository.update_farm(cache_entry)
 
     async def _update_farm_entity(self, farm_entity_proxy: MutableProxy[FarmEntity]) -> None:
