@@ -58,6 +58,10 @@ class CacheService(Generic[K, V]):
             return self._cache[key]
         return None
 
+    @property
+    def cache(self) -> TTLCache:
+        return self._cache
+
     @asynccontextmanager
     async def _revert_if_exception(
         self, entity: V, previous_state: dict[str, Any], proxy_object: MutableProxy[V]
