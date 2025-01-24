@@ -1,3 +1,4 @@
+import time
 import pytest
 import pytest_asyncio
 from pytest_mock import MockerFixture
@@ -23,13 +24,13 @@ def player_repository(mocker: MockerFixture):
 
 @pytest.fixture
 def player_cache_service(player_repository):
-    return PlayerCacheService(track_evict=True, player_repository=player_repository)
+    return PlayerCacheService(track_evict=True, player_repository=player_repository, expiration_time=0.05)
 
 
 @pytest.fixture
 def player_entity_proxy():
     player_entity = PlayerEntity(
-        id="asdsad",
+        id="9946bdcb-b9fc-482b-b4ed-ee41f103f310",
         discord_user_id=1,
         balance=100,
         last_bought_title=None,
@@ -44,7 +45,7 @@ def player_entity_proxy():
 @pytest.fixture
 def player_entity():
     return PlayerEntity(
-        id="asdsad",
+        id="9946bdcb-b9fc-482b-b4ed-ee41f103f310",
         discord_user_id=1,
         balance=100,
         last_bought_title=None,
@@ -165,3 +166,13 @@ async def test_create_player_entity(player_cache_service, player_repository):
     assert result.discord_user_id == discord_user_id
     player_repository.create_player.assert_awaited_once_with(discord_user_id)
     assert player_cache_service.get_item(discord_user_id) == result
+
+
+@pytest.mark.asyncio
+async def test_update_expired_or_removed_entries(player_cache_service, player_repository, player_entity):
+    player_cache_service.add_item(player_entity.discord_user_id, player_entity)
+    player_repository.get_player_by_discord_id.return_value = player_entity
+    time.sleep(0.06)
+    await player_cache_service.get_or_fetch_player_entity(player_entity.discord_user_id)
+    player_repository.bulk_update_players.assert_awaited_once()
+    player_repository.get_player_by_discord_id.assert_awaited_once_with(player_entity.discord_user_id)
