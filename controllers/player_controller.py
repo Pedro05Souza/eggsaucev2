@@ -6,7 +6,7 @@ from tools import (
     AwayTimeEarningsService,
     PointsService,
     PlayerCacheService,
-    CacheService,
+    LRUCacheService,
     GlobalPlayerCache,
     spin_command_autocomplete,
     ensure_database_user,
@@ -125,6 +125,6 @@ class PlayerController(Cog):
 
 
 async def setup(bot: Bot) -> None:
-    points_service = PointsService(CacheService[int, datetime](track_evict=False))
+    points_service = PointsService(LRUCacheService[int, datetime]())
     away_time_earnings_service = AwayTimeEarningsService()
     await bot.add_cog(PlayerController(bot, GlobalPlayerCache, points_service, away_time_earnings_service))

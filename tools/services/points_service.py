@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from discord import VoiceState
 from tools.constants import SECONDS_PER_POINT
-from .cache_service import CacheService
+from .cache import LRUCacheService
 
 __all__ = ["PointsService"]
 
@@ -10,7 +10,7 @@ class PointsService:
 
     def __init__(
         self,
-        cache_service: CacheService[int, datetime],
+        cache_service: LRUCacheService[int, datetime],
     ) -> None:
         self.creation_timestamp = (
             datetime.now()  # This is useful for users who were active in the voice chat before the bot was started
