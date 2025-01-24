@@ -2,15 +2,15 @@ from typing import Generic, TypeVar, Optional, Any, AsyncGenerator
 from contextlib import asynccontextmanager
 from cachetools import TTLCache
 from tools.utils import get_logger
-from ._proxy_objects import MutableProxy
+from ._proxy_object import MutableProxy
 
-__all__ = ["CacheService"]
+__all__ = ["TTLCacheService"]
 
 K = TypeVar("K")
 V = TypeVar("V")
 
 
-class CacheService(Generic[K, V]):
+class TTLCacheService(Generic[K, V]):
 
     class _TrackEvictCache(TTLCache):
 

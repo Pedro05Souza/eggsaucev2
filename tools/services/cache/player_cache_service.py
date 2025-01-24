@@ -5,13 +5,13 @@ from entities import PlayerEntity
 from repositories import PlayerRepositoryProtocol
 from tools.constants import NotInCacheException, NoUpdateRequiredException
 from tools.utils import player_entity_to_model
-from .cache_service import CacheService
-from ._proxy_objects import MutableProxy
+from .ttl_cache_service import TTLCacheService
+from ._proxy_object import MutableProxy
 
 __all__ = ["PlayerCacheService"]
 
 
-class PlayerCacheService(CacheService[int, PlayerEntity]):
+class PlayerCacheService(TTLCacheService[int, PlayerEntity]):
 
     def __init__(
         self,

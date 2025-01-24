@@ -3,14 +3,14 @@ from tortoise.transactions import in_transaction
 from entities import BotConfigEntity
 from tools.constants import NotInCacheException, NoUpdateRequiredException
 from repositories import BotConfigRepositoryProtocol
-from .cache_service import CacheService
-from ._proxy_objects import MutableProxy
+from .ttl_cache_service import TTLCacheService
+from ._proxy_object import MutableProxy
 
 
 __all__ = ["BotConfigCacheService"]
 
 
-class BotConfigCacheService(CacheService[int, BotConfigEntity]):
+class BotConfigCacheService(TTLCacheService[int, BotConfigEntity]):
 
     def __init__(
         self,

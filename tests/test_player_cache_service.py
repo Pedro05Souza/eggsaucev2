@@ -4,7 +4,7 @@ import pytest_asyncio
 from pytest_mock import MockerFixture
 from tortoise import Tortoise
 from tools import PlayerCacheService
-from tools.services._proxy_objects import MutableProxy
+from tools.services.cache._proxy_object import MutableProxy
 from tools.constants import NoUpdateRequiredException, NotInCacheException
 from entities import PlayerEntity
 from repositories import PlayerRepositoryProtocol

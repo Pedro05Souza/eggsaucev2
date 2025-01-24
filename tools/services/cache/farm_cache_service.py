@@ -5,13 +5,13 @@ from tools.constants import NotInCacheException, NoUpdateRequiredException
 from tools.utils import chicken_entity_to_model
 from repositories import FarmRepositoryProtocol
 from entities import FarmEntity
-from .cache_service import CacheService
-from ._proxy_objects import MutableProxy
+from .ttl_cache_service import TTLCacheService
+from ._proxy_object import MutableProxy
 
 __all__ = ["FarmCacheService"]
 
 
-class FarmCacheService(CacheService[int, FarmEntity]):
+class FarmCacheService(TTLCacheService[int, FarmEntity]):
 
     def __init__(
         self,
