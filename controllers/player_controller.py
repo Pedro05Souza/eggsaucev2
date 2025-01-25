@@ -6,10 +6,13 @@ from tools import (
     AwayTimeEarningsService,
     PointsService,
     PlayerCacheService,
+    BotConfigCacheService,
     LRUCacheService,
     GlobalPlayerCache,
+    GlobalBotConfigCache,
     spin_command_autocomplete,
     ensure_database_user,
+    is_using_valid_channel,
 )
 from tools.constants import REGULAR_COMMAND_COOLDOWN
 from usecases import (
@@ -34,11 +37,13 @@ class PlayerController(Cog):
         player_cache: PlayerCacheService,
         points_service: PointsService,
         away_time_earnings_service: AwayTimeEarningsService,
+        bot_config_cache: BotConfigCacheService,
     ) -> None:
         self.bot = bot
         self.player_cache = player_cache
         self.points_service = points_service
         self.away_time_earnings_service = away_time_earnings_service
+        self.bot_config_cache = bot_config_cache
 
     async def _ensure_database_player_decorator(self, ctx: Context) -> None:
         await ensure_database_user(ctx, self.player_cache)
@@ -108,6 +113,9 @@ class PlayerController(Cog):
         buy_title_usecase = BuyTitleUsecase(ctx, ctx.player_entity, self.player_cache)
         await buy_title_usecase.buy_title()
 
+    async def cog_check(self, ctx: Context) -> bool: # type: ignore
+        return await is_using_valid_channel(ctx, self.bot_config_cache)
+
     @Cog.listener()
     async def on_message(self, message: Message) -> None:
         if message.author.bot:
@@ -127,4 +135,6 @@ class PlayerController(Cog):
 async def setup(bot: Bot) -> None:
     points_service = PointsService(LRUCacheService[int, datetime]())
     away_time_earnings_service = AwayTimeEarningsService()
-    await bot.add_cog(PlayerController(bot, GlobalPlayerCache, points_service, away_time_earnings_service))
+    await bot.add_cog(
+        PlayerController(bot, GlobalPlayerCache, points_service, away_time_earnings_service, GlobalBotConfigCache)
+    )
