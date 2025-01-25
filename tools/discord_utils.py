@@ -1,5 +1,6 @@
 from typing import Union, Optional
 from discord.ext.commands import Context
+from discord.ext.commands._types import BotT
 from discord import Interaction, Embed, Forbidden, ButtonStyle
 from discord.ui import View, Button
 from .constants import REASON_DM_FAILURE
@@ -16,11 +17,10 @@ __all__ = [
 
 
 async def send_bot_embed(
-    ctx: Context | Interaction,
+    ctx: Context[BotT] | Interaction,
     color: str = "#FEE75C",
     footer_text: Optional[str] = None,
     ephemeral: bool = False,
-    is_dm: bool = False,
     thumbnail_url: Optional[str] = None,
     view: Optional[View] = None,
     **kwargs
@@ -34,8 +34,6 @@ async def send_bot_embed(
         Defaults to None.
         ephemeral (bool, optional): A boolean that checks if the message should be sent privately within the server.
         Defaults to False.
-        is_dm (bool, optional): Checks if the message should be sent privately to the user.
-        Defaults to False.
         embed_file (Optional[str], optional): The file that will be sent with the embed. Defaults to None.
         thumbnail_url (Optional[str], optional): The URL of the thumbnail that will be displayed in the embed.
         Defaults to None.
@@ -44,9 +42,6 @@ async def send_bot_embed(
     Raises:
         ValueError: If ephemeral and is_dm are both True or if ephemeral is True and the context is not an interaction.
     """
-    if ephemeral and is_dm:
-        raise ValueError("Cannot have both ephemeral and is_dm as True")
-
     embed = embed_builder(color=color, footer_text=footer_text, thumbnail_url=thumbnail_url, **kwargs)
 
     if isinstance(ctx, Interaction):
@@ -103,7 +98,7 @@ def embed_builder(
     return embed
 
 
-async def send_user_dm(ctx: Context | Interaction, embed: Embed) -> None:
+async def send_user_dm(ctx: Context[BotT] | Interaction, embed: Embed) -> None:
     """This function is responsable for sending a message to the user's DM.
 
     Args:
@@ -125,13 +120,12 @@ async def send_user_dm(ctx: Context | Interaction, embed: Embed) -> None:
             ctx,
             title="Error",
             description=REASON_DM_FAILURE,
-            color="#FF0000.",
-            ephemeral=True,
+            color="#FF0000",
         )
         return
 
 
-async def send_failed_embed(ctx: Union[Context, Interaction], description: str, ephemeral: bool = True) -> None:
+async def send_failed_embed(ctx: Union[Context[BotT], Interaction], description: str, ephemeral: bool = True) -> None:
     """This function is responsable for sending an embed when a command fails.
     This works the same as the `send_bot_embed` coroutine, but with a predefined title.
 
@@ -179,7 +173,7 @@ def view_button_builder(*buttons) -> View:
 
 
 async def confirmation_popup(
-    ctx: Context | Interaction,
+    ctx: Context[BotT] | Interaction,
     description: str,
     title: str = "🔔 Please Confirm Your Action",
     ephemeral=True,
@@ -214,7 +208,7 @@ async def confirmation_popup(
     try:
         interaction = await client.wait_for("interaction", check=lambda i: i.user.id == author.id, timeout=60)
         await interaction.response.defer(ephemeral=ephemeral)
-        if interaction.data["custom_id"] == "confirm": # type: ignore
+        if interaction.data["custom_id"] == "confirm":  # type: ignore
             return True
         return False
     except TimeoutError:
