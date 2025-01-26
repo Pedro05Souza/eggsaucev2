@@ -15,10 +15,14 @@ class FarmUseCase:
 
     async def farm(self) -> None:
 
+        avatar_to_send = None
+
         if self.discord_member:
             farm_entity = await self.farm_cache_service.get_or_fetch_farm_entity(self.discord_member.id)
+            avatar_to_send = self.discord_member.display_avatar.url
         else:
             farm_entity = await self.farm_cache_service.get_or_fetch_farm_entity(self.ctx.author.id)
+            avatar_to_send = self.ctx.author.display_avatar.url
 
         if not farm_entity:
             if self.discord_member:
@@ -29,7 +33,7 @@ class FarmUseCase:
             farm_entity = await self.farm_cache_service.create_farm(self.ctx.author.id)
 
         farm_title = (
-            f"🚜{farm_entity.farm_title}\n🧑‍🌾 Farmer: {farm_entity.farmer if farm_entity.farmer else 'No farmer'}"
+            f"🚜 {farm_entity.farm_title}\n🧑‍🌾 Farmer: {farm_entity.farmer if farm_entity.farmer else 'No farmer'}"
         )
         farm_chickens = "\n\n".join(
             [
@@ -45,5 +49,5 @@ class FarmUseCase:
             self.ctx,
             title=farm_title,
             description=farm_chickens,
-            thumbnail_url=self.ctx.author.display_avatar.url,
+            thumbnail_url=avatar_to_send,
         )
