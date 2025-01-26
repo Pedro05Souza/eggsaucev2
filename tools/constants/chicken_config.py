@@ -84,16 +84,17 @@ class ChickenRaritiesEmojis(Enum):
     ETHEREAL = "♾️"
 
 
-class ChickenRarityRates(Enum):
-    HORRIFIC = 0.2
-    TERRIBLE = 0.3
-    BAD = 0.4
-    NORMAL = 0.5
-    GOOD = 0.6
-    GREAT = 0.7
-    AMAZING = 0.8
-    AWESOME = 0.9
-    PERFECT = 1.0
+chicken_quality_rates = {
+    20: "HORRIFIC",
+    30: "TERRIBLE",
+    40: "BAD",
+    50: "NORMAL",
+    60: "GOOD",
+    70: "GREAT",
+    80: "AMAZING",
+    90: "AWESOME",
+    100: "PERFECT",
+}
 
 
 class ChickenPricesMultiplier(Enum):

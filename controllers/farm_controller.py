@@ -1,5 +1,7 @@
+from typing import Optional
+from discord import Member
 from discord.ext.commands import Cog, Bot, hybrid_command, Context, before_invoke
-from usecases import MarketUsecase
+from usecases import MarketUsecase, FarmUseCase
 from tools import (
     ChickenGeneratorService,
     GlobalPlayerCache,
@@ -35,8 +37,15 @@ class FarmController(Cog):
     @hybrid_command(name="market", aliases=["m"], description="🐔 Roll for a chicken in the market!")
     @before_invoke(_ensure_farm_user_context)
     async def market(self, ctx: Context) -> None:
-        market_usecase = MarketUsecase(ctx, self.chicken_generator_service, self.farm_cache, self.player_cache)
+        market_usecase = MarketUsecase(
+            ctx, self.chicken_generator_service, self.farm_cache, self.player_cache, ctx.farm_entity
+        )
         await market_usecase.market()
+
+    @hybrid_command(name="farm", aliases=["f"], description="🐔 View your farm!")
+    async def farm(self, ctx: Context, member: Optional[Member] = None) -> None:
+        farm_usecase = FarmUseCase(ctx, member, self.farm_cache)
+        await farm_usecase.farm()
 
     async def cog_check(self, ctx: Context) -> bool:  # type: ignore
         return await is_using_valid_channel(ctx, self.bot_config_cache)

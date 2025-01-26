@@ -24,8 +24,8 @@ class FarmEntity:
     player_id: str
     discord_user_id: int
     farm_title: str
-    farmer: str
-    next_drop_time: datetime
+    farmer: Optional[str]
+    next_drop_time: Optional[datetime]
     remaining_rolls: int
     next_chicken_roll_time: Optional[datetime]
     chickens: list[ChickenEntity]

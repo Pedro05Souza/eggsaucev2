@@ -35,12 +35,13 @@ class MarketUsecase:
         chicken_generator_service: ChickenGeneratorService,
         farm_cache_service: FarmCacheService,
         player_cache_service: PlayerCacheService,
+        farm_entity: FarmEntity
     ) -> None:
         self.ctx = ctx
         self.chicken_generator_service = chicken_generator_service
         self.farm_cache_service = farm_cache_service
         self.player_cache_service = player_cache_service
-        self.farm_entity: FarmEntity = ctx.farm_entity
+        self.farm_entity = farm_entity
 
     async def market(self) -> None:
         if self.farm_entity.remaining_rolls == 0:
