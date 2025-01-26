@@ -5,7 +5,7 @@ from tools import (
     send_bot_embed,
     send_failed_embed,
 )
-
+from tools.constants import MIN_FARM_NAME_CHARACTERS
 
 __all__ = ["RenameFarmUsecase"]
 
@@ -18,12 +18,13 @@ class RenameFarmUsecase:
         self.farm_cache = farm_cache
         self.new_name = new_name
 
-    async def rename(self) -> None:
-        if self.farm_entity is None:
-            return await send_failed_embed(self.ctx, "The command has failed.")
+    async def rename_farm(self) -> None:
+        self.new_name = self.new_name.strip()
 
-        if len(self.new_name) == 0:
-            return await send_failed_embed(self.ctx, "Please enter a name with 1 or more characters")
+        if len(self.new_name) < MIN_FARM_NAME_CHARACTERS:
+            return await send_failed_embed(
+                self.ctx, f"Please enter a name with **{MIN_FARM_NAME_CHARACTERS}** or more characters"
+            )
 
         self.farm_entity.farm_title = self.new_name
 
