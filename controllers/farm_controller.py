@@ -1,7 +1,7 @@
 from typing import Optional
 from discord import Member
 from discord.ext.commands import Cog, Bot, hybrid_command, Context, before_invoke
-from usecases import MarketUsecase, FarmUseCase
+from usecases import MarketUsecase, FarmUseCase, RenameFarmUsecase
 from tools import (
     ChickenGeneratorService,
     GlobalPlayerCache,
@@ -46,6 +46,12 @@ class FarmController(Cog):
     async def farm(self, ctx: Context, member: Optional[Member] = None) -> None:
         farm_usecase = FarmUseCase(ctx, member, self.farm_cache)
         await farm_usecase.farm()
+
+    @hybrid_command(name="renamefarm", aliases=["rf"], description="🐔 Rename your farm!")
+    @before_invoke(_ensure_farm_user_context)
+    async def rename_farm(self, ctx: Context, new_name: str):
+        rename_farm_usecase = RenameFarmUsecase(ctx, ctx.farm_entity, self.farm_cache, new_name)
+        await rename_farm_usecase.rename_farm()
 
     async def cog_check(self, ctx: Context) -> bool:  # type: ignore
         return await is_using_valid_channel(ctx, self.bot_config_cache)
