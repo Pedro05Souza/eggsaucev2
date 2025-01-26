@@ -18,7 +18,7 @@ class LRUCacheService(_CacheBase[KeyT, ValueT]):
 
     async def clear(self) -> None:
         while True:
-            await asyncio.sleep(3600)
+            await asyncio.sleep(86400)
             self._cache.clear()
             self._logger.info("LRU cache has been cleared")
 
