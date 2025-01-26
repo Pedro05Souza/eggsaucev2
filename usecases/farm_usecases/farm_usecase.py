@@ -38,7 +38,7 @@ class FarmUseCase:
         farm_chickens = "\n\n".join(
             [
                 f"{chicken.emoji} - **{chicken.rarity} {chicken.name}**"
-                + f"\n✨ Happiness: **{chicken.happiness}**"
+                + f"\n✨ Happiness: **{chicken.happiness}%**"
                 + f"\n📈 Quality: **{get_quality_text(chicken.quality)}**"
                 for chicken in farm_entity.chickens
             ]
