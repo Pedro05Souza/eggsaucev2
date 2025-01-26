@@ -8,7 +8,7 @@ async def chicken_model_to_entity(chicken: Chicken) -> ChickenEntity:
         id=str(chicken.id),
         eggs_generated=chicken.eggs_generated,
         quality=chicken.quality,
-        rarity=chicken.rarity,
+        rarity=chicken.rarity.name,
         location_status=chicken.location_status.value,
         name=chicken.name,
         happiness=chicken.happiness,
