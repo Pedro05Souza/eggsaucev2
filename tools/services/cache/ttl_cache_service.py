@@ -1,16 +1,15 @@
-from typing import Generic, TypeVar, Optional, Any, AsyncGenerator
+from typing import Any, AsyncGenerator
 from contextlib import asynccontextmanager
 from cachetools import TTLCache
 from tools.utils import get_logger
 from ._proxy_object import MutableProxy
+from ._cache_base import _CacheBase
+from ._types import KeyT, ValueT
 
 __all__ = ["TTLCacheService"]
 
-K = TypeVar("K")
-V = TypeVar("V")
 
-
-class TTLCacheService(Generic[K, V]):
+class TTLCacheService(_CacheBase[KeyT, ValueT]):
 
     class _TrackEvictCache(TTLCache):
 
@@ -28,21 +27,11 @@ class TTLCacheService(Generic[K, V]):
             self._cache = self._TrackEvictCache(maxsize=maxsize, ttl=expiration_time)
         else:
             self._cache = TTLCache(maxsize=maxsize, ttl=expiration_time)
+
+        super().__init__(self._cache)
         self._logger = get_logger(__name__)
 
-    def add_item(self, key: K, value: V) -> bool:
-        if key not in self._cache:
-            self._cache[key] = value
-            return True
-        return False
-
-    def remove_item(self, key: K) -> None:
-        if key in self._cache:
-            del self._cache[key]
-        else:
-            raise KeyError(f"Key {key} not found in cache")
-
-    async def _get_expired_or_removed_items(self) -> list[tuple[K, V]]:
+    async def _get_expired_or_removed_items(self) -> list[tuple[KeyT, ValueT]]:
         if not hasattr(self._cache, "evicted_items"):
             raise ValueError("This method is only available when track_evict is set to True")
 
@@ -53,18 +42,9 @@ class TTLCacheService(Generic[K, V]):
             self._cache.evicted_items.clear()
         return items
 
-    def get_item(self, key: K) -> Optional[V]:
-        if key in self._cache:
-            return self._cache[key]
-        return None
-
-    @property
-    def cache(self) -> TTLCache:
-        return self._cache
-
     @asynccontextmanager
     async def _revert_if_exception(
-        self, entity: V, previous_state: dict[str, Any], proxy_object: MutableProxy[V]
+        self, entity: ValueT, previous_state: dict[str, Any], proxy_object: MutableProxy[ValueT]
     ) -> AsyncGenerator[None, Any]:
         """Reverts the entity to its previous state if an exception occurs.
 
@@ -80,6 +60,5 @@ class TTLCacheService(Generic[K, V]):
         except Exception as e:
             for key, value in previous_state.items():
                 setattr(entity, key, value)
-                print(proxy_object.modified_fields)
                 proxy_object.modified_fields.pop(key)
             self._logger.exception("Failed to update cache: %s", e)
