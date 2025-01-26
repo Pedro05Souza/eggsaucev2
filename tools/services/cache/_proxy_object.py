@@ -1,12 +1,10 @@
-from typing import Generic, TypeVar, Any
-
-
-T = TypeVar("T")
+from typing import Generic, Any
+from ._types import ProxyT
 
 __all__ = ["MutableProxy"]
 
-class MutableProxy(Generic[T]):
-    def __init__(self, obj: T):
+class MutableProxy(Generic[ProxyT]):
+    def __init__(self, obj: ProxyT):
         self._obj = obj
         self.is_update_required = False
         self.modified_fields: dict[str, Any] = {}
