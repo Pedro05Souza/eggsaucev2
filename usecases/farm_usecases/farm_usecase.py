@@ -43,7 +43,7 @@ class FarmUseCase:
                 for chicken in farm_entity.chickens
             ]
             if farm_entity.chickens
-            else "No chickens"
+            else ["No chickens in the farm yet!"]
         )
         await send_bot_embed(
             self.ctx,
