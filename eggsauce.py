@@ -8,12 +8,12 @@ from tools.constants import get_env_var
 class Eggsauce(Bot):
 
     def __init__(self, bot_config_cache: BotConfigCacheService) -> None:
-        intents = self.__setup_intents()
+        intents = self._setup_intents()
         self.bot_config_cache = bot_config_cache
         self.logger = get_logger(__name__)
-        super().__init__(command_prefix=self.__get_bot_prefix, intents=intents, case_insensitive=True)
+        super().__init__(command_prefix=self._get_bot_prefix, intents=intents, case_insensitive=True)
 
-    def __setup_intents(self) -> Intents:
+    def _setup_intents(self) -> Intents:
         intents = Intents.default()
         intents.members = True
         intents.voice_states = True
@@ -23,7 +23,7 @@ class Eggsauce(Bot):
         intents.message_content = True
         return intents
 
-    async def __load_cogs(self) -> None:
+    async def _load_cogs(self) -> None:
         cogs_dir = Path("./controllers")
 
         for filepath in cogs_dir.rglob("*.py"):
@@ -37,7 +37,7 @@ class Eggsauce(Bot):
             self.logger.info("Loaded %s cog.", module)
 
     async def setup_hook(self):
-        await self.__load_cogs()
+        await self._load_cogs()
 
     def run(self, *args, **kwargs) -> None:
         workspace_env = get_env_var("ENVIRONMENT")
@@ -51,7 +51,7 @@ class Eggsauce(Bot):
 
         super().run(discord_token_key, *args, **kwargs)  # type: ignore
 
-    async def __get_bot_prefix(self, _: Bot, message: Message) -> str:
+    async def _get_bot_prefix(self, _: Bot, message: Message) -> str:
 
         if not message.guild:
             return "!"
