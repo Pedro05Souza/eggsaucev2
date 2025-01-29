@@ -66,9 +66,10 @@ class PlayerCacheService(TTLCacheService[int, PlayerEntity]):
         Returns:
             PlayerEntity: The player entity.
         """
-        player = await self.player_repository.create_player(discord_user_id)
-        self.add_item(player.discord_user_id, player)
-        return MutableProxy(player)  # type: ignore
+        async with in_transaction():
+            player = await self.player_repository.create_player(discord_user_id)
+            self.add_item(player.discord_user_id, player)
+            return MutableProxy(player)  # type: ignore
 
     async def __save_expired_or_removed_items(self):
         """Saves the expired or removed items to the database."""
@@ -138,6 +139,7 @@ class PlayerCacheService(TTLCacheService[int, PlayerEntity]):
 
         Raises:
             NoUpdateRequiredException: If the entity does not need to be updated.
+            NotInCacheException: If the entity is not in the cache.
         """
         if not proxy_entity.is_update_required:
             raise NoUpdateRequiredException()
