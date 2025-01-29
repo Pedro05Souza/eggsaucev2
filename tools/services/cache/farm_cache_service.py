@@ -38,7 +38,7 @@ class FarmCacheService(TTLCacheService[int, FarmEntity]):
             return MutableProxy(farm_entity)  # type: ignore
 
     async def create_farm(self, discord_user_id: int) -> FarmEntity:
-        async with self._lock:
+        async with in_transaction():
             farm_entity = await self.farm_repository.create_farm(discord_user_id)
             self.add_item(discord_user_id, farm_entity)
             return farm_entity
