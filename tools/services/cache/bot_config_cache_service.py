@@ -1,4 +1,5 @@
-from typing import Optional, Union
+from typing import Optional
+from asyncio import Lock
 from tortoise.transactions import in_transaction
 from entities import BotConfigEntity
 from tools.constants import NotInCacheException, NoUpdateRequiredException
@@ -21,10 +22,9 @@ class BotConfigCacheService(TTLCacheService[int, BotConfigEntity]):
     ) -> None:
         super().__init__(track_evict, max_size, expiration_time)
         self.bot_config_repository = bot_config_repository
+        self._lock = Lock()
 
-    async def get_or_fetch_bot_config_entity(
-        self, discord_guild_id_or_entity: Union[int, BotConfigEntity]
-    ) -> Optional[BotConfigEntity]:
+    async def get_or_fetch_bot_config_entity(self, discord_guild_id: int) -> Optional[BotConfigEntity]:
         """Gets or fetches a guild config entity from the cache. If the entity is not in the cache,
         it will be fetched from the database.
 
@@ -36,9 +36,7 @@ class BotConfigCacheService(TTLCacheService[int, BotConfigEntity]):
             Optional[BotConfigEntity]: The guild config entity if it exists, None otherwise. This will return a
             proxy object (ImmutableProxy or MutableProxy) based on the is_readonly flag.
         """
-        if isinstance(discord_guild_id_or_entity, int):
-            discord_guild_id = discord_guild_id_or_entity
-
+        async with self._lock:
             guild_config = self.get_item(discord_guild_id)
 
             if guild_config:
@@ -49,14 +47,10 @@ class BotConfigCacheService(TTLCacheService[int, BotConfigEntity]):
             if guild_config:
                 self.add_item(discord_guild_id, guild_config)
 
-        elif isinstance(discord_guild_id_or_entity, BotConfigEntity):
-            guild_config = discord_guild_id_or_entity
-            self.add_item(guild_config.guild_id, guild_config)
+            if not guild_config:
+                return None
 
-        if not guild_config:
-            return None
-
-        return MutableProxy(guild_config)  # type: ignore
+            return MutableProxy(guild_config)  # type: ignore
 
     async def create_bot_config(self, discord_guild_id: int) -> BotConfigEntity:
         """Creates a guild config entity in the cache and the database.
@@ -99,7 +93,7 @@ class BotConfigCacheService(TTLCacheService[int, BotConfigEntity]):
             cache_entry.allowed_channels.remove(deleted_channel)
 
             async with self._revert_if_exception(cache_entry, previous_state, bot_config_proxy):
-                await self.bot_config_repository.delete_allowed_channel(cache_entry.id, deleted_channel)
+                return await self.bot_config_repository.delete_allowed_channel(cache_entry.id, deleted_channel)
 
         if len(cache_entry.allowed_channels) < len(proxy_allowed_channels):
             created_channel_set = proxy_allowed_channels.difference(cache_entry.allowed_channels)
@@ -108,7 +102,7 @@ class BotConfigCacheService(TTLCacheService[int, BotConfigEntity]):
             cache_entry.allowed_channels.add(created_channel)
 
             async with self._revert_if_exception(cache_entry, previous_state, bot_config_proxy):
-                await self.bot_config_repository.create_allowed_channel(cache_entry.id, created_channel)
+                return await self.bot_config_repository.create_allowed_channel(cache_entry.id, created_channel)
 
     async def _update_bot_config(
         self, cache_entry: BotConfigEntity, bot_config_proxy: MutableProxy[BotConfigEntity]
