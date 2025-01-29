@@ -18,12 +18,12 @@ class PlayerRepository:
 
     async def create_player(self, discord_user_id: int) -> PlayerEntity:
         player = await Player.create(discord_user_id=discord_user_id)
-        await self.__create_bank_player(player)
-        player: Optional[Player] = await Player.get(id=player.id).select_related("bank_player")
+        await self._create_bank_player(player)
+        player = await Player.get(id=player.id).select_related("bank_player")
 
         return player_model_to_entity(player)
 
-    async def __create_bank_player(self, player: Player) -> BankPlayer:
+    async def _create_bank_player(self, player: Player) -> BankPlayer:
         return await BankPlayer.create(player=player)
 
     async def update_player(self, player: PlayerEntity) -> PlayerEntity:
