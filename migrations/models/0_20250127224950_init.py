@@ -11,7 +11,7 @@ async def upgrade(db: BaseDBAsyncClient) -> str:
 CREATE TABLE IF NOT EXISTS "allowed_channels" (
     "id" SERIAL NOT NULL PRIMARY KEY,
     "channel_id" BIGINT NOT NULL,
-    "bot_config_id" UUID NOT NULL UNIQUE REFERENCES "bot_config" ("id") ON DELETE CASCADE,
+    "bot_config_id" UUID NOT NULL REFERENCES "bot_config" ("id") ON DELETE CASCADE,
     CONSTRAINT "uid_allowed_cha_bot_con_d695b9" UNIQUE ("bot_config_id", "channel_id")
 );
 CREATE TABLE IF NOT EXISTS "player" (
@@ -23,13 +23,13 @@ CREATE TABLE IF NOT EXISTS "player" (
 );
 COMMENT ON COLUMN "player"."last_bought_title" IS 'EGG_NOVICE: Egg Novice\nEGG_APPRENTICE: Egg Apprentice\nEGG_WIZARD: Egg Wizard\nEGG_KING: Egg King';
 CREATE TABLE IF NOT EXISTS "bank_player" (
-    "balance" INT NOT NULL  DEFAULT 0,
+    "balance" INT NOT NULL  DEFAULT 400,
     "upgrade_level" INT NOT NULL  DEFAULT 1,
     "player_id" UUID NOT NULL  PRIMARY KEY REFERENCES "player" ("id") ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS "farm_player" (
     "id" UUID NOT NULL  PRIMARY KEY,
-    "farm_title" VARCHAR(50) NOT NULL,
+    "farm_title" VARCHAR(50) NOT NULL  DEFAULT 'My Farm',
     "farmer" VARCHAR(50),
     "next_drop_time" TIMESTAMPTZ,
     "remaining_rolls" INT NOT NULL  DEFAULT 8,
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS "chicken" (
     "happiness" INT NOT NULL,
     "farm_id" UUID NOT NULL REFERENCES "farm_player" ("id") ON DELETE CASCADE
 );
-COMMENT ON COLUMN "chicken"."rarity" IS 'DEAD: dead\nCOMMON: common\nUNCOMMON: uncommon\nRARE: rare\nEXCEPTIONAL: exceptional\nEPIC: epic\nLEGENDARY: legendary\nMYTHICAL: mythical\nULTIMATE: ultimate\nCOSMIC: cosmic\nDIVINE: divine\nGALATIC: galactic\nOMINOUS: ominous\nCELESTIAL: celestial\nIMMORTAL: immortal\nCHOSEN: chosen\nASCENDED: ascended\nBETA: beta\nETHEREAL: ethereal';
+COMMENT ON COLUMN "chicken"."rarity" IS 'DEAD: dead\nCOMMON: common\nUNCOMMON: uncommon\nRARE: rare\nEXCEPTIONAL: exceptional\nEPIC: epic\nLEGENDARY: legendary\nMYTHICAL: mythical\nULTIMATE: ultimate\nCOSMIC: cosmic\nDIVINE: divine\nGALACTIC: galactic\nOMINOUS: ominous\nCELESTIAL: celestial\nIMMORTAL: immortal\nCHOSEN: chosen\nASCENDED: ascended\nBETA: beta\nETHEREAL: ethereal';
 COMMENT ON COLUMN "chicken"."location_status" IS 'FARM: farm\nBENCH: bench\nMARKET: market\nREDEEMABLES: redeemables';
 CREATE TABLE IF NOT EXISTS "farmcornfield" (
     "id" UUID NOT NULL  PRIMARY KEY,
