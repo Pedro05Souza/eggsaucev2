@@ -1,3 +1,4 @@
+from tortoise.exceptions import NoValuesFetched
 from entities import FarmEntity
 from models import Farm
 from ._chicken_to_entity import chicken_model_to_entity
@@ -6,11 +7,12 @@ __all__ = ["farm_model_to_entity"]
 
 
 async def farm_model_to_entity(farm: Farm) -> FarmEntity:
-    chickens = []
 
-    for chicken in farm.chickens:
-        chicken_entity = await chicken_model_to_entity(chicken)
-        chickens.append(chicken_entity)
+    try:
+        chickens = [await chicken_model_to_entity(chicken) for chicken in farm.chickens]
+
+    except NoValuesFetched:
+        chickens = []
 
     return FarmEntity(
         id=str(farm.id),

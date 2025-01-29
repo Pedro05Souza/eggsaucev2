@@ -1,3 +1,4 @@
+from tortoise.exceptions import NoValuesFetched
 from entities import BotConfigEntity
 from models import BotConfig
 
@@ -5,7 +6,11 @@ __all__ = ["bot_config_model_to_entity"]
 
 
 async def bot_config_model_to_entity(bot_config: BotConfig) -> BotConfigEntity:
-    allowed_channels = await bot_config.allowed_channels.all() if bot_config.allowed_channels else None
+
+    try:
+        allowed_channels = await bot_config.allowed_channels
+    except NoValuesFetched:
+        allowed_channels = None
 
     return BotConfigEntity(
         id=str(bot_config.id),
