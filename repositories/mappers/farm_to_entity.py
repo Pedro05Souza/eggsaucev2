@@ -19,7 +19,7 @@ async def farm_model_to_entity(farm: Farm) -> FarmEntity:
         player_id=farm.player.id,
         discord_user_id=farm.player.discord_user_id,
         farm_title=farm.farm_title,
-        farmer=farm.farmer,
+        farmer=farm.farmer.value,
         next_drop_time=farm.next_drop_time,
         remaining_rolls=farm.remaining_rolls,
         next_chicken_roll_time=farm.next_chicken_roll_time,

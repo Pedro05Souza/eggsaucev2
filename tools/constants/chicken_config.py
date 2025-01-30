@@ -1,9 +1,10 @@
 from enum import Enum
-from typing import NamedTuple
+from typing import NamedTuple, TypedDict
 
 BASE_CHICKEN_PRICE = 400
 FARM_MAX_CHICKENS = 8
 BENCH_MAX_CHICKENS = 5
+BASE_FARMER_PRICE = 5000
 
 
 class ChickenLocationStatus(Enum):
@@ -11,6 +12,60 @@ class ChickenLocationStatus(Enum):
     BENCH = "bench"
     MARKET = "market"
     REDEEMABLES = "redeemables"
+
+
+class FarmerTypes(Enum):
+    RICH = "Rich"
+    GUARDIAN = "Guardian"
+    EXECUTIVE = "Executive"
+    WARRIOR = "Warrior"
+    GENEROUS = "Generous"
+    SUSTAINABLE = "Sustainable"
+
+
+class _RichTypedDict(TypedDict):
+    egg_value_percentage: int
+    corn_production_percentage: int
+
+
+class _SustainableTypedDict(TypedDict):
+    auto_feed_time_seconds: int
+    min_happiness_gain: int
+    max_happiness_gain: int
+
+
+class _ExecutiveTypedDict(TypedDict):
+    number_of_extra_rolls: int
+    extra_market_chickens: int
+
+
+class _FarmersTypedDict(TypedDict):
+    rich: _RichTypedDict
+    guardian: int
+    executive: _ExecutiveTypedDict
+    warrior: int
+    generous: int
+    sustainable: _SustainableTypedDict
+
+
+farmers_dict: _FarmersTypedDict = {
+    "rich": {
+        "egg_value_percentage": 10,
+        "corn_production_percentage": 10,
+    },
+    "guardian": 5,
+    "executive": {
+        "number_of_extra_rolls": 2,
+        "extra_market_chickens": 2,
+    },
+    "warrior": 2,
+    "generous": 2,
+    "sustainable": {
+        "auto_feed_time_seconds": 3600,
+        "min_happiness_gain": 5,
+        "max_happiness_gain": 10,
+    },
+}
 
 
 class ChickenRarities(str, Enum):

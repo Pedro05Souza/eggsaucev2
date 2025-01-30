@@ -1,6 +1,5 @@
 from random import uniform
 from ..constants import (
-    MAX_GENERATED_CHICKENS,
     ChickenRaritiesProbabilities,
     ChickenRaritiesEmojis,
     ChickenPricesMultiplier,
@@ -14,11 +13,11 @@ __all__ = ["ChickenGeneratorService"]
 
 class ChickenGeneratorService:
 
-    async def generate_chickens(self) -> list[GeneratedChicken]:
+    async def generate_chickens(self, chickens_to_generate) -> list[GeneratedChicken]:
         chicken_rarities_generated = []
         roll_sum = sum(probability.value for probability in ChickenRaritiesProbabilities)
 
-        for _ in range(MAX_GENERATED_CHICKENS):
+        for _ in range(chickens_to_generate):
             roll = uniform(0, roll_sum)
             current_sum = 0
 

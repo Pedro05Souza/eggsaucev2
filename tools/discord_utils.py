@@ -156,7 +156,7 @@ def button_builder(**kwargs) -> Button:
     return Button(**kwargs)
 
 
-def view_button_builder(*buttons) -> View:
+def view_button_builder(*buttons: Button) -> View:
     """
     Function that creates a view with buttons.
 
@@ -214,7 +214,8 @@ async def confirmation_popup(
         return False
     except TimeoutError:
         return False
-    
+
+
 def extract_discord_user(author: Member, mentioned_user: Optional[Member]) -> Member:
     """Extracts the discord user from the command.
 

@@ -19,8 +19,10 @@ from tools.constants import (
     REASON_INSUFFICIENT_BALANCE,
     REASON_FARM_IS_FULL,
     FARM_MAX_CHICKENS,
+    MAX_GENERATED_CHICKENS,
     SECONDS_TO_FARM_ROLL,
     GeneratedChicken,
+    farmers_dict,
 )
 
 
@@ -35,7 +37,7 @@ class MarketUsecase:
         chicken_generator_service: ChickenGeneratorService,
         farm_cache_service: FarmCacheService,
         player_cache_service: PlayerCacheService,
-        farm_entity: FarmEntity
+        farm_entity: FarmEntity,
     ) -> None:
         self.ctx = ctx
         self.chicken_generator_service = chicken_generator_service
@@ -44,11 +46,11 @@ class MarketUsecase:
         self.farm_entity = farm_entity
 
     async def market(self) -> None:
-        if self.farm_entity.remaining_rolls == 0:
+        if self.farm_entity.remaining_rolls == 0 and self.farm_entity.next_chicken_roll_time is not None:
             await send_failed_embed(
                 self.ctx,
                 "You have no rolls left. The next roll will be available in "
-                + f"{format_dt(self.farm_entity.next_chicken_roll_time, 'R')}.",  # type: ignore
+                + f"{format_dt(self.farm_entity.next_chicken_roll_time, 'R')}.",
             )
             return
 
@@ -60,7 +62,13 @@ class MarketUsecase:
 
             self.farm_entity.next_chicken_roll_time += timedelta(seconds=SECONDS_TO_FARM_ROLL)
 
-        generated_chickens = await self.chicken_generator_service.generate_chickens()
+        chickens_to_generated = (
+            MAX_GENERATED_CHICKENS
+            if self.farm_entity.farmer != "Generous"
+            else MAX_GENERATED_CHICKENS + farmers_dict["generous"]
+        )
+
+        generated_chickens = await self.chicken_generator_service.generate_chickens(chickens_to_generated)
 
         title = "Here are the chickens that were generated for you!"
         description = "\n".join(
@@ -113,7 +121,11 @@ class ChickenView(View):
         selected_position = int(interaction.data["values"][0])  # type: ignore
         selected_chicken = self.chickens[selected_position - 1]
 
-        if len(self.farm_entity.chickens) >= FARM_MAX_CHICKENS:
+        if not self.farm_entity.farmer == "Warrior":
+            await send_failed_embed(interaction, REASON_FARM_IS_FULL)
+            return
+
+        if len(self.farm_entity.chickens) >= FARM_MAX_CHICKENS + farmers_dict["warrior"]:
             await send_failed_embed(interaction, REASON_FARM_IS_FULL)
             return
 
