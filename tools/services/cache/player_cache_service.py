@@ -33,9 +33,8 @@ class PlayerCacheService(TTLCacheService[int, PlayerEntity]):
         If the entity is not in the cache, it will be fetched from the database.
 
         Args:
-            discord_user_id_or_entity (Union[int, Union[PlayerEntity]): The Discord ID of the player or the
-                player entity to add. if its an entity, it will be added to the cache.
-                Otherwise, it will be fetched from the database.
+            discord_user_id_or_entity (int): The Discord ID of the player if not found, 
+            it will be fetched from the database.
 
         Returns:
             Optional[PlayerEntity]: The player entity
@@ -165,7 +164,7 @@ class PlayerCacheService(TTLCacheService[int, PlayerEntity]):
 
         Args:
             key (int): The Discord ID of the player.
-            entity_proxy (MutableProxy[PlayerEntity]): The player proxy object.
+            entity (MutableProxy[PlayerEntity]): The player proxy object.
             save_to_db (bool, optional): If True, the entity will be saved to the database. Defaults to True.
         """
         async with in_transaction():

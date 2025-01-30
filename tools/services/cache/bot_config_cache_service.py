@@ -30,11 +30,9 @@ class BotConfigCacheService(TTLCacheService[int, BotConfigEntity]):
 
         Args:
             discord_guild_id (int): The Discord ID of the guild.
-            is_readonly (bool, optional): If True, the entity will be returned as a reference. Defaults to False.
 
         Returns:
-            Optional[BotConfigEntity]: The guild config entity if it exists, None otherwise. This will return a
-            proxy object (ImmutableProxy or MutableProxy) based on the is_readonly flag.
+            Optional[BotConfigEntity]: The guild config entity if it exists, None otherwise.
         """
         async with self._lock:
             guild_config = self.get_item(discord_guild_id)

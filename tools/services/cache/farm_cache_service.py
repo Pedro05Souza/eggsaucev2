@@ -25,6 +25,16 @@ class FarmCacheService(TTLCacheService[int, FarmEntity]):
         self.farm_repository = farm_repository
 
     async def get_or_fetch_farm_entity(self, discord_user_id: int) -> Optional[FarmEntity]:
+        """Gets or fetches a farm entity to from cache.
+        If the entity is not in the cache, it will be fetched from the database.
+
+        Args:
+            discord_user_id(int): The Discord ID of the player if not found, 
+            it will be fetched from the database.
+
+        Returns:
+            Optional[FarmEntity]: The farm entity
+        """
         async with self._lock:
             farm_entity = self.get_item(discord_user_id)
 
@@ -38,6 +48,14 @@ class FarmCacheService(TTLCacheService[int, FarmEntity]):
             return MutableProxy(farm_entity)  # type: ignore
 
     async def create_farm(self, discord_user_id: int) -> FarmEntity:
+        """Create a farm entity for a discord user.
+
+        Args:
+            discord_user_id (int): The discord user id.
+
+        Returns:
+            FarmEntity: The created farm entity.
+        """
         async with in_transaction():
             farm_entity = await self.farm_repository.create_farm(discord_user_id)
             self.add_item(discord_user_id, farm_entity)
@@ -89,6 +107,11 @@ class FarmCacheService(TTLCacheService[int, FarmEntity]):
         await self._update_farm(cache_entry, farm_entity_proxy)
 
     async def synchronizer(self, farm_entity: FarmEntity) -> None:
+        """Synchronizes the farm entity with the database.
+
+        Args:
+            farm_entity (FarmEntity): The farm entity to synchronize.
+        """
         async with in_transaction():
             if isinstance(farm_entity, MutableProxy):
                 await self._update_farm_entity(farm_entity)
