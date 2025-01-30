@@ -8,9 +8,9 @@ class BaseEggsauceException(Exception):
 
 class NoUpdateRequiredException(BaseEggsauceException):
     def __init__(self):
-        super().__init__("The entity you are trying to update is already up to date.")
+        super().__init__("The entity does not require an update.")
 
 
 class NotInCacheException(BaseEggsauceException):
     def __init__(self):
-        super().__init__("The entity you are trying to access is not in the cache.")
+        super().__init__("The entity is not in the cache.")
