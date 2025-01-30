@@ -31,12 +31,12 @@ async def send_bot_embed(
 
     Args:
         ctx (Union[Context, Interaction]): The context of the command.
+        embed_params (EmbedParams): The parameters that will be passed to the embed builder.
         color (str, optional): The color of the embed, defaults to "#FEE75C".
         footer_text (Optional[str], optional): The text that will be displayed in the footer of the embed.
         Defaults to None.
         ephemeral (bool, optional): A boolean that checks if the message should be sent privately within the server.
         Defaults to False.
-        embed_file (Optional[str], optional): The file that will be sent with the embed. Defaults to None.
         thumbnail_url (Optional[str], optional): The URL of the thumbnail that will be displayed in the embed.
         Defaults to None.
         view (Optional[View], optional): The view that will be sent with the embed. Defaults to None.
@@ -85,9 +85,10 @@ def embed_builder(
     """This function is responsable for building the embed that will be sent to the user.
 
     Args:
-        ctx (Union[Context, Interaction]): The context of the command.
-        color (str): The color of the embed in hexadecimal.
+        embed_params (EmbedParams): The parameters that will be passed to the embed builder.
         footer_text (Optional[str]): The text that will be displayed in the footer of the embed.
+        thumbnail_url (Optional[str]): The URL of the thumbnail that will be displayed in the embed.
+        color (str, optional): The color of the embed, defaults to "#FEE75C".
 
     Returns:
         discord.Embed: The embed that will be sent to the user.
@@ -143,6 +144,7 @@ async def send_failed_embed(ctx: Union[Context[BotT], Interaction], description:
     Args:
         context (Context): The context of the command.
         description (str): The description of the embed.
+        ephemeral (bool): Whether the message should be ephemeral or not.
     """
     return await send_bot_embed(
         ctx=ctx,
@@ -196,9 +198,9 @@ async def confirmation_popup(
 
     Args:
         ctx (Context): The context of the command.
-        embed (Embed): The embed that will be sent.
+        description (str): The description of the embed.
+        title (str): The title of the embed. Defaults to "🔔 Please Confirm Your Action".
         ephemeral (bool): Whether the message should be ephemeral or not.
-        is_dm (bool): Whether the message should be sent in DMs or not.
     """
     cancel_button = button_builder(label="Cancel", style=ButtonStyle.red, custom_id="cancel")
     confirm_button = button_builder(label="Confirm", style=ButtonStyle.green, custom_id="confirm")
