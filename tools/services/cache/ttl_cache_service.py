@@ -1,6 +1,6 @@
-from typing import Any, AsyncGenerator
+from typing import Any, AsyncGenerator, List, Tuple
 from contextlib import asynccontextmanager
-from cachetools import TTLCache
+from cachetools import TTLCache, Cache
 from tools.utils import get_logger
 from ._proxy_object import MutableProxy
 from ._cache_base import CacheBase
@@ -11,10 +11,10 @@ __all__ = ["TTLCacheService"]
 
 class TTLCacheService(CacheBase[KeyT, ValueT]):
 
-    class _TrackEvictCache(TTLCache):
+    class _TrackEvictCache(TTLCache[KeyT, ValueT]):  # type: ignore
 
         def __init__(self, *args, **kwargs):
-            self.evicted_items = []
+            self.evicted_items: List[Tuple[KeyT, ValueT]] = []
             super().__init__(*args, **kwargs)
 
         def popitem(self):
@@ -23,10 +23,13 @@ class TTLCacheService(CacheBase[KeyT, ValueT]):
             return key, value
 
     def __init__(self, track_evict: bool, maxsize: int = 250, expiration_time: float = 300) -> None:
-        if track_evict:
-            self._cache = self._TrackEvictCache(maxsize=maxsize, ttl=expiration_time)
-        else:
-            self._cache = TTLCache(maxsize=maxsize, ttl=expiration_time)
+        cache_instance: Cache[KeyT, ValueT] = (
+            self._TrackEvictCache(maxsize=maxsize, ttl=expiration_time)
+            if track_evict
+            else TTLCache(maxsize=maxsize, ttl=expiration_time)
+        )
+        super().__init__(cache_instance)
+        self._cache = cache_instance
 
         super().__init__(self._cache)
         self._logger = get_logger(__name__)
@@ -62,3 +65,7 @@ class TTLCacheService(CacheBase[KeyT, ValueT]):
                 setattr(entity, key, value)
                 proxy_object.modified_fields.pop(key)
             self._logger.exception("Failed to update cache: %s", e)
+
+    @property
+    def cache(self) -> _TrackEvictCache[KeyT, ValueT] | TTLCache[KeyT, ValueT]:
+        return self._cache

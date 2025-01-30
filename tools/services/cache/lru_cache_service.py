@@ -11,8 +11,7 @@ __all__ = ["LRUCacheService"]
 class LRUCacheService(CacheBase[KeyT, ValueT]):
 
     def __init__(self, maxsize: int = 250) -> None:
-        self._cache = LRUCache(maxsize=maxsize)
-        super().__init__(self._cache)
+        super().__init__(LRUCache(maxsize=maxsize))
         self._logger = get_logger(__name__)
         asyncio.create_task(self.clear())
 
@@ -21,7 +20,3 @@ class LRUCacheService(CacheBase[KeyT, ValueT]):
             await asyncio.sleep(86400)
             self._cache.clear()
             self._logger.info("LRU cache has been cleared")
-
-    @property
-    def cache(self) -> LRUCache:
-        return self._cache
