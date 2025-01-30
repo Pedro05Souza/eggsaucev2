@@ -29,7 +29,7 @@ class FarmCacheService(TTLCacheService[int, FarmEntity]):
         If the entity is not in the cache, it will be fetched from the database.
 
         Args:
-            discord_user_id(int): The Discord ID of the player if not found, 
+            discord_user_id(int): The Discord ID of the player if not found,
             it will be fetched from the database.
 
         Returns:
@@ -70,6 +70,10 @@ class FarmCacheService(TTLCacheService[int, FarmEntity]):
         generated_chickens = [
             chicken for chicken in farm_entity_proxy.modified_fields["chickens"] if chicken.is_newly_generated
         ]
+
+        if len(generated_chickens) == 0:
+            if all(chicken in cache_entry.chickens for chicken in farm_entity_proxy.modified_fields["chickens"]):
+                return
 
         chicken_models = [
             await chicken_entity_to_model(cache_entry.id, chicken)
