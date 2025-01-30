@@ -16,7 +16,7 @@ def cli():  # pylint: disable=no-self-argument,no-method-argument
     default="dev",
     help="🚀 Run the bot in the specified environment (dev or prod)",
 )
-def run(env) -> None:  # pylint: disable=no-self-argument,no-method-argument
+def run(env: str) -> None:  # pylint: disable=no-self-argument,no-method-argument
     os.environ["ENVIRONMENT"] = env.upper()  # pylint: disable=no-member
     load_dotenv()
 

@@ -2,11 +2,11 @@ from typing import Generic, Optional
 from cachetools import Cache
 from ._types import KeyT, ValueT
 
-__all__ = ["_CacheBase"]
+__all__ = ["CacheBase"]
 
 
-class _CacheBase(Generic[KeyT, ValueT]):
-    def __init__(self, cache: Cache) -> None:
+class CacheBase(Generic[KeyT, ValueT]):
+    def __init__(self, cache: Cache[KeyT, ValueT]) -> None:
         self._cache = cache
 
     def get_item(self, key: KeyT) -> Optional[ValueT]:
@@ -27,5 +27,5 @@ class _CacheBase(Generic[KeyT, ValueT]):
             raise KeyError(f"Key {key} not found in cache")
 
     @property
-    def cache(self) -> Cache:
+    def cache(self) -> Cache[KeyT, ValueT]:
         return self._cache

@@ -9,7 +9,7 @@ class MutableProxy(Generic[ProxyT]):
         self.is_update_required = False
         self.modified_fields: dict[str, Any] = {}
 
-    def __getattr__(self, name) -> Any:
+    def __getattr__(self, name: str) -> Any:
         if name in {"_obj", "is_update_required", "modified_fields"}:
             return self.__dict__[name]
 
@@ -27,7 +27,7 @@ class MutableProxy(Generic[ProxyT]):
 
         return attr
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: Any):
         if name in {"_obj", "is_update_required", "modified_fields"}:
             super().__setattr__(name, value)
             return

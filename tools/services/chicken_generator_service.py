@@ -1,3 +1,4 @@
+from typing import List
 from random import uniform
 from ..constants import (
     ChickenRaritiesProbabilities,
@@ -13,8 +14,8 @@ __all__ = ["ChickenGeneratorService"]
 
 class ChickenGeneratorService:
 
-    async def generate_chickens(self, chickens_to_generate) -> list[GeneratedChicken]:
-        chicken_rarities_generated = []
+    async def generate_chickens(self, chickens_to_generate: int) -> list[GeneratedChicken]:
+        chicken_rarities_generated: List[GeneratedChicken] = []
         roll_sum = sum(probability.value for probability in ChickenRaritiesProbabilities)
 
         for _ in range(chickens_to_generate):

@@ -3,13 +3,13 @@ from contextlib import asynccontextmanager
 from cachetools import TTLCache
 from tools.utils import get_logger
 from ._proxy_object import MutableProxy
-from ._cache_base import _CacheBase
+from ._cache_base import CacheBase
 from ._types import KeyT, ValueT
 
 __all__ = ["TTLCacheService"]
 
 
-class TTLCacheService(_CacheBase[KeyT, ValueT]):
+class TTLCacheService(CacheBase[KeyT, ValueT]):
 
     class _TrackEvictCache(TTLCache):
 

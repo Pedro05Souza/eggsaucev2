@@ -1,14 +1,14 @@
 import asyncio
 from cachetools import LRUCache
 from tools.utils import get_logger
-from ._cache_base import _CacheBase
+from ._cache_base import CacheBase
 from ._types import KeyT, ValueT
 
 
 __all__ = ["LRUCacheService"]
 
 
-class LRUCacheService(_CacheBase[KeyT, ValueT]):
+class LRUCacheService(CacheBase[KeyT, ValueT]):
 
     def __init__(self, maxsize: int = 250) -> None:
         self._cache = LRUCache(maxsize=maxsize)

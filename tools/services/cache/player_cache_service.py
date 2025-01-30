@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict, Any
 from asyncio import Lock
 from tortoise.transactions import in_transaction
 from entities import PlayerEntity
@@ -94,7 +94,7 @@ class PlayerCacheService(TTLCacheService[int, PlayerEntity]):
         if not any(key in player_proxy.modified_fields for key in self._possible_bank_upgrades):
             return
 
-        previous_state = {}
+        previous_state: Dict[str, Any] = {}
 
         for key, value in player_proxy.modified_fields.items():
             if key in self._possible_bank_upgrades:
@@ -113,7 +113,7 @@ class PlayerCacheService(TTLCacheService[int, PlayerEntity]):
             cache_entry (PlayerEntity): The player entity to update.
             player_proxy (MutableProxy[PlayerEntity]): The player proxy object.
         """
-        previous_state = {}
+        previous_state: Dict[str, Any] = {}
         do_update = False
 
         for key, value in player_proxy.modified_fields.items():
