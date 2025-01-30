@@ -7,6 +7,8 @@ from tools import (
     send_failed_embed,
     calculate_away_time_earnings,
     AwayTimeEarningsService,
+    extract_discord_user,
+    format_earnings_type,
 )
 from tools.constants import REASON_INVALID_USER
 
@@ -29,14 +31,9 @@ class BalanceUsecase:
 
     async def balance(self) -> None:
 
-        avatar_to_send = None
-
-        if self._discord_member:
-            player_entity = await self._player_cache.get_or_fetch_player_entity(self._discord_member.id)
-            avatar_to_send = self._discord_member.display_avatar.url
-        else:
-            player_entity = await self._player_cache.get_or_fetch_player_entity(self._ctx.author.id)
-            avatar_to_send = self._ctx.author.display_avatar.url
+        member_to_send = extract_discord_user(self._ctx.author, self._discord_member)  # type: ignore
+        avatar_to_send = member_to_send.display_avatar.url
+        player_entity = await self._player_cache.get_or_fetch_player_entity(member_to_send.id)
 
         if not player_entity:
             if self._discord_member:
@@ -46,7 +43,9 @@ class BalanceUsecase:
                 )
             player_entity = await self._player_cache.create_player(self._ctx.author.id)
 
-        await calculate_away_time_earnings(player_entity, self._player_cache, self._away_time_earnings_service)
+        earning_types = await calculate_away_time_earnings(
+            player_entity, self._player_cache, self._away_time_earnings_service
+        )
 
         description = (
             f"💸 Wallet: **{player_entity.balance}**"
@@ -58,6 +57,10 @@ class BalanceUsecase:
             description += f"\n⏰Next salary in: **{format_dt(player_entity.next_salary_time, 'R')}**"
 
         description += f"\n\n🥚 Total: **{player_entity.balance + player_entity.bank_balance}** eggbux."
+
+        if earning_types is not None:
+            formatted_earning_types = format_earnings_type(earning_types)
+            description += f"\n\n{formatted_earning_types}"
 
         return await send_bot_embed(
             ctx=self._ctx,
