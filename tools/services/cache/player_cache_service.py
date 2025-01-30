@@ -22,7 +22,7 @@ class PlayerCacheService(TTLCacheService[int, PlayerEntity]):
     ) -> None:
         super().__init__(track_evict, maxsize, expiration_time)
         self._lock = Lock()
-        self.player_repository = player_repository
+        self._player_repository = player_repository
         self._possible_bank_upgrades = {"bank_balance", "bank_capacity", "upgrade_level"}
 
     async def get_or_fetch_player_entity(
@@ -38,10 +38,10 @@ class PlayerCacheService(TTLCacheService[int, PlayerEntity]):
                 Otherwise, it will be fetched from the database.
 
         Returns:
-            Union[PlayerEntity]: The player entity
+            Optional[PlayerEntity]: The player entity
         """
         async with self._lock:
-            await self.__save_expired_or_removed_items()
+            await self._save_expired_or_removed_items()
 
             player = self.get_item(discord_user_id)
 
@@ -71,7 +71,7 @@ class PlayerCacheService(TTLCacheService[int, PlayerEntity]):
             self.add_item(player.discord_user_id, player)
             return MutableProxy(player)  # type: ignore
 
-    async def __save_expired_or_removed_items(self):
+    async def _save_expired_or_removed_items(self):
         """Saves the expired or removed items to the database."""
         items = await self._get_expired_or_removed_items()
 
@@ -171,3 +171,7 @@ class PlayerCacheService(TTLCacheService[int, PlayerEntity]):
         async with in_transaction():
             if isinstance(entity, MutableProxy):
                 await self._update_player_checks(entity, save_to_db)
+
+    @property
+    def player_repository(self) -> PlayerRepositoryProtocol:
+        return self._player_repository
