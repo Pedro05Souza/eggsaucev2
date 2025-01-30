@@ -1,7 +1,7 @@
 from typing import Optional
 from discord import Member
-from discord.ext.commands import Cog, Bot, hybrid_command, Context, before_invoke
-from usecases import MarketUsecase, FarmUseCase, RenameFarmUsecase
+from discord.ext.commands import Cog, Bot, hybrid_command, Context, before_invoke, cooldown, BucketType
+from usecases import MarketUsecase, FarmUseCase, RenameFarmUsecase, BuyFarmerUseCase
 from tools import (
     ChickenGeneratorService,
     GlobalPlayerCache,
@@ -12,7 +12,9 @@ from tools import (
     PlayerCacheService,
     BotConfigCacheService,
     is_using_valid_channel,
+    ensure_database_user,
 )
+from tools.constants import REGULAR_COMMAND_COOLDOWN, SPAM_COMMAND_COOLDOWN
 
 
 class FarmController(Cog):
@@ -31,11 +33,16 @@ class FarmController(Cog):
         self.player_cache = player_cache
         self.bot_config_cache = bot_config_cache
 
-    async def _ensure_farm_user_context(self, ctx: Context) -> None:
+    async def _ensure_farm_user(self, ctx: Context) -> None:
         await ensure_farm_user(ctx, self.farm_cache)
 
+    async def _ensure_farm_and_player_user(self, ctx: Context) -> None:
+        await ensure_farm_user(ctx, self.farm_cache)
+        await ensure_database_user(ctx, self.player_cache)
+
     @hybrid_command(name="market", aliases=["m"], description="🐔 Roll for a chicken in the market!")
-    @before_invoke(_ensure_farm_user_context)
+    @before_invoke(_ensure_farm_user)
+    @cooldown(1, SPAM_COMMAND_COOLDOWN, BucketType.user)
     async def market(self, ctx: Context) -> None:
         market_usecase = MarketUsecase(
             ctx, self.chicken_generator_service, self.farm_cache, self.player_cache, ctx.farm_entity
@@ -43,15 +50,26 @@ class FarmController(Cog):
         await market_usecase.market()
 
     @hybrid_command(name="farm", aliases=["f"], description="🐔 View your farm!")
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
     async def farm(self, ctx: Context, member: Optional[Member] = None) -> None:
         farm_usecase = FarmUseCase(ctx, member, self.farm_cache)
         await farm_usecase.farm()
 
     @hybrid_command(name="renamefarm", aliases=["rf"], description="🐔 Rename your farm!")
-    @before_invoke(_ensure_farm_user_context)
+    @before_invoke(_ensure_farm_user)
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
     async def rename_farm(self, ctx: Context, new_name: str):
         rename_farm_usecase = RenameFarmUsecase(ctx, ctx.farm_entity, self.farm_cache, new_name)
         await rename_farm_usecase.rename_farm()
+
+    @hybrid_command(name="buyfarmer", aliases=["bf"], description="🐔 Buy a farmer for your farm!")
+    @before_invoke(_ensure_farm_and_player_user)
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
+    async def buy_farmer(self, ctx: Context) -> None:
+        buy_farmer_usecase = BuyFarmerUseCase(
+            ctx, ctx.player_entity, ctx.farm_entity, self.player_cache, self.farm_cache
+        )
+        await buy_farmer_usecase.buy_farmer()
 
     async def cog_check(self, ctx: Context) -> bool:  # type: ignore
         return await is_using_valid_channel(ctx, self.bot_config_cache)
