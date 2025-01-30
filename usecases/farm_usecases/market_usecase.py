@@ -50,7 +50,7 @@ class MarketUsecase:
             await send_failed_embed(
                 self.ctx,
                 "You have no rolls left. The next roll will be available in "
-                + f"{format_dt(self.farm_entity.next_chicken_roll_time, 'R')}."
+                + f"{format_dt(self.farm_entity.next_chicken_roll_time, 'R')}.",
             )
             return
 
@@ -121,7 +121,11 @@ class ChickenView(View):
         selected_position = int(interaction.data["values"][0])  # type: ignore
         selected_chicken = self.chickens[selected_position - 1]
 
-        if len(self.farm_entity.chickens) >= FARM_MAX_CHICKENS:
+        if not self.farm_entity.farmer == "Warrior":
+            await send_failed_embed(interaction, REASON_FARM_IS_FULL)
+            return
+
+        if len(self.farm_entity.chickens) >= FARM_MAX_CHICKENS + farmers_dict["warrior"]:
             await send_failed_embed(interaction, REASON_FARM_IS_FULL)
             return
 
