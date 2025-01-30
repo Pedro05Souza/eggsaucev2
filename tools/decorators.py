@@ -41,9 +41,7 @@ async def is_using_valid_channel(ctx: Context[BotT], bot_config_cache: BotConfig
     if ctx.channel.id in bot_config_entity.allowed_channels:
         return True
 
-    embed = embed_builder(
-        title="❌ Invalid Channel", description="This channel does not support my commands."
-    )
+    embed = embed_builder(title="❌ Invalid Channel", description="This channel does not support my commands.")
     await send_user_dm(ctx, embed)
     return False
 
