@@ -4,5 +4,5 @@ from .services import PlayerCacheService, BotConfigCacheService, FarmCacheServic
 __all__ = ['GlobalPlayerCache', 'GlobalBotConfigCache', 'GlobalFarmCache']
 
 GlobalPlayerCache = PlayerCacheService(True, PlayerRepository())
-GlobalBotConfigCache = BotConfigCacheService(False, BotConfigRepository())
+GlobalBotConfigCache = BotConfigCacheService(False, BotConfigRepository(), expiration_time=3600)
 GlobalFarmCache = FarmCacheService(True, FarmRepository())
