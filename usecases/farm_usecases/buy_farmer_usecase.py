@@ -40,7 +40,8 @@ class BuyFarmerUseCase:
         if self.player_entity.balance + self.player_entity.bank_balance < BASE_FARMER_PRICE:
             await send_failed_embed(
                 self.ctx,
-                description=f"You don't have enough eggbux to buy a farmer. The price is **{BASE_FARMER_PRICE}** eggbux.",
+                description="You don't have enough eggbux to buy a farmer."
+                + f"The price is **{BASE_FARMER_PRICE}** eggbux.",
             )
             return
 
@@ -98,7 +99,8 @@ class BuyFarmerUseCase:
             f" chickens in the market come with **{farmers_dict['executive']['extra_market_chickens']}%** discount.\n\n"
             f"⚔️ Warrior Farmer: Adds **{farmers_dict['warrior']}** extra chickens to the farm.\n\n"
             f"🎁 Generous Farmer: Generates **{farmers_dict['generous']}** extra chickens in the market\n\n"
-            f"🌱 Sustainable Farmer: Automatically feeds the chickens every **{farmers_dict['sustainable']['auto_feed_time_seconds']}** seconds"
+            f"🌱 Sustainable Farmer: Automatically feeds the chickens every"
+            f"**{farmers_dict['sustainable']['auto_feed_time_seconds']}** seconds"
             f" and increases happiness between **{farmers_dict['sustainable']['min_happiness_gain']}%**"
             f" to **{farmers_dict['sustainable']['max_happiness_gain']}%**."
         )

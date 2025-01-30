@@ -32,7 +32,10 @@ class FarmUseCase:
                 )
             farm_entity = await self.farm_cache_service.create_farm(self.ctx.author.id)
 
-        farm_title = f"🚜 {farm_entity.farm_title}\n🧑‍🌾 Farmer: {farm_entity.farmer + ' Farmer' if farm_entity.farmer else 'No farmer'}"
+        farm_title = (
+            f"🚜 {farm_entity.farm_title}\n🧑‍🌾 Farmer:"
+            f"{farm_entity.farmer + ' Farmer' if farm_entity.farmer else 'No farmer'}"
+        )
         farm_chickens = "\n\n".join(
             [
                 f"{chicken.emoji} - **{chicken.rarity} {chicken.name}**"
