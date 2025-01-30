@@ -2,6 +2,7 @@ from enum import Enum
 from typing import NamedTuple, Literal
 from random import Random
 from discord.ext.commands import Context
+from discord.ext.commands._types import BotT
 from entities import PlayerEntity
 from tools import PlayerCacheService, send_failed_embed, send_bot_embed
 from tools.constants import REASON_INSUFFICIENT_BALANCE, REASON_INVALID_AMOUNT, MIN_AMOUNT_SPIN
@@ -24,7 +25,7 @@ class SpinUsecase:
 
     def __init__(
         self,
-        ctx: Context,
+        ctx: Context[BotT],
         player_entity: PlayerEntity,
         player_cache: PlayerCacheService,
         color_choice: str,

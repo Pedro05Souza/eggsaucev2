@@ -1,4 +1,5 @@
 from discord.ext.commands import Context
+from discord.ext.commands._types import BotT
 from discord import Member
 from discord.utils import format_dt
 from tools import (
@@ -19,7 +20,7 @@ class BalanceUsecase:
 
     def __init__(
         self,
-        ctx: Context,
+        ctx: Context[BotT],
         discord_member: Member | None,
         player_cache: PlayerCacheService,
         away_time_earnings_service: AwayTimeEarningsService,

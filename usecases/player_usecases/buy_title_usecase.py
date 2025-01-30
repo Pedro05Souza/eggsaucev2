@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from discord.ext.commands import Context
+from discord.ext.commands._types import BotT
 from entities import PlayerEntity
 from tools import (
     PlayerCacheService,
@@ -22,7 +23,7 @@ __all__ = ["BuyTitleUsecase"]
 
 class BuyTitleUsecase:
 
-    def __init__(self, ctx: Context, player_entity: PlayerEntity, player_cache: PlayerCacheService) -> None:
+    def __init__(self, ctx: Context[BotT], player_entity: PlayerEntity, player_cache: PlayerCacheService) -> None:
         self._ctx = ctx
         self._player_entity = player_entity
         self._player_cache = player_cache

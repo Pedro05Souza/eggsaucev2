@@ -1,4 +1,5 @@
 from discord.ext.commands import Context
+from discord.ext.commands._types import BotT
 from entities import FarmEntity
 from tools import (
     FarmCacheService,
@@ -12,7 +13,9 @@ __all__ = ["RenameFarmUsecase"]
 
 class RenameFarmUsecase:
 
-    def __init__(self, ctx: Context, farm_entity: FarmEntity, farm_cache: FarmCacheService, new_name: str) -> None:
+    def __init__(
+        self, ctx: Context[BotT], farm_entity: FarmEntity, farm_cache: FarmCacheService, new_name: str
+    ) -> None:
         self.ctx = ctx
         self.farm_entity = farm_entity
         self.farm_cache = farm_cache

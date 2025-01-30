@@ -1,4 +1,5 @@
 from discord.ext.commands import Bot, Cog, command, Context
+from discord.ext.commands._types import BotT
 from usecases import SetChannelUsecase, SetPrefixUsecase, UnsetChannelUsecase
 from tools import BotConfigCacheService, admin_only, ensure_database_config, GlobalBotConfigCache
 
@@ -11,23 +12,23 @@ class BotConfigController(Cog):
 
     @command(name="setprefix")
     @admin_only()
-    async def set_prefix(self, ctx: Context, prefix: str) -> None:
+    async def set_prefix(self, ctx: Context[BotT], prefix: str) -> None:
         set_prefix_usecase = SetPrefixUsecase(ctx, ctx.guild_config_entity, self.bot_config_cache, prefix)
         await set_prefix_usecase.set_prefix()
 
     @command(name="setchannel")
     @admin_only()
-    async def set_channel(self, ctx: Context) -> None:
+    async def set_channel(self, ctx: Context[BotT]) -> None:
         set_channel_usecase = SetChannelUsecase(ctx, ctx.channel.id, ctx.guild_config_entity, self.bot_config_cache)
         await set_channel_usecase.set_channel()
 
     @command(name="unsetchannel")
     @admin_only()
-    async def unset_channel(self, ctx: Context) -> None:
+    async def unset_channel(self, ctx: Context[BotT]) -> None:
         unset_channel_usecase = UnsetChannelUsecase(ctx, ctx.channel.id, ctx.guild_config_entity, self.bot_config_cache)
         await unset_channel_usecase.unset_channel()
 
-    async def cog_before_invoke(self, ctx: Context) -> None:
+    async def cog_before_invoke(self, ctx: Context[BotT]) -> None:
         await ensure_database_config(ctx, self.bot_config_cache)
 
 
