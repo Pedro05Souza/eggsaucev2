@@ -1,5 +1,6 @@
 from tortoise.models import Model
 from tortoise import fields
+from tools.constants import FarmerTypes
 
 __all__ = ["Farm"]
 
@@ -8,7 +9,7 @@ class Farm(Model):
     id = fields.UUIDField(pk=True)
     player = fields.OneToOneField("models.Player", related_name="farm_player")
     farm_title = fields.CharField(max_length=50, default="My Farm")
-    farmer = fields.CharField(max_length=50, null=True)
+    farmer = fields.CharEnumField(FarmerTypes, null=True)
     next_drop_time = fields.DatetimeField(null=True)
     remaining_rolls = fields.IntField(default=8)
     next_chicken_roll_time = fields.DatetimeField(null=True)
