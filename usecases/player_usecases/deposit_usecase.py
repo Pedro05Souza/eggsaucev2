@@ -46,6 +46,8 @@ class DepositUsecase:
 
         return await send_bot_embed(
             ctx=self.ctx,
-            title="✅ Deposit was sucessfull",
-            description=f"You deposited **{self.amount}** eggbux successfully in your bank account.",
+            embed_params={
+                "title": "✅ Deposit was sucessfull",
+                "description": f"You deposited **{self.amount}** eggbux successfully in your bank account.",
+            },
         )

@@ -65,7 +65,6 @@ class BalanceUsecase:
 
         return await send_bot_embed(
             ctx=self._ctx,
-            title=f"💼 {self._ctx.author.display_name}'s balance",
-            description=description,
+            embed_params={"title": f"💼 {self._ctx.author.display_name}'s balance", "description": description},
             thumbnail_url=avatar_to_send,
         )

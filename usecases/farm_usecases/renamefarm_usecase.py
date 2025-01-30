@@ -35,6 +35,8 @@ class RenameFarmUsecase:
 
         return await send_bot_embed(
             ctx=self.ctx,
-            title="✅ Success!",
-            description=f"You sucessfully has change your farm name to **{self.new_name}**!!",
+            embed_params={
+                "title": "✅ Success!",
+                "description": f"You sucessfully has change your farm name to **{self.new_name}**!!",
+            },
         )

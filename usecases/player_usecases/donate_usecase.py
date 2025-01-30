@@ -13,6 +13,7 @@ from tools.constants import (
 
 __all__ = ("DonateUsecase",)
 
+
 class DonateUsecase:
 
     def __init__(
@@ -52,6 +53,8 @@ class DonateUsecase:
             await self._player_cache.synchronizer(recipient_entity)
             return await send_bot_embed(
                 ctx=self._ctx,
-                title="✅ Donation successful",
-                description=f"You donated {self._donation_amount} eggbux to {self._recipient.mention}",
+                embed_params={
+                    "title": "✅ Donation successful",
+                    "description": f"You donated {self._donation_amount} eggbux to {self._recipient.mention}",
+                },
             )

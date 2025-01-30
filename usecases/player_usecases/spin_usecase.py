@@ -68,8 +68,10 @@ class SpinUsecase:
 
         await send_bot_embed(
             ctx=self._ctx,
-            title="🎰 Spin result",
-            description=embed_description,
+            embed_params={
+                "title": "🎰 Spin result",
+                "description": embed_description,
+            },
         )
 
     async def _calculate_spin_result(self) -> _SpinData:

@@ -49,7 +49,9 @@ class FarmUseCase:
         )
         await send_bot_embed(
             self.ctx,
-            title=farm_title,
-            description=farm_chickens,
+            embed_params={
+                "title": farm_title,
+                "description": farm_chickens,
+            },
             thumbnail_url=avatar_to_send,
         )

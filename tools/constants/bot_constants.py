@@ -1,3 +1,9 @@
+from typing import TypedDict, Any, Union
+from datetime import datetime
+from discord import Colour
+from discord.types.embed import EmbedType
+
+
 AMOUNT_PER_BANK_UPGRADE = 10000
 SECONDS_TO_SALARY_DROP = 3600
 SECONDS_TO_FARM_ROLL = 3600
@@ -24,3 +30,11 @@ def get_titles_salaries() -> dict[str, int]:
 
 def get_titles_emojis() -> dict[str, str]:
     return {"Egg Novice": "🥚", "Egg Apprentice": "🍳", "Egg Wizard": "🪄", "Egg King": "👑"}
+
+class EmbedParams(TypedDict, total=False):
+    title: Any | None
+    type: EmbedType
+    url: Any | None
+    description: Any
+    timestamp: Union[datetime, None]
+    colour: Union[int, Colour, None]

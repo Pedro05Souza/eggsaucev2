@@ -4,7 +4,7 @@ from discord.ext.commands import Context
 from discord.ext.commands._types import BotT
 from discord import Interaction, Embed, Forbidden, ButtonStyle
 from discord.ui import View, Button
-from .constants import REASON_DM_FAILURE
+from .constants import REASON_DM_FAILURE, EmbedParams
 
 __all__ = [
     "send_bot_embed",
@@ -20,12 +20,12 @@ __all__ = [
 
 async def send_bot_embed(
     ctx: Context[BotT] | Interaction,
+    embed_params: EmbedParams,
     color: str = "#FEE75C",
     footer_text: Optional[str] = None,
     ephemeral: bool = False,
     thumbnail_url: Optional[str] = None,
     view: Optional[View] = None,
-    **kwargs
 ) -> None:
     """This function is responsable for sending an embed for the user.
 
@@ -44,7 +44,7 @@ async def send_bot_embed(
     Raises:
         ValueError: If ephemeral and is_dm are both True or if ephemeral is True and the context is not an interaction.
     """
-    embed = embed_builder(color=color, footer_text=footer_text, thumbnail_url=thumbnail_url, **kwargs)
+    embed = embed_builder(color=color, footer_text=footer_text, thumbnail_url=thumbnail_url, embed_params=embed_params)
 
     if isinstance(ctx, Interaction):
         await _handle_interaction_respose(ctx, embed, ephemeral, view)
@@ -77,7 +77,10 @@ async def _handle_interaction_respose(
 
 
 def embed_builder(
-    footer_text: Optional[str] = None, thumbnail_url: Optional[str] = None, color: str = "#FEE75C", **kwargs
+    embed_params: EmbedParams,
+    footer_text: Optional[str] = None,
+    thumbnail_url: Optional[str] = None,
+    color: str = "#FEE75C",
 ) -> Embed:
     """This function is responsable for building the embed that will be sent to the user.
 
@@ -89,7 +92,11 @@ def embed_builder(
     Returns:
         discord.Embed: The embed that will be sent to the user.
     """
-    embed = Embed(color=int(color.replace("#", ""), 16), **kwargs)
+
+    if not embed_params.get("type"):
+        embed_params["type"] = "rich"
+
+    embed = Embed(color=int(color.replace("#", ""), 16), **embed_params)
 
     if footer_text:
         embed.set_footer(text=footer_text)
@@ -120,8 +127,10 @@ async def send_user_dm(ctx: Context[BotT] | Interaction, embed: Embed) -> None:
     except Forbidden:
         await send_bot_embed(
             ctx,
-            title="Error",
-            description=REASON_DM_FAILURE,
+            embed_params={
+                "title": "❌ Failed to send DM",
+                "description": REASON_DM_FAILURE,
+            },
             color="#FF0000",
         )
         return
@@ -138,8 +147,10 @@ async def send_failed_embed(ctx: Union[Context[BotT], Interaction], description:
     return await send_bot_embed(
         ctx=ctx,
         ephemeral=ephemeral,
-        title="❌ Command failed",
-        description=description,
+        embed_params={
+            "title": "❌ Command failed",
+            "description": description,
+        }
     )
 
 
@@ -178,7 +189,7 @@ async def confirmation_popup(
     ctx: Context[BotT] | Interaction,
     description: str,
     title: str = "🔔 Please Confirm Your Action",
-    ephemeral=True,
+    ephemeral: bool = True,
 ) -> bool:
     """
     Function that creates a confirmation popup.
@@ -194,7 +205,7 @@ async def confirmation_popup(
 
     view = view_button_builder(cancel_button, confirm_button)
 
-    await send_bot_embed(ctx, ephemeral=ephemeral, view=view, description=description, title=title)
+    await send_bot_embed(ctx, ephemeral=ephemeral, view=view, embed_params={"title": title, "description": description})
 
     if isinstance(ctx, Interaction):
         client = ctx.client

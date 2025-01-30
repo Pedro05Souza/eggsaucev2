@@ -37,6 +37,8 @@ class WithdrawUsecase:
 
         return await send_bot_embed(
             ctx=self.ctx,
-            title="✅ Success!",
-            description=f"You withdrew **{self.amount}** eggbux from the bank.",
+            embed_params={
+                "title": "✅ Success!",
+                "description": f"You withdrew **{self.amount}** eggbux from the bank.",
+            },
         )

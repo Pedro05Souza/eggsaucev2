@@ -5,6 +5,7 @@ from tools import BotConfigCacheService, send_bot_embed
 
 __all__ = ["SetPrefixUsecase"]
 
+
 class SetPrefixUsecase:
 
     def __init__(
@@ -24,6 +25,8 @@ class SetPrefixUsecase:
         await self._bot_config_cache.synchronizer(self._bot_config_entity)
         await send_bot_embed(
             ctx=self._ctx,
-            title="✅ Prefix updated",
-            description=f"Prefix has been updated to **{self._new_prefix}**",
+            embed_params={
+                "title": "✅ Prefix updated",
+                "description": f"Prefix has been updated to **{self._new_prefix}**",
+            },
         )

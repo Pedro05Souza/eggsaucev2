@@ -78,7 +78,7 @@ class MarketUsecase:
         )
 
         view = ChickenView(self.farm_entity, generated_chickens, self.player_cache_service, self.farm_cache_service)
-        await send_bot_embed(self.ctx, title=title, description=description, view=view)
+        await send_bot_embed(self.ctx, embed_params={"title": title, "description": description}, view=view)
         await self.farm_cache_service.synchronizer(self.farm_entity)
 
 
@@ -149,19 +149,23 @@ class ChickenView(View):
         self.add_item(self.select)
 
         embed = embed_builder(
-            title="Here are the chickens that were generated for you!",
-            description="\n".join(
-                f"{chicken.emoji} **{chicken.rarity} {chicken.name}** - {chicken.price} eggbux"
-                for chicken in self.chickens
-            ),
+            embed_params={
+                "title": "Here are the chickens that were generated for you!",
+                "description": "\n".join(
+                    f"{chicken.emoji} **{chicken.rarity} {chicken.name}** - {chicken.price} eggbux"
+                    for chicken in self.chickens
+                ),
+            },
         )
 
         await interaction.message.edit(view=self, embed=embed)  # type: ignore
         await send_bot_embed(
             interaction,
-            description=f"✅ **{interaction.user.display_name}** has successfully bought a"
-            + f"{selected_chicken.emoji} **{selected_chicken.rarity} {selected_chicken.name}**"
-            + f" for **{selected_chicken.price}** eggbux!",
+            embed_params={
+                "description": f"✅ **{interaction.user.display_name}** has successfully bought a"
+                + f"{selected_chicken.emoji} **{selected_chicken.rarity} {selected_chicken.name}**"
+                + f" for **{selected_chicken.price}** eggbux!"
+            },
         )
 
         async with in_transaction():

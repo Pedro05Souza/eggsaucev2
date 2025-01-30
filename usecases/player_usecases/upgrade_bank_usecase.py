@@ -42,6 +42,8 @@ class UpgradeBankUsecase:
 
         return await send_bot_embed(
             ctx=self._ctx,
-            title="✅ Bank limit upgraded",
-            description=f"Your bank limit has been upgraded to **{self._player_entity.bank_capacity}** eggbux!",
+            embed_params={
+                "title": "✅ Bank limit upgraded",
+                "description": f"Your bank limit has been upgraded to **{self._player_entity.bank_capacity}** eggbux!",
+            },
         )

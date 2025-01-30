@@ -16,6 +16,7 @@ from tools.constants import (
 
 __all__ = ("StealUsecase",)
 
+
 class StealUsecase:
 
     def __init__(
@@ -65,6 +66,8 @@ class StealUsecase:
             await self._player_cache.synchronizer(target_entity)
             return await send_bot_embed(
                 ctx=self._ctx,
-                title="✅ Steal successful",
-                description=f"You stole **{stolen_amount}** eggbux from {self._target.mention}",
+                embed_params={
+                    "title": "✅ Steal successful",
+                    "description": f"You stole **{stolen_amount}** eggbux from {self._target.mention}",
+                },
             )

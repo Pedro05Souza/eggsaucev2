@@ -27,4 +27,7 @@ class SetChannelUsecase:
 
         self._bot_config_entity.allowed_channels.add(self._channel_id)
         await self._bot_config_cache_service.synchronizer(self._bot_config_entity)
-        await send_bot_embed(self._ctx, title="✅ Channel set successfully!", description="Channel set successfully!")
+        await send_bot_embed(
+            self._ctx,
+            embed_params={"title": "✅ Channel set successfully!", "description": "Channel set successfully!"},
+        )

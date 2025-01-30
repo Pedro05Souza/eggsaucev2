@@ -53,7 +53,8 @@ class BuyFarmerUseCase:
         ]
         view = view_button_builder(*buttons)
         embed = embed_builder(
-            title=title, description=description, footer_text="Click on any of the emojis to buy a farmer."
+            embed_params={"title": title, "description": description},
+            footer_text="Click on any of the emojis to buy a farmer.",
         )
 
         message = await self.ctx.send(embed=embed, view=view)
@@ -70,7 +71,7 @@ class BuyFarmerUseCase:
 
             if self.farm_entity.farmer == selected_farmer:
                 await interaction.edit_original_response(
-                    embed=embed_builder(description="❌ You already have this farmer."), view=None
+                    embed=embed_builder(embed_params={"description": "❌ You already have this farmer."}), view=None
                 )
                 return
 
@@ -82,10 +83,12 @@ class BuyFarmerUseCase:
                 await self.farm_cache.synchronizer(self.farm_entity)
 
             await interaction.edit_original_response(
-                embed=embed_builder(description="✅ Farmer bought successfully."), view=None
+                embed=embed_builder(embed_params={"description": "✅ Farmer bought successfully."}), view=None
             )
         except Exception:
-            await message.edit(embed=embed_builder(description="❌ Farmer purchase timed out."), view=None)
+            await message.edit(
+                embed=embed_builder(embed_params={"description": "❌ Farmer purchase timed out."}), view=None
+            )
             return
 
     def _farmer_descriptions(self) -> str:

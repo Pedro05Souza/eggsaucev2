@@ -8,6 +8,7 @@ from tools.constants import REASON_INSUFFICIENT_BALANCE, REASON_INVALID_AMOUNT
 
 __all__ = ["SlotsUsecase"]
 
+
 class SlotsUsecase:
 
     def __init__(
@@ -56,7 +57,7 @@ class SlotsUsecase:
             description += f"\n\n❌ **LOSE** ❌\nYou lost **{self._amount_betted}** eggbux!"
 
         await self._player_cache.synchronizer(self._player_entity)
-        return await send_bot_embed(ctx=self._ctx, title=title, description=description)
+        return await send_bot_embed(ctx=self._ctx, embed_params={"title": title, "description": description})
 
     def _get_fruits(self) -> list[str]:
         return ["🍇", "🍋", "🍒", "🍊", "🍉"]

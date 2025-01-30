@@ -5,6 +5,7 @@ from tools import BotConfigCacheService, send_bot_embed, send_failed_embed
 
 __all__ = ["UnsetChannelUsecase"]
 
+
 class UnsetChannelUsecase:
     def __init__(
         self,
@@ -26,5 +27,6 @@ class UnsetChannelUsecase:
         self._bot_config_entity.allowed_channels.remove(self._channel_id)
         await self._bot_config_cache_service.synchronizer(self._bot_config_entity)
         await send_bot_embed(
-            self._ctx, title="✅ Channel unset successfully!", description="Channel unset successfully!"
+            self._ctx,
+            embed_params={"title": "✅ Channel unset successfully!", "description": "Channel unset successfully!"},
         )
