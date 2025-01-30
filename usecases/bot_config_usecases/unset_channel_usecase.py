@@ -1,4 +1,5 @@
 from discord.ext.commands import Context
+from discord.ext.commands._types import BotT
 from entities import BotConfigEntity
 from tools import BotConfigCacheService, send_bot_embed, send_failed_embed
 
@@ -7,7 +8,7 @@ __all__ = ["UnsetChannelUsecase"]
 class UnsetChannelUsecase:
     def __init__(
         self,
-        ctx: Context,
+        ctx: Context[BotT],
         channel_id: int,
         bot_config_entity: BotConfigEntity,
         bot_config_cache_service: BotConfigCacheService,

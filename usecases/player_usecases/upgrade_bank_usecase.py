@@ -1,4 +1,5 @@
 from discord.ext.commands import Context
+from discord.ext.commands._types import BotT
 from entities import PlayerEntity
 from tools import (
     PlayerCacheService,
@@ -13,7 +14,7 @@ from tools.constants import REASON_INSUFFICIENT_BALANCE
 
 class UpgradeBankUsecase:
 
-    def __init__(self, ctx: Context, player_entity: PlayerEntity, player_cache: PlayerCacheService) -> None:
+    def __init__(self, ctx: Context[BotT], player_entity: PlayerEntity, player_cache: PlayerCacheService) -> None:
         self._ctx = ctx
         self._player_entity = player_entity
         self._player_cache = player_cache

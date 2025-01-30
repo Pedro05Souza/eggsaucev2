@@ -1,4 +1,5 @@
 from discord.ext.commands import Context
+from discord.ext.commands._types import BotT
 from discord import Member
 from tools.constants import REASON_INVALID_USER
 from tools import get_quality_text, FarmCacheService, send_bot_embed, send_failed_embed
@@ -8,7 +9,7 @@ __all__ = ["FarmUseCase"]
 
 class FarmUseCase:
 
-    def __init__(self, ctx: Context, discord_member: Member | None, farm_cache_service: FarmCacheService) -> None:
+    def __init__(self, ctx: Context[BotT], discord_member: Member | None, farm_cache_service: FarmCacheService) -> None:
         self.ctx = ctx
         self.discord_member = discord_member
         self.farm_cache_service = farm_cache_service

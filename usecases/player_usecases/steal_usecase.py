@@ -1,5 +1,6 @@
 from random import Random
 from discord.ext.commands import Context
+from discord.ext.commands._types import BotT
 from discord import Member
 from tortoise.transactions import in_transaction
 from entities import PlayerEntity
@@ -19,7 +20,7 @@ class StealUsecase:
 
     def __init__(
         self,
-        ctx: Context,
+        ctx: Context[BotT],
         stealer: PlayerEntity,
         target: Member,
         player_cache: PlayerCacheService,

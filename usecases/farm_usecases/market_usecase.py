@@ -1,5 +1,6 @@
 from datetime import timedelta, datetime
 from discord.ext.commands import Context
+from discord.ext.commands._types import BotT
 from discord.utils import format_dt
 from discord import SelectOption, Interaction
 from discord.ui import View, Select
@@ -33,7 +34,7 @@ class MarketUsecase:
 
     def __init__(
         self,
-        ctx: Context,
+        ctx: Context[BotT],
         chicken_generator_service: ChickenGeneratorService,
         farm_cache_service: FarmCacheService,
         player_cache_service: PlayerCacheService,

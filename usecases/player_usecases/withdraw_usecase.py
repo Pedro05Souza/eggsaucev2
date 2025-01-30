@@ -1,4 +1,5 @@
 from discord.ext.commands import Context
+from discord.ext.commands._types import BotT
 from entities import PlayerEntity
 from tools import (
     PlayerCacheService,
@@ -14,7 +15,7 @@ __all__ = ["WithdrawUsecase"]
 class WithdrawUsecase:
 
     def __init__(
-        self, ctx: Context, player_entity: PlayerEntity, player_cache: PlayerCacheService, amount: int
+        self, ctx: Context[BotT], player_entity: PlayerEntity, player_cache: PlayerCacheService, amount: int
     ) -> None:
         self.ctx = ctx
         self.player_entity = player_entity

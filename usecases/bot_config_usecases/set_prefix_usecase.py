@@ -1,4 +1,5 @@
 from discord.ext.commands import Context
+from discord.ext.commands._types import BotT
 from entities import BotConfigEntity
 from tools import BotConfigCacheService, send_bot_embed
 
@@ -8,7 +9,7 @@ class SetPrefixUsecase:
 
     def __init__(
         self,
-        ctx: Context,
+        ctx: Context[BotT],
         bot_config_entity: BotConfigEntity,
         bot_config_cache: BotConfigCacheService,
         new_prefix: str,

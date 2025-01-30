@@ -1,5 +1,6 @@
 from discord import Member
 from discord.ext.commands import Context
+from discord.ext.commands._types import BotT
 from tortoise.transactions import in_transaction
 from entities import PlayerEntity
 from tools import send_bot_embed, send_failed_embed, PlayerCacheService
@@ -16,7 +17,7 @@ class DonateUsecase:
 
     def __init__(
         self,
-        ctx: Context,
+        ctx: Context[BotT],
         donator: PlayerEntity,
         donation_amount: int,
         recipient: Member,
