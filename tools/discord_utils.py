@@ -1,4 +1,5 @@
 from typing import Union, Optional
+from discord import Member
 from discord.ext.commands import Context
 from discord.ext.commands._types import BotT
 from discord import Interaction, Embed, Forbidden, ButtonStyle
@@ -13,6 +14,7 @@ __all__ = [
     "button_builder",
     "view_button_builder",
     "confirmation_popup",
+    "extract_discord_user",
 ]
 
 
@@ -177,7 +179,6 @@ async def confirmation_popup(
     description: str,
     title: str = "🔔 Please Confirm Your Action",
     ephemeral=True,
-    is_dm=False,
 ) -> bool:
     """
     Function that creates a confirmation popup.
@@ -193,7 +194,7 @@ async def confirmation_popup(
 
     view = view_button_builder(cancel_button, confirm_button)
 
-    await send_bot_embed(ctx, ephemeral=ephemeral, is_dm=is_dm, view=view, description=description, title=title)
+    await send_bot_embed(ctx, ephemeral=ephemeral, view=view, description=description, title=title)
 
     if isinstance(ctx, Interaction):
         client = ctx.client
@@ -213,3 +214,17 @@ async def confirmation_popup(
         return False
     except TimeoutError:
         return False
+    
+def extract_discord_user(author: Member, mentioned_user: Optional[Member]) -> Member:
+    """Extracts the discord user from the command.
+
+    Args:
+        author (Member): The author of the command.
+        possible_mentioned_user (Member): The possible mentioned user.
+
+    Returns:
+        Member: The discord user.
+    """
+    if mentioned_user:
+        return mentioned_user
+    return author
