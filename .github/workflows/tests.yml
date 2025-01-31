@@ -41,7 +41,3 @@ jobs:
       - name: Run tests
         run: |
             python -m pytest --import-mode=append tests/
-
-            
-
-
