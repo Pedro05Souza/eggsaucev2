@@ -29,6 +29,10 @@ jobs:
           with:
             python-version: "3.12"
 
+        - name: Install Pytz
+          run: |
+            pip install pytz
+
         - name: Run tests
           run: |
             python -m pytest
