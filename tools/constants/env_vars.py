@@ -1,12 +1,12 @@
 import os
-from typing import Union, List
+from typing import List
 from json import loads
 from dotenv import load_dotenv
 
 __all__ = ["get_env_var"]
 
 
-def get_env_var(enviroment_variable: str) -> Union[str, List[str]]:
+def get_env_var(enviroment_variable: str) -> str | List[str]:
     load_dotenv()
     env_var = os.getenv(enviroment_variable)
 
