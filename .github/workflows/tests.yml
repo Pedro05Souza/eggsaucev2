@@ -6,10 +6,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    env:
+        DATABASE_URL: postgres://postgres:postgres@eggsauce_db:5432/eggsauce
     strategy:
       matrix:
         python-version: [3.12]
-  
+          
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
