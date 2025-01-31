@@ -163,7 +163,9 @@ class PlayerCacheService(TTLCacheService[int, "PlayerEntity"]):
         await self._update_player_bank_entity(cache_entry, proxy_entity)
         await self._update_player_entity(cache_entry, proxy_entity)
 
-    async def synchronizer(self, entity: "PlayerEntity", save_to_db: bool = True) -> None:
+    async def synchronizer(
+        self, entity: "PlayerEntity" | MutableProxy["PlayerEntity"], save_to_db: bool = True
+    ) -> None:
         """Synchronizes the player entity with the cache and database (if needed).
 
         Args:

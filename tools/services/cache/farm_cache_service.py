@@ -114,12 +114,12 @@ class FarmCacheService(TTLCacheService[int, "FarmEntity"]):
         await self._update_farm_chickens(cache_entry, farm_entity_proxy)
         await self._update_farm(cache_entry, farm_entity_proxy)
 
-    async def synchronizer(self, farm_entity: " FarmEntity") -> None:
+    async def synchronizer(self, entity: "FarmEntity" | MutableProxy["FarmEntity"]) -> None:
         """Synchronizes the farm entity with the database.
 
         Args:
             farm_entity (FarmEntity): The farm entity to synchronize.
         """
         async with in_transaction():
-            if isinstance(farm_entity, MutableProxy):
-                await self._update_farm_entity(farm_entity)
+            if isinstance(entity, MutableProxy):
+                await self._update_farm_entity(entity)
