@@ -32,3 +32,6 @@ reportMissingTypeStubs = "none"
 addopts = [
     "--import-mode=importlib",
 ]
+
+[tool.isort]
+profile = "black"
