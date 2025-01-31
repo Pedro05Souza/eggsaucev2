@@ -1,7 +1,6 @@
-from typing import TypedDict, Optional
+from typing import TypedDict, Optional, TYPE_CHECKING
 from datetime import datetime, timedelta, timezone
 from math import ceil
-from entities import PlayerEntity
 from tools.constants import SECONDS_TO_SALARY_DROP, SALARY_HOURS_THRESHOLD
 from tools.utils import get_salary_from_title
 
@@ -12,11 +11,15 @@ class EarningsType(TypedDict):
     cornfield: int
 
 
+if TYPE_CHECKING:
+    from entities import PlayerEntity
+
+
 __all__ = ["AwayTimeEarningsService", "EarningsType"]
 
 
 class AwayTimeEarningsService:
-    def _check_away_time_salary(self, player_entity: PlayerEntity, earnings_data: EarningsType) -> None:
+    def _check_away_time_salary(self, player_entity: "PlayerEntity", earnings_data: EarningsType) -> None:
         if not player_entity.last_bought_title or not player_entity.next_salary_time:
             return
 
@@ -43,7 +46,7 @@ class AwayTimeEarningsService:
         player_entity.balance += total_gained_salary
         earnings_data["salary"] = total_gained_salary
 
-    async def calculate_away_time_earnings(self, player_entity: PlayerEntity) -> Optional[EarningsType]:
+    async def calculate_away_time_earnings(self, player_entity: "PlayerEntity") -> Optional[EarningsType]:
         earnings_data: EarningsType = {"salary": 0, "farm": 0, "cornfield": 0}
         self._check_away_time_salary(player_entity, earnings_data)
 

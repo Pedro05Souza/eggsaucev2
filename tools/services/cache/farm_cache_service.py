@@ -1,17 +1,19 @@
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from asyncio import Lock
 from tortoise.transactions import in_transaction
 from tools.constants import NotInCacheException, NoUpdateRequiredException
 from tools.utils import chicken_entity_to_model
 from repositories import FarmRepositoryProtocol
-from entities import FarmEntity
 from .ttl_cache_service import TTLCacheService
 from ._proxy_object import MutableProxy
+
+if TYPE_CHECKING:
+    from entities import FarmEntity
 
 __all__ = ["FarmCacheService"]
 
 
-class FarmCacheService(TTLCacheService[int, FarmEntity]):
+class FarmCacheService(TTLCacheService[int, "FarmEntity"]):
 
     def __init__(
         self,
@@ -24,7 +26,7 @@ class FarmCacheService(TTLCacheService[int, FarmEntity]):
         self._lock = Lock()
         self.farm_repository = farm_repository
 
-    async def get_or_fetch_farm_entity(self, discord_user_id: int) -> Optional[FarmEntity]:
+    async def get_or_fetch_farm_entity(self, discord_user_id: int) -> Optional["FarmEntity"]:
         """Gets or fetches a farm entity to from cache.
         If the entity is not in the cache, it will be fetched from the database.
 
@@ -47,7 +49,7 @@ class FarmCacheService(TTLCacheService[int, FarmEntity]):
                 self.add_item(discord_user_id, farm_entity)
             return MutableProxy(farm_entity)  # type: ignore
 
-    async def create_farm(self, discord_user_id: int) -> FarmEntity:
+    async def create_farm(self, discord_user_id: int) -> "FarmEntity":
         """Create a farm entity for a discord user.
 
         Args:
@@ -61,7 +63,9 @@ class FarmCacheService(TTLCacheService[int, FarmEntity]):
             self.add_item(discord_user_id, farm_entity)
             return farm_entity
 
-    async def _update_farm_chickens(self, cache_entry: FarmEntity, farm_entity_proxy: MutableProxy[FarmEntity]) -> None:
+    async def _update_farm_chickens(
+        self, cache_entry: "FarmEntity", farm_entity_proxy: MutableProxy["FarmEntity"]
+    ) -> None:
         if farm_entity_proxy.modified_fields.get("chickens") is None:
             return
 
@@ -85,7 +89,7 @@ class FarmCacheService(TTLCacheService[int, FarmEntity]):
         async with self._revert_if_exception(cache_entry, previous_state, farm_entity_proxy):
             await self.farm_repository.bulk_upsert_farm_chicken(chicken_models, is_updated)
 
-    async def _update_farm(self, cache_entry: FarmEntity, farm_entity_proxy: MutableProxy[FarmEntity]) -> None:
+    async def _update_farm(self, cache_entry: "FarmEntity", farm_entity_proxy: MutableProxy["FarmEntity"]) -> None:
         previous_state = {}
 
         for key, value in farm_entity_proxy.modified_fields.items():
@@ -98,7 +102,7 @@ class FarmCacheService(TTLCacheService[int, FarmEntity]):
         async with self._revert_if_exception(cache_entry, previous_state, farm_entity_proxy):
             await self.farm_repository.update_farm(cache_entry)
 
-    async def _update_farm_entity(self, farm_entity_proxy: MutableProxy[FarmEntity]) -> None:
+    async def _update_farm_entity(self, farm_entity_proxy: MutableProxy["FarmEntity"]) -> None:
         if not farm_entity_proxy.is_update_required:
             raise NoUpdateRequiredException()
 
@@ -110,7 +114,7 @@ class FarmCacheService(TTLCacheService[int, FarmEntity]):
         await self._update_farm_chickens(cache_entry, farm_entity_proxy)
         await self._update_farm(cache_entry, farm_entity_proxy)
 
-    async def synchronizer(self, farm_entity: FarmEntity) -> None:
+    async def synchronizer(self, farm_entity: " FarmEntity") -> None:
         """Synchronizes the farm entity with the database.
 
         Args:

@@ -27,3 +27,6 @@ reportUnusedClass = "warning"
 reportUnusedVariable = "warning"
 reportIncompatibleMethodOverride = "error"
 reportMissingTypeStubs = "none"
+
+[tool.pytest.ini_options]
+pythonpath = ["tests"]
