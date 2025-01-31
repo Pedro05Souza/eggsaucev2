@@ -103,7 +103,7 @@ class BuyFarmerUseCase:
             f"⚔️ Warrior Farmer: Adds **{farmers_dict['warrior']}** extra chickens to the farm.\n\n"
             f"🎁 Generous Farmer: Generates **{farmers_dict['generous']}** extra chickens in the market\n\n"
             f"🌱 Sustainable Farmer: Automatically feeds the chickens every"
-            f"**{farmers_dict['sustainable']['auto_feed_time_seconds']}** seconds"
+            f" **{farmers_dict['sustainable']['auto_feed_time_seconds']}** seconds"
             f" and increases happiness between **{farmers_dict['sustainable']['min_happiness_gain']}%**"
             f" to **{farmers_dict['sustainable']['max_happiness_gain']}%**."
         )
