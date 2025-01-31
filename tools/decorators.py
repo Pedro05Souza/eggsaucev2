@@ -1,10 +1,13 @@
+from typing import TYPE_CHECKING
 from discord.ext.commands import Context, check
 from discord.app_commands import Choice
 from discord.ext.commands._types import BotT
 from discord import User, Interaction
 from tools.discord_utils import embed_builder, send_user_dm
-from tools.services import PlayerCacheService, BotConfigCacheService, FarmCacheService
 from tools.constants import get_env_var
+
+if TYPE_CHECKING:
+    from services import PlayerCacheService, BotConfigCacheService, FarmCacheService
 
 __all__ = [
     "dev_only",
@@ -29,7 +32,7 @@ def dev_only():
     return check(predicate)
 
 
-async def is_using_valid_channel(ctx: Context[BotT], bot_config_cache: BotConfigCacheService):
+async def is_using_valid_channel(ctx: Context[BotT], bot_config_cache: "BotConfigCacheService"):
     if ctx.guild is None:
         return True
 
@@ -48,7 +51,7 @@ async def is_using_valid_channel(ctx: Context[BotT], bot_config_cache: BotConfig
     return False
 
 
-async def ensure_database_user(ctx: Context[BotT], player_cache: PlayerCacheService) -> None:
+async def ensure_database_user(ctx: Context[BotT], player_cache: "PlayerCacheService") -> None:
     """Fetches or creates the player entity from the cache or database and attaches it to the context[BotT].
 
     Args:
@@ -63,7 +66,7 @@ async def ensure_database_user(ctx: Context[BotT], player_cache: PlayerCacheServ
     ctx.player_entity = player_entity
 
 
-async def ensure_farm_user(ctx: Context[BotT], farm_cache: FarmCacheService) -> None:
+async def ensure_farm_user(ctx: Context[BotT], farm_cache: "FarmCacheService") -> None:
     """Fetches or creates the farm entity from the cache or database and attaches it to the context[BotT].
 
     Args:
@@ -78,7 +81,7 @@ async def ensure_farm_user(ctx: Context[BotT], farm_cache: FarmCacheService) -> 
     ctx.farm_entity = farm_entity
 
 
-async def ensure_database_config(ctx: Context[BotT], bot_config_cache: BotConfigCacheService) -> None:
+async def ensure_database_config(ctx: Context[BotT], bot_config_cache: "BotConfigCacheService") -> None:
     """Fetches or creates the bot config entity from the cache or database and attaches it to the context[BotT].
 
     Args:

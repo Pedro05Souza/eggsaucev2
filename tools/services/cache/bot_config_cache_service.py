@@ -1,17 +1,19 @@
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from asyncio import Lock
 from tortoise.transactions import in_transaction
-from entities import BotConfigEntity
 from tools.constants import NotInCacheException, NoUpdateRequiredException
 from repositories import BotConfigRepositoryProtocol
 from .ttl_cache_service import TTLCacheService
 from ._proxy_object import MutableProxy
 
+if TYPE_CHECKING:
+    from entities import BotConfigEntity
+
 
 __all__ = ["BotConfigCacheService"]
 
 
-class BotConfigCacheService(TTLCacheService[int, BotConfigEntity]):
+class BotConfigCacheService(TTLCacheService[int, "BotConfigEntity"]):
 
     def __init__(
         self,
@@ -24,7 +26,7 @@ class BotConfigCacheService(TTLCacheService[int, BotConfigEntity]):
         self.bot_config_repository = bot_config_repository
         self._lock = Lock()
 
-    async def get_or_fetch_bot_config_entity(self, discord_guild_id: int) -> Optional[BotConfigEntity]:
+    async def get_or_fetch_bot_config_entity(self, discord_guild_id: int) -> Optional["BotConfigEntity"]:
         """Gets or fetches a guild config entity from the cache. If the entity is not in the cache,
         it will be fetched from the database.
 
@@ -50,7 +52,7 @@ class BotConfigCacheService(TTLCacheService[int, BotConfigEntity]):
 
             return MutableProxy(guild_config)  # type: ignore
 
-    async def create_bot_config(self, discord_guild_id: int) -> BotConfigEntity:
+    async def create_bot_config(self, discord_guild_id: int) ->" BotConfigEntity":
         """Creates a guild config entity in the cache and the database.
 
         Args:
@@ -65,7 +67,7 @@ class BotConfigCacheService(TTLCacheService[int, BotConfigEntity]):
         return bot_config_entity
 
     async def _has_changed_channels(
-        self, cache_entry: BotConfigEntity, bot_config_proxy: MutableProxy[BotConfigEntity]
+        self, cache_entry: "BotConfigEntity", bot_config_proxy: MutableProxy["BotConfigEntity"]
     ) -> None:
         """Checks if the bot config entity has deleted channels.
 
@@ -103,7 +105,7 @@ class BotConfigCacheService(TTLCacheService[int, BotConfigEntity]):
                 return await self.bot_config_repository.create_allowed_channel(cache_entry.id, created_channel)
 
     async def _update_bot_config(
-        self, cache_entry: BotConfigEntity, bot_config_proxy: MutableProxy[BotConfigEntity]
+        self, cache_entry: "BotConfigEntity", bot_config_proxy: MutableProxy["BotConfigEntity"]
     ) -> None:
         """Updates the bot config entity.
 
@@ -120,7 +122,7 @@ class BotConfigCacheService(TTLCacheService[int, BotConfigEntity]):
             async with self._revert_if_exception(cache_entry, previous_state, bot_config_proxy):
                 await self.bot_config_repository.update_bot_config(cache_entry)
 
-    async def _update_bot_config_checks(self, bot_config_proxy: MutableProxy[BotConfigEntity]) -> None:
+    async def _update_bot_config_checks(self, bot_config_proxy: MutableProxy["BotConfigEntity"]) -> None:
         """
         Checks if the bot config entity has changed.
 
@@ -141,7 +143,7 @@ class BotConfigCacheService(TTLCacheService[int, BotConfigEntity]):
         await self._has_changed_channels(cache_entry, bot_config_proxy)
         await self._update_bot_config(cache_entry, bot_config_proxy)
 
-    async def synchronizer(self, entity: BotConfigEntity) -> None:
+    async def synchronizer(self, entity: "BotConfigEntity") -> None:
         """Synchronizes the bot config entity with the cache and the database.
 
         Args:

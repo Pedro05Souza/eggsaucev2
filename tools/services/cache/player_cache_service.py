@@ -1,17 +1,19 @@
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, TYPE_CHECKING
 from asyncio import Lock
 from tortoise.transactions import in_transaction
-from entities import PlayerEntity
 from repositories import PlayerRepositoryProtocol
 from tools.constants import NotInCacheException, NoUpdateRequiredException
 from tools.utils import player_entity_to_model
 from .ttl_cache_service import TTLCacheService
 from ._proxy_object import MutableProxy
 
+if TYPE_CHECKING:
+    from entities import PlayerEntity
+
 __all__ = ["PlayerCacheService"]
 
 
-class PlayerCacheService(TTLCacheService[int, PlayerEntity]):
+class PlayerCacheService(TTLCacheService[int, "PlayerEntity"]):
 
     def __init__(
         self,
@@ -28,12 +30,12 @@ class PlayerCacheService(TTLCacheService[int, PlayerEntity]):
     async def get_or_fetch_player_entity(
         self,
         discord_user_id: int,
-    ) -> Optional[PlayerEntity]:
+    ) -> Optional["PlayerEntity"]:
         """Gets or fetches a player entity to from cache.
         If the entity is not in the cache, it will be fetched from the database.
 
         Args:
-            discord_user_id_or_entity (int): The Discord ID of the player if not found, 
+            discord_user_id_or_entity (int): The Discord ID of the player if not found,
             it will be fetched from the database.
 
         Returns:
@@ -56,7 +58,7 @@ class PlayerCacheService(TTLCacheService[int, PlayerEntity]):
             if not player:
                 return None
 
-    async def create_player(self, discord_user_id: int) -> PlayerEntity:
+    async def create_player(self, discord_user_id: int) -> "PlayerEntity":
         """Creates a player in the database and adds it to the cache.
 
         Args:
@@ -84,7 +86,9 @@ class PlayerCacheService(TTLCacheService[int, PlayerEntity]):
             await self.player_repository.bulk_update_players(items)
         self._logger.info("Saved %s expired or removed items to the database.", len(items))
 
-    async def _update_player_bank_entity(self, entity: PlayerEntity, player_proxy: MutableProxy[PlayerEntity]) -> None:
+    async def _update_player_bank_entity(
+        self, entity: "PlayerEntity", player_proxy: MutableProxy["PlayerEntity"]
+    ) -> None:
         """Updates the player bank entity if needed.
 
         Args:
@@ -106,7 +110,7 @@ class PlayerCacheService(TTLCacheService[int, PlayerEntity]):
         async with self._revert_if_exception(entity, previous_state, player_proxy):
             await self.player_repository.update_player_bank(entity)
 
-    async def _update_player_entity(self, entity: PlayerEntity, player_proxy: MutableProxy[PlayerEntity]) -> None:
+    async def _update_player_entity(self, entity: "PlayerEntity", player_proxy: MutableProxy["PlayerEntity"]) -> None:
         """Updates the player entity if needed.
 
         Args:
@@ -129,7 +133,7 @@ class PlayerCacheService(TTLCacheService[int, PlayerEntity]):
             async with self._revert_if_exception(entity, previous_state, player_proxy):
                 await self.player_repository.update_player(entity)
 
-    async def _update_player_checks(self, proxy_entity: MutableProxy[PlayerEntity], save_to_db: bool) -> None:
+    async def _update_player_checks(self, proxy_entity: MutableProxy["PlayerEntity"], save_to_db: bool) -> None:
         """Updates the player entity if needed.
 
         Args:
@@ -159,7 +163,7 @@ class PlayerCacheService(TTLCacheService[int, PlayerEntity]):
         await self._update_player_bank_entity(cache_entry, proxy_entity)
         await self._update_player_entity(cache_entry, proxy_entity)
 
-    async def synchronizer(self, entity: PlayerEntity, save_to_db: bool = True) -> None:
+    async def synchronizer(self, entity: "PlayerEntity", save_to_db: bool = True) -> None:
         """Synchronizes the player entity with the cache and database (if needed).
 
         Args:

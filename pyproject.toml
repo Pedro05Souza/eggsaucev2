@@ -28,10 +28,3 @@ reportUnusedVariable = "warning"
 reportIncompatibleMethodOverride = "error"
 reportMissingTypeStubs = "none"
 
-[tool.pytest.ini_options]
-addopts = [
-    "--import-mode=importlib",
-]
-
-[tool.isort]
-profile = "black"
