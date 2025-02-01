@@ -30,3 +30,4 @@ reportMissingTypeStubs = "none"
 
 [tool.pytest.ini_options]
 pythonpath = ["tests"]
+filterwarnings = "ignore::DeprecationWarning"
