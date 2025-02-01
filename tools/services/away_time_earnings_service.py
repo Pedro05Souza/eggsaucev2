@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import TypedDict, Optional, TYPE_CHECKING
 from datetime import datetime, timedelta, timezone
 from math import ceil

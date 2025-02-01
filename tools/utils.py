@@ -1,3 +1,4 @@
+from __future__ import annotations
 from logging import Logger, config, getLogger
 from typing import Literal, TYPE_CHECKING, Optional
 from uuid import uuid4

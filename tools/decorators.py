@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import TYPE_CHECKING
 from discord.ext.commands import Context, check
 from discord.app_commands import Choice

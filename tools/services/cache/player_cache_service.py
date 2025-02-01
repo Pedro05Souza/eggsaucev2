@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Optional, Dict, Any, TYPE_CHECKING
 from asyncio import Lock
 from tortoise.transactions import in_transaction
@@ -9,7 +10,7 @@ from ._proxy_object import MutableProxy
 
 if TYPE_CHECKING:
     from entities import PlayerEntity
-
+    
 __all__ = ["PlayerCacheService"]
 
 
