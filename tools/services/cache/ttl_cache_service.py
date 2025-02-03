@@ -45,21 +45,38 @@ class TTLCacheService(CacheBase[KT, VT]):
         return items
 
     @asynccontextmanager
-    async def remove_if_exception(self, *keys: KT) -> AsyncGenerator[None, Any]:
+    async def remove_if_exception(self, *keys: KT, propagate_exception: bool = False) -> AsyncGenerator[None, Any]:
         """Removes the item if an exception occurs
 
         Args:
             key (KT): The key of the item to remove
+            propagate_exception (bool, optional): Whether to raise the exception after removing the item. 
+            Defaults to False.
+            This is useful when there are nested context managers 
+            and the exception should be propagated to the outer context manager.
+
+            Example:
+
+            ```python
+            async with self._cache.remove_if_exception(key):
+                async with self._another_cache.remove_if_exception(another_key, propagate_exception=True):
+                    # Do something
+
+            # If an exception occurs in the inner context manager, 
+            # the error will be propagated to the outer context manager, deleting both items.
+            ```
         Returns:
             AsyncGenerator[None, Any]: _description_
         """
         try:
             yield
         except Exception:
-            self._logger.exception("An error occurred while processing the cache")
-
             for key in keys:
                 self._cache.pop(key)
+
+            if propagate_exception:
+                self._logger.exception("An exception occurred, removing the items with keys: %s", keys)
+                raise
 
     async def _save_expired_or_removed_items(self) -> None:
         """Saves the expired or removed items to the database."""

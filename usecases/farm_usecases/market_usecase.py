@@ -138,11 +138,14 @@ class ChickenView(View):
         selected_position = int(interaction.data["values"][0])  # type: ignore
         selected_chicken = self._chickens[selected_position - 1]
 
-        if not self._farm_entity.farmer == "Warrior":
+        if (
+            len(self._farm_entity.chickens) >= FARM_MAX_CHICKENS + farmers_dict["warrior"]
+            and self._farm_entity.farmer == "Warrior"
+        ):
             await send_failed_embed(interaction, REASON_FARM_IS_FULL)
             return
 
-        if len(self._farm_entity.chickens) >= FARM_MAX_CHICKENS + farmers_dict["warrior"]:
+        if len(self._farm_entity.chickens) >= FARM_MAX_CHICKENS:
             await send_failed_embed(interaction, REASON_FARM_IS_FULL)
             return
 
@@ -174,6 +177,11 @@ class ChickenView(View):
             },
         )
 
+        async with self._farm_cache_service.remove_if_exception(self._farm_entity.discord_user_id):
+            async with self._player_cache_service.remove_if_exception(interaction.user.id, propagate_exception=True):
+                await self._player_repository.update_player(player_entity)
+                await self._farm_repository.update_farm(self._farm_entity)
+
         await interaction.message.edit(view=self, embed=embed)  # type: ignore
         await send_bot_embed(
             interaction,
@@ -183,8 +191,3 @@ class ChickenView(View):
                 + f" for **{selected_chicken.price}** eggbux!"
             },
         )
-
-        async with self._farm_cache_service.remove_if_exception(self._farm_entity.discord_user_id):
-            async with self._player_cache_service.remove_if_exception(interaction.user.id):
-                await self._player_repository.update_player(player_entity)
-                await self._farm_repository.update_farm(self._farm_entity)

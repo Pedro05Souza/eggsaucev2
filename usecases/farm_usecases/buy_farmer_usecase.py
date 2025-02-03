@@ -85,7 +85,7 @@ class BuyFarmerUseCase:
             deduct_from_balance_and_bank(self._player_entity, BASE_FARMER_PRICE)
 
             async with self._farm_cache.remove_if_exception(self._farm_entity.discord_user_id):
-                async with self._player_cache.remove_if_exception(self._player_entity.discord_user_id):
+                async with self._player_cache.remove_if_exception(self._player_entity.discord_user_id, propagate_exception=True):
                     await self._farm_repository.update_farm(self._farm_entity)
                     await self._player_repository.update_player(self._player_entity)
 
