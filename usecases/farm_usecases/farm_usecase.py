@@ -40,7 +40,7 @@ class FarmUseCase:
                     REASON_INVALID_USER,
                 )
             farm_entity = await self._farm_repository.create_farm(self._ctx.author.id)
-            self._farm_cache_service.add_item(farm_entity)
+            self._farm_cache_service.add_item(farm_entity.discord_user_id, farm_entity)
 
         farm_title = (
             f"🚜 {farm_entity.farm_title}\n🧑‍🌾 Farmer:"
