@@ -64,7 +64,7 @@ class FarmController(Cog):
     @hybrid_command(name="farm", aliases=["f"], description="🐔 View your farm!")
     @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
     async def farm(self, ctx: Context[BotT], member: Optional[Member] = None) -> None:
-        farm_usecase = FarmUseCase(ctx, member, self.farm_cache)
+        farm_usecase = FarmUseCase(ctx, member, self.farm_cache, self.farm_repository)
         await farm_usecase.farm()
 
     @hybrid_command(name="renamefarm", aliases=["rf"], description="🐔 Rename your farm!")

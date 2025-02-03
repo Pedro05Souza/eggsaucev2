@@ -45,7 +45,7 @@ class FarmCacheService(TTLCacheService[int, "FarmEntity"]):
 
                 self.add_item(discord_user_id, farm_entity)
             return farm_entity
-        
+
     async def _save_expired_or_removed_items(self):
-        #TODO: Implement this method
+        # TODO: Implement this method
         return await super()._save_expired_or_removed_items()

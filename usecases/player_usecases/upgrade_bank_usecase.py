@@ -14,7 +14,6 @@ from tools.constants import REASON_INSUFFICIENT_BALANCE
 
 
 class UpgradeBankUsecase:
-
     def __init__(
         self,
         ctx: Context[BotT],
