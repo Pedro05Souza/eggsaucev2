@@ -4,6 +4,7 @@ from random import Random
 from discord.ext.commands import Context
 from discord.ext.commands._types import BotT
 from entities import PlayerEntity
+from repositories import PlayerRepositoryProtocol
 from tools import PlayerCacheService, send_failed_embed, send_bot_embed
 from tools.constants import REASON_INSUFFICIENT_BALANCE, REASON_INVALID_AMOUNT, MIN_AMOUNT_SPIN
 
@@ -30,6 +31,7 @@ class SpinUsecase:
         player_cache: PlayerCacheService,
         color_choice: str,
         amount_betted: int,
+        player_repository: PlayerRepositoryProtocol,
     ) -> None:
         self._player_entity = player_entity
         self._player_cache = player_cache
@@ -37,6 +39,7 @@ class SpinUsecase:
         self._ctx = ctx
         self._random = Random()
         self._color_choice = color_choice
+        self._player_repository = player_repository
 
     async def spin(self) -> None:
         if self._amount_betted > self._player_entity.balance:
@@ -64,7 +67,8 @@ class SpinUsecase:
             self._player_entity.balance += spin_data.amount_result
             embed_description += f" You won **{spin_data.amount_result}** eggbux!"
 
-        await self._player_cache.synchronizer(self._player_entity)
+        async with self._player_cache.remove_if_exception(self._player_entity.discord_user_id):
+            await self._player_repository.update_player(self._player_entity)
 
         await send_bot_embed(
             ctx=self._ctx,

@@ -8,7 +8,8 @@ from entities import ChickenEntity
 from .constants import LOGGING_CONFIG, get_titles_salaries, GeneratedChicken
 
 if TYPE_CHECKING:
-    from services import PlayerCacheService, AwayTimeEarningsService, EarningsType
+    from services import AwayTimeEarningsService, EarningsType
+    from repositories import PlayerRepository
     from entities import PlayerEntity
 
 __all__ = [
@@ -104,7 +105,7 @@ def generated_chicken_to_chicken_entity(
 
 async def calculate_away_time_earnings(
     player_entity: "PlayerEntity",
-    player_cache: "PlayerCacheService",
+    player_repository: "PlayerRepository",
     away_time_earnings_service: "AwayTimeEarningsService",
 ) -> Optional["EarningsType"]:
     earnings_data = await away_time_earnings_service.calculate_away_time_earnings(player_entity)
@@ -113,7 +114,7 @@ async def calculate_away_time_earnings(
         return
 
     if earnings_data["salary"] > 0:
-        await player_cache.synchronizer(player_entity)
+        await player_repository.update_player(player_entity)
 
     return earnings_data
 

@@ -1,6 +1,7 @@
 from discord.ext.commands import Context
 from discord.ext.commands._types import BotT
 from discord import Member
+from repositories import FarmRepositoryProtocol
 from tools.constants import REASON_INVALID_USER
 from tools import get_quality_text, FarmCacheService, send_bot_embed, send_failed_embed
 
@@ -9,29 +10,37 @@ __all__ = ["FarmUseCase"]
 
 class FarmUseCase:
 
-    def __init__(self, ctx: Context[BotT], discord_member: Member | None, farm_cache_service: FarmCacheService) -> None:
-        self.ctx = ctx
-        self.discord_member = discord_member
-        self.farm_cache_service = farm_cache_service
+    def __init__(
+        self,
+        ctx: Context[BotT],
+        discord_member: Member | None,
+        farm_cache_service: FarmCacheService,
+        farm_repository: FarmRepositoryProtocol,
+    ) -> None:
+        self._ctx = ctx
+        self._discord_member = discord_member
+        self._farm_cache_service = farm_cache_service
+        self._farm_repository = farm_repository
 
     async def farm(self) -> None:
 
         avatar_to_send = None
 
-        if self.discord_member:
-            farm_entity = await self.farm_cache_service.get_or_fetch_farm_entity(self.discord_member.id)
-            avatar_to_send = self.discord_member.display_avatar.url
+        if self._discord_member:
+            farm_entity = await self._farm_cache_service.get_or_fetch_farm_entity(self._discord_member.id)
+            avatar_to_send = self._discord_member.display_avatar.url
         else:
-            farm_entity = await self.farm_cache_service.get_or_fetch_farm_entity(self.ctx.author.id)
-            avatar_to_send = self.ctx.author.display_avatar.url
+            farm_entity = await self._farm_cache_service.get_or_fetch_farm_entity(self._ctx.author.id)
+            avatar_to_send = self._ctx.author.display_avatar.url
 
         if not farm_entity:
-            if self.discord_member:
+            if self._discord_member:
                 return await send_failed_embed(
-                    self.ctx,
+                    self._ctx,
                     REASON_INVALID_USER,
                 )
-            farm_entity = await self.farm_cache_service.create_farm(self.ctx.author.id)
+            farm_entity = await self._farm_repository.create_farm(self._ctx.author.id)
+            self._farm_cache_service.add_item(farm_entity)
 
         farm_title = (
             f"🚜 {farm_entity.farm_title}\n🧑‍🌾 Farmer:"
@@ -48,7 +57,7 @@ class FarmUseCase:
             else ["No chickens in the farm yet!"]
         )
         await send_bot_embed(
-            self.ctx,
+            self._ctx,
             embed_params={
                 "title": farm_title,
                 "description": farm_chickens,

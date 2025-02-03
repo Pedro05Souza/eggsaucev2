@@ -2,6 +2,7 @@ from discord.ext.commands import Context
 from discord.ext.commands._types import BotT
 from discord import Member
 from discord.utils import format_dt
+from repositories import PlayerRepositoryProtocol
 from tools import (
     send_bot_embed,
     PlayerCacheService,
@@ -24,11 +25,13 @@ class BalanceUsecase:
         discord_member: Member | None,
         player_cache: PlayerCacheService,
         away_time_earnings_service: AwayTimeEarningsService,
+        player_repository: PlayerRepositoryProtocol,
     ) -> None:
         self._ctx = ctx
         self._discord_member = discord_member
         self._player_cache = player_cache
         self._away_time_earnings_service = away_time_earnings_service
+        self._player_repository = player_repository
 
     async def balance(self) -> None:
 
@@ -42,10 +45,11 @@ class BalanceUsecase:
                     self._ctx,
                     REASON_INVALID_USER,
                 )
-            player_entity = await self._player_cache.create_player(self._ctx.author.id)
+            player_entity = await self._player_repository.create_player(member_to_send.id)
+            self._player_cache.add_item(player_entity.discord_user_id, player_entity)
 
         earning_types = await calculate_away_time_earnings(
-            player_entity, self._player_cache, self._away_time_earnings_service
+            player_entity, self._player_repository, self._away_time_earnings_service
         )
 
         description = (

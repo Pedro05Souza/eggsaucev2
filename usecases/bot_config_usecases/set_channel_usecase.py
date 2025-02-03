@@ -1,6 +1,7 @@
 from discord.ext.commands import Context
 from discord.ext.commands._types import BotT
 from tools import BotConfigCacheService, send_bot_embed, send_failed_embed
+from repositories import BotConfigRepositoryProtocol
 from entities import BotConfigEntity
 
 __all__ = ["SetChannelUsecase"]
@@ -14,11 +15,13 @@ class SetChannelUsecase:
         channel_id: int,
         bot_config_entity: BotConfigEntity,
         bot_config_cache_service: BotConfigCacheService,
+        bot_config_repository: BotConfigRepositoryProtocol,
     ):
         self._ctx = ctx
         self._channel_id = channel_id
         self._bot_config_entity = bot_config_entity
         self._bot_config_cache_service = bot_config_cache_service
+        self._bot_config_repository = bot_config_repository
 
     async def set_channel(self) -> None:
         if self._channel_id in self._bot_config_entity.allowed_channels:
@@ -26,7 +29,10 @@ class SetChannelUsecase:
             return
 
         self._bot_config_entity.allowed_channels.add(self._channel_id)
-        await self._bot_config_cache_service.synchronizer(self._bot_config_entity)
+
+        async with self._bot_config_cache_service.remove_if_exception(self._bot_config_entity.guild_id):
+            await self._bot_config_repository.create_allowed_channel(self._bot_config_entity.id, self._channel_id)
+
         await send_bot_embed(
             self._ctx,
             embed_params={"title": "✅ Channel set successfully!", "description": "Channel set successfully!"},

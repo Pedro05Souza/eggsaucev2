@@ -3,6 +3,7 @@ from discord import Member
 from discord.ext.commands import Cog, Bot, hybrid_command, Context, before_invoke, cooldown, BucketType
 from discord.ext.commands._types import BotT
 from usecases import MarketUsecase, FarmUseCase, RenameFarmUsecase, BuyFarmerUseCase
+from repositories import FarmRepository, FarmRepositoryProtocol, PlayerRepositoryProtocol, PlayerRepository
 from tools import (
     ChickenGeneratorService,
     GlobalPlayerCache,
@@ -27,26 +28,36 @@ class FarmController(Cog):
         farm_cache: FarmCacheService,
         player_cache: PlayerCacheService,
         bot_config_cache: BotConfigCacheService,
+        farm_repository: FarmRepositoryProtocol,
+        player_repository: PlayerRepositoryProtocol,
     ) -> None:
         self.bot = bot
         self.chicken_generator_service = chicken_generator_service
         self.farm_cache = farm_cache
         self.player_cache = player_cache
         self.bot_config_cache = bot_config_cache
+        self.farm_repository = farm_repository
+        self.player_repository = player_repository
 
     async def _ensure_farm_user(self, ctx: Context[BotT]) -> None:
-        await ensure_farm_user(ctx, self.farm_cache)
+        await ensure_farm_user(ctx, self.farm_cache, self.farm_repository)
 
     async def _ensure_farm_and_player_user(self, ctx: Context[BotT]) -> None:
-        await ensure_farm_user(ctx, self.farm_cache)
-        await ensure_database_user(ctx, self.player_cache)
+        await ensure_farm_user(ctx, self.farm_cache, self.farm_repository)
+        await ensure_database_user(ctx, self.player_cache, self.player_repository)
 
     @hybrid_command(name="market", aliases=["m"], description="🐔 Roll for a chicken in the market!")
     @before_invoke(_ensure_farm_user)
     @cooldown(1, SPAM_COMMAND_COOLDOWN, BucketType.user)
     async def market(self, ctx: Context[BotT]) -> None:
         market_usecase = MarketUsecase(
-            ctx, self.chicken_generator_service, self.farm_cache, self.player_cache, ctx.farm_entity
+            ctx,
+            self.chicken_generator_service,
+            self.farm_cache,
+            self.player_cache,
+            ctx.farm_entity,
+            self.farm_repository,
+            self.player_repository,
         )
         await market_usecase.market()
 
@@ -60,7 +71,7 @@ class FarmController(Cog):
     @before_invoke(_ensure_farm_user)
     @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
     async def rename_farm(self, ctx: Context[BotT], new_name: str):
-        rename_farm_usecase = RenameFarmUsecase(ctx, ctx.farm_entity, self.farm_cache, new_name)
+        rename_farm_usecase = RenameFarmUsecase(ctx, ctx.farm_entity, self.farm_cache, new_name, self.farm_repository)
         await rename_farm_usecase.rename_farm()
 
     @hybrid_command(name="buyfarmer", aliases=["bf"], description="🐔 Buy a farmer for your farm!")
@@ -68,7 +79,13 @@ class FarmController(Cog):
     @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
     async def buy_farmer(self, ctx: Context[BotT]) -> None:
         buy_farmer_usecase = BuyFarmerUseCase(
-            ctx, ctx.player_entity, ctx.farm_entity, self.player_cache, self.farm_cache
+            ctx,
+            ctx.player_entity,
+            ctx.farm_entity,
+            self.player_cache,
+            self.farm_cache,
+            self.farm_repository,
+            self.player_repository,
         )
         await buy_farmer_usecase.buy_farmer()
 
@@ -78,5 +95,13 @@ class FarmController(Cog):
 
 async def setup(bot: Bot) -> None:
     await bot.add_cog(
-        FarmController(bot, ChickenGeneratorService(), GlobalFarmCache, GlobalPlayerCache, GlobalBotConfigCache)
+        FarmController(
+            bot,
+            ChickenGeneratorService(),
+            GlobalFarmCache,
+            GlobalPlayerCache,
+            GlobalBotConfigCache,
+            FarmRepository(),
+            PlayerRepository(),
+        )
     )

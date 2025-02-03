@@ -3,6 +3,7 @@ from collections import Counter
 from discord.ext.commands import Context
 from discord.ext.commands._types import BotT
 from entities import PlayerEntity
+from repositories import PlayerRepositoryProtocol
 from tools import PlayerCacheService, send_bot_embed, send_failed_embed
 from tools.constants import REASON_INSUFFICIENT_BALANCE, REASON_INVALID_AMOUNT
 
@@ -12,12 +13,18 @@ __all__ = ["SlotsUsecase"]
 class SlotsUsecase:
 
     def __init__(
-        self, ctx: Context[BotT], player_entity: PlayerEntity, player_cache: PlayerCacheService, amount_betted: int
+        self,
+        ctx: Context[BotT],
+        player_entity: PlayerEntity,
+        player_cache: PlayerCacheService,
+        amount_betted: int,
+        player_repository: PlayerRepositoryProtocol,
     ) -> None:
         self._ctx = ctx
         self._player_entity = player_entity
         self._player_cache = player_cache
         self._amount_betted = amount_betted
+        self._player_repository = player_repository
 
     async def slots(self) -> None:
         if self._amount_betted < 1:
@@ -56,7 +63,9 @@ class SlotsUsecase:
             self._player_entity.balance -= self._amount_betted
             description += f"\n\n❌ **LOSE** ❌\nYou lost **{self._amount_betted}** eggbux!"
 
-        await self._player_cache.synchronizer(self._player_entity)
+        async with self._player_cache.remove_if_exception(self._player_entity.discord_user_id):
+            await self._player_repository.update_player(self._player_entity)
+
         return await send_bot_embed(ctx=self._ctx, embed_params={"title": title, "description": description})
 
     def _get_fruits(self) -> list[str]:

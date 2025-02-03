@@ -1,6 +1,8 @@
+from tortoise.transactions import atomic
 from discord.ext.commands import Context
 from discord.ext.commands._types import BotT
 from entities import PlayerEntity
+from repositories import PlayerRepositoryProtocol
 from tools import (
     PlayerCacheService,
     send_bot_embed,
@@ -15,39 +17,48 @@ __all__ = ["DepositUsecase"]
 class DepositUsecase:
 
     def __init__(
-        self, ctx: Context[BotT], player_entity: PlayerEntity, player_cache: PlayerCacheService, amount: int
+        self,
+        ctx: Context[BotT],
+        player_entity: PlayerEntity,
+        player_cache: PlayerCacheService,
+        amount: int,
+        player_repository: PlayerRepositoryProtocol,
     ) -> None:
-        self.ctx = ctx
-        self.player_entity = player_entity
+        self._ctx = ctx
+        self._player_entity = player_entity
         self.player_cache = player_cache
-        self.amount = amount
+        self._amount = amount
+        self._player_repository = player_repository
 
+    @atomic()
     async def deposit(self) -> None:
 
-        if self.amount <= 0:
-            return await send_failed_embed(self.ctx, REASON_INVALID_AMOUNT)
+        if self._amount <= 0:
+            return await send_failed_embed(self._ctx, REASON_INVALID_AMOUNT)
 
-        if self.amount > self.player_entity.balance:
-            return await send_failed_embed(self.ctx, REASON_INSUFFICIENT_BALANCE)
+        if self._amount > self._player_entity.balance:
+            return await send_failed_embed(self._ctx, REASON_INSUFFICIENT_BALANCE)
 
-        reached_capacity = self.amount + self.player_entity.bank_balance
+        reached_capacity = self._amount + self._player_entity.bank_balance
 
-        if self.player_entity.bank_capacity < reached_capacity:
+        if self._player_entity.bank_capacity < reached_capacity:
 
-            if self.player_entity.bank_capacity == self.player_entity.bank_balance:
-                return await send_failed_embed(self.ctx, REASON_INSUFFICIENT_BANK_CAPACITY)
-            self.amount = self.player_entity.bank_capacity - self.player_entity.bank_balance
+            if self._player_entity.bank_capacity == self._player_entity.bank_balance:
+                return await send_failed_embed(self._ctx, REASON_INSUFFICIENT_BANK_CAPACITY)
+            self._amount = self._player_entity.bank_capacity - self._player_entity.bank_balance
 
-        self.player_entity.bank_balance += self.amount
+        self._player_entity.bank_balance += self._amount
 
-        self.player_entity.balance -= self.amount
+        self._player_entity.balance -= self._amount
 
-        await self.player_cache.synchronizer(self.player_entity)
+        async with self.player_cache.remove_if_exception(self._player_entity.discord_user_id):
+            await self._player_repository.update_player(self._player_entity)
+            await self._player_repository.update_player_bank(self._player_entity)
 
         return await send_bot_embed(
-            ctx=self.ctx,
+            ctx=self._ctx,
             embed_params={
                 "title": "✅ Deposit was sucessfull",
-                "description": f"You deposited **{self.amount}** eggbux successfully in your bank account.",
+                "description": f"You deposited **{self._amount}** eggbux successfully in your bank account.",
             },
         )

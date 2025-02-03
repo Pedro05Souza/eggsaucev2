@@ -9,6 +9,7 @@ from tools.constants import get_env_var
 
 if TYPE_CHECKING:
     from services import PlayerCacheService, BotConfigCacheService, FarmCacheService
+    from repositories import BotConfigRepositoryProtocol, PlayerRepositoryProtocol, FarmRepositoryProtocol
 
 __all__ = [
     "dev_only",
@@ -52,7 +53,9 @@ async def is_using_valid_channel(ctx: Context[BotT], bot_config_cache: "BotConfi
     return False
 
 
-async def ensure_database_user(ctx: Context[BotT], player_cache: "PlayerCacheService") -> None:
+async def ensure_database_user(
+    ctx: Context[BotT], player_cache: "PlayerCacheService", player_repository: "PlayerRepositoryProtocol"
+) -> None:
     """Fetches or creates the player entity from the cache or database and attaches it to the context[BotT].
 
     Args:
@@ -62,12 +65,15 @@ async def ensure_database_user(ctx: Context[BotT], player_cache: "PlayerCacheSer
     player_entity = await player_cache.get_or_fetch_player_entity(ctx.author.id)
 
     if player_entity is None:
-        player_entity = await player_cache.create_player(ctx.author.id)
+        player_entity = await player_repository.create_player(ctx.author.id)
+        player_cache.add_item(ctx.author.id, player_entity)
 
     ctx.player_entity = player_entity
 
 
-async def ensure_farm_user(ctx: Context[BotT], farm_cache: "FarmCacheService") -> None:
+async def ensure_farm_user(
+    ctx: Context[BotT], farm_cache: "FarmCacheService", farm_repository: "FarmRepositoryProtocol"
+) -> None:
     """Fetches or creates the farm entity from the cache or database and attaches it to the context[BotT].
 
     Args:
@@ -77,12 +83,15 @@ async def ensure_farm_user(ctx: Context[BotT], farm_cache: "FarmCacheService") -
     farm_entity = await farm_cache.get_or_fetch_farm_entity(ctx.author.id)
 
     if farm_entity is None:
-        farm_entity = await farm_cache.create_farm(ctx.author.id)
+        farm_entity = await farm_repository.create_farm(ctx.author.id)
+        farm_cache.add_item(ctx.author.id, farm_entity)
 
     ctx.farm_entity = farm_entity
 
 
-async def ensure_database_config(ctx: Context[BotT], bot_config_cache: "BotConfigCacheService") -> None:
+async def ensure_database_config(
+    ctx: Context[BotT], bot_config_cache: "BotConfigCacheService", bot_config_repository: BotConfigRepositoryProtocol
+) -> None:
     """Fetches or creates the bot config entity from the cache or database and attaches it to the context[BotT].
 
     Args:
@@ -95,7 +104,8 @@ async def ensure_database_config(ctx: Context[BotT], bot_config_cache: "BotConfi
     bot_config_entity = await bot_config_cache.get_or_fetch_bot_config_entity(ctx.guild.id)
 
     if bot_config_entity is None:
-        bot_config_entity = await bot_config_cache.create_bot_config(ctx.guild.id)
+        bot_config_entity = await bot_config_repository.create_guild_config(ctx.guild.id)
+        bot_config_cache.add_item(ctx.guild.id, bot_config_entity)
 
     ctx.guild_config_entity = bot_config_entity
 

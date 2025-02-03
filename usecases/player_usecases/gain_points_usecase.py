@@ -24,8 +24,6 @@ class GainPointsUsecase:
 
         player_entity.balance += calculated_points
 
-        await player_cache.synchronizer(player_entity, save_to_db=False)  # Will be saved when the item expires
-
     async def calculate_points_voice(
         self,
         discord_user_id: int,
@@ -45,5 +43,3 @@ class GainPointsUsecase:
             return
 
         player_entity.balance += calculated_points
-
-        await player_cache.synchronizer(player_entity, save_to_db=False)  # Will be saved when the item expires
