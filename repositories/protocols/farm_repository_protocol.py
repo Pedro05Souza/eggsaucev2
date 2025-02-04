@@ -1,6 +1,5 @@
 from typing import Protocol, Optional
-from entities import FarmEntity
-from models import Chicken
+from entities import FarmEntity, ChickenEntity
 
 __all__ = ["FarmRepositoryProtocol"]
 
@@ -12,4 +11,4 @@ class FarmRepositoryProtocol(Protocol):
 
     async def update_farm(self, farm_entity: FarmEntity) -> FarmEntity: ...
 
-    async def bulk_upsert_farm_chicken(self, chickens: list[Chicken], is_updated: bool) -> None: ...
+    async def upsert_farm_chicken(self, farm_id: str, chicken: ChickenEntity) -> None: ...

@@ -180,7 +180,7 @@ class ChickenView(View):
         async with self._farm_cache_service.remove_if_exception(self._farm_entity.discord_user_id):
             async with self._player_cache_service.remove_if_exception(interaction.user.id, propagate_exception=True):
                 await self._player_repository.update_player(player_entity)
-                await self._farm_repository.update_farm(self._farm_entity)
+                await self._farm_repository.upsert_farm_chicken(self._farm_entity.id, chicken_entity)
 
         await interaction.message.edit(view=self, embed=embed)  # type: ignore
         await send_bot_embed(
