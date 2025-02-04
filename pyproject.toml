@@ -1,5 +1,5 @@
 [tool.pylint]
-disable = ["C0114", "C0115", "C0116", "R0903", "W0703", "R0913", "R0917", "R0902", "W0511", "W0621", "W0236"]
+disable = ["C0114", "C0115", "C0116", "R0903", "W0703", "R0913", "R0917", "R0902", "W0511", "W0621", "W0236", "R0801"]
 max-line-length = 120
 suggestion-mode = true
 ignore = ["venv", "migrations", "build"]
@@ -30,3 +30,4 @@ reportMissingTypeStubs = "none"
 
 [tool.pytest.ini_options]
 pythonpath = ["tests"]
+filterwarnings = "ignore::DeprecationWarning"

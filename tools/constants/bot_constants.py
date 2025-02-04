@@ -1,4 +1,4 @@
-from typing import TypedDict, Any, Union
+from typing import TypedDict, Any
 from datetime import datetime
 from discord import Colour
 from discord.types.embed import EmbedType
@@ -19,7 +19,6 @@ MAX_GENERATED_CHICKENS = 8
 MIN_FARM_NAME_CHARACTERS = 3
 
 
-
 def get_titles_prices() -> dict[str, int]:
     return {"Egg Novice": 1500, "Egg Apprentice": 3000, "Egg Wizard": 5000, "Egg King": 10000}
 
@@ -31,10 +30,11 @@ def get_titles_salaries() -> dict[str, int]:
 def get_titles_emojis() -> dict[str, str]:
     return {"Egg Novice": "🥚", "Egg Apprentice": "🍳", "Egg Wizard": "🪄", "Egg King": "👑"}
 
+
 class EmbedParams(TypedDict, total=False):
     title: Any | None
     type: EmbedType
     url: Any | None
     description: Any
-    timestamp: Union[datetime, None]
-    colour: Union[int, Colour, None]
+    timestamp: datetime | None
+    colour: int | Colour | None

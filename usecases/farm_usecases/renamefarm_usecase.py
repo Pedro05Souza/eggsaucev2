@@ -1,6 +1,7 @@
 from discord.ext.commands import Context
 from discord.ext.commands._types import BotT
 from entities import FarmEntity
+from repositories import FarmRepositoryProtocol
 from tools import (
     FarmCacheService,
     send_bot_embed,
@@ -14,29 +15,36 @@ __all__ = ["RenameFarmUsecase"]
 class RenameFarmUsecase:
 
     def __init__(
-        self, ctx: Context[BotT], farm_entity: FarmEntity, farm_cache: FarmCacheService, new_name: str
+        self,
+        ctx: Context[BotT],
+        farm_entity: FarmEntity,
+        farm_cache: FarmCacheService,
+        new_name: str,
+        farm_repository: FarmRepositoryProtocol,
     ) -> None:
-        self.ctx = ctx
-        self.farm_entity = farm_entity
-        self.farm_cache = farm_cache
-        self.new_name = new_name
+        self._ctx = ctx
+        self._farm_entity = farm_entity
+        self._farm_cache = farm_cache
+        self._new_name = new_name
+        self._farm_repository = farm_repository
 
     async def rename_farm(self) -> None:
-        self.new_name = self.new_name.strip()
+        self._new_name = self._new_name.strip()
 
-        if len(self.new_name) < MIN_FARM_NAME_CHARACTERS:
+        if len(self._new_name) < MIN_FARM_NAME_CHARACTERS:
             return await send_failed_embed(
-                self.ctx, f"Please enter a name with **{MIN_FARM_NAME_CHARACTERS}** or more characters"
+                self._ctx, f"Please enter a name with **{MIN_FARM_NAME_CHARACTERS}** or more characters"
             )
 
-        self.farm_entity.farm_title = self.new_name
+        self._farm_entity.farm_title = self._new_name
 
-        await self.farm_cache.synchronizer(self.farm_entity)
+        async with self._farm_cache.remove_if_exception(self._farm_entity.discord_user_id):
+            await self._farm_repository.update_farm(self._farm_entity)
 
         return await send_bot_embed(
-            ctx=self.ctx,
+            ctx=self._ctx,
             embed_params={
                 "title": "✅ Success!",
-                "description": f"You sucessfully has change your farm name to **{self.new_name}**!!",
+                "description": f"You sucessfully has change your farm name to **{self._new_name}**!!",
             },
         )

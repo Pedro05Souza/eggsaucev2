@@ -30,7 +30,7 @@ async def send_bot_embed(
     """This function is responsable for sending an embed for the user.
 
     Args:
-        ctx (Union[Context, Interaction]): The context of the command.
+        ctx ([Context | Interaction]): The context of the command.
         embed_params (EmbedParams): The parameters that will be passed to the embed builder.
         color (str, optional): The color of the embed, defaults to "#FEE75C".
         footer_text (Optional[str], optional): The text that will be displayed in the footer of the embed.
@@ -112,7 +112,7 @@ async def send_user_dm(ctx: Context[BotT] | Interaction, embed: Embed) -> None:
     """This function is responsable for sending a message to the user's DM.
 
     Args:
-        ctx (Union[Context, Interaction]): The context of the command.
+        ctx Context | Interaction]: The context of the command.
         embed (Embed): The embed that will be sent to the user.
     """
 

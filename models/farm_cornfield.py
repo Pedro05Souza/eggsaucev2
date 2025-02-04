@@ -3,6 +3,7 @@ from tortoise import fields
 
 __all__ = ["FarmCornfield"]
 
+
 class FarmCornfield(Model):
     id = fields.UUIDField(pk=True)
     farm = fields.OneToOneField("models.Farm", related_name="cornfield")

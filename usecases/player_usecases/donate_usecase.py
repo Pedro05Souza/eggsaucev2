@@ -1,8 +1,9 @@
 from discord import Member
 from discord.ext.commands import Context
 from discord.ext.commands._types import BotT
-from tortoise.transactions import in_transaction
+from tortoise.transactions import atomic
 from entities import PlayerEntity
+from repositories import PlayerRepositoryProtocol
 from tools import send_bot_embed, send_failed_embed, PlayerCacheService
 from tools.constants import (
     REASON_INVALID_USER,
@@ -23,13 +24,16 @@ class DonateUsecase:
         donation_amount: int,
         recipient: Member,
         player_cache: PlayerCacheService,
+        player_repository: PlayerRepositoryProtocol,
     ) -> None:
         self._ctx = ctx
         self._donator = donator
         self._donation_amount = donation_amount
         self._recipient = recipient
         self._player_cache = player_cache
+        self._player_repository = player_repository
 
+    @atomic()
     async def donate(self) -> None:
         recipient_entity = await self._player_cache.get_or_fetch_player_entity(self._recipient.id)
 
@@ -48,9 +52,12 @@ class DonateUsecase:
         self._donator.balance -= self._donation_amount
         recipient_entity.balance += self._donation_amount
 
-        async with in_transaction():
-            await self._player_cache.synchronizer(self._donator)
-            await self._player_cache.synchronizer(recipient_entity)
+        async with self._player_cache.remove_if_exception(
+            self._donator.discord_user_id, recipient_entity.discord_user_id
+        ):
+            await self._player_repository.update_player(self._donator)
+            await self._player_repository.update_player(recipient_entity)
+
             return await send_bot_embed(
                 ctx=self._ctx,
                 embed_params={

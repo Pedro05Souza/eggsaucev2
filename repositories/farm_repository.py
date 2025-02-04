@@ -1,6 +1,6 @@
 from typing import Optional
 from tortoise.query_utils import Prefetch
-from entities import FarmEntity
+from entities import FarmEntity, ChickenEntity
 from models import Farm, Player, Chicken
 from .mappers import farm_model_to_entity
 
@@ -37,11 +37,17 @@ class FarmRepository:
         )
         return farm_entity
 
-    async def bulk_upsert_farm_chicken(self, chickens: list[Chicken], is_updated: bool) -> None:
-        if not is_updated:
-            await Chicken.bulk_create(chickens)
-        else:
-            await Chicken.bulk_update(
-                chickens,
-                fields=["farm_id", "name", "eggs_generated", "quality", "rarity", "location_status", "happiness"],
-            )
+    async def upsert_farm_chicken(self, farm_id: str, chicken: ChickenEntity) -> None:
+        await Chicken.update_or_create(
+            id=chicken.id,
+            defaults={
+                "name": chicken.name,
+                "rarity": chicken.rarity.lower(),
+                "eggs_generated": chicken.eggs_generated,
+                "quality": chicken.quality,
+                "price": chicken.price,
+                "location_status": chicken.location_status,
+                "happiness": chicken.happiness,
+                "farm_id": farm_id,
+            },
+        )

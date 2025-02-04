@@ -1,6 +1,7 @@
 from discord.ext.commands import Context
 from discord.ext.commands._types import BotT
 from entities import PlayerEntity
+from repositories import PlayerRepositoryProtocol
 from tools import (
     PlayerCacheService,
     send_failed_embed,
@@ -13,11 +14,17 @@ from tools.constants import REASON_INSUFFICIENT_BALANCE
 
 
 class UpgradeBankUsecase:
-
-    def __init__(self, ctx: Context[BotT], player_entity: PlayerEntity, player_cache: PlayerCacheService) -> None:
+    def __init__(
+        self,
+        ctx: Context[BotT],
+        player_entity: PlayerEntity,
+        player_cache: PlayerCacheService,
+        player_repository: PlayerRepositoryProtocol,
+    ) -> None:
         self._ctx = ctx
         self._player_entity = player_entity
         self._player_cache = player_cache
+        self._player_repository = player_repository
 
     async def upgrade_bank_limit(self) -> None:
         bank_upgrade_price = self._player_entity.bank_capacity
@@ -38,7 +45,8 @@ class UpgradeBankUsecase:
         self._player_entity.upgrade_level += 1
         self._player_entity.bank_capacity += 10000
 
-        await self._player_cache.synchronizer(self._player_entity)
+        async with self._player_cache.remove_if_exception(self._player_entity.discord_user_id):
+            await self._player_repository.update_player(self._player_entity)
 
         return await send_bot_embed(
             ctx=self._ctx,

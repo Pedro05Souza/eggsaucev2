@@ -4,8 +4,9 @@ from discord.ext.commands._types import BotT
 from discord.utils import format_dt
 from discord import SelectOption, Interaction
 from discord.ui import View, Select
-from tortoise.transactions import in_transaction
+from tortoise.transactions import atomic
 from entities import FarmEntity
+from repositories import FarmRepositoryProtocol, PlayerRepositoryProtocol
 from tools import (
     ChickenGeneratorService,
     FarmCacheService,
@@ -39,12 +40,16 @@ class MarketUsecase:
         farm_cache_service: FarmCacheService,
         player_cache_service: PlayerCacheService,
         farm_entity: FarmEntity,
+        farm_repository: FarmRepositoryProtocol,
+        player_repository: PlayerRepositoryProtocol,
     ) -> None:
         self.ctx = ctx
         self.chicken_generator_service = chicken_generator_service
         self.farm_cache_service = farm_cache_service
         self.player_cache_service = player_cache_service
         self.farm_entity = farm_entity
+        self.farm_repository = farm_repository
+        self.player_repository = player_repository
 
     async def market(self) -> None:
         if self.farm_entity.remaining_rolls == 0 and self.farm_entity.next_chicken_roll_time is not None:
@@ -77,9 +82,15 @@ class MarketUsecase:
             for chicken in generated_chickens
         )
 
-        view = ChickenView(self.farm_entity, generated_chickens, self.player_cache_service, self.farm_cache_service)
+        view = ChickenView(
+            self.farm_entity,
+            generated_chickens,
+            self.player_cache_service,
+            self.farm_cache_service,
+            self.farm_repository,
+            self.player_repository,
+        )
         await send_bot_embed(self.ctx, embed_params={"title": title, "description": description}, view=view)
-        await self.farm_cache_service.synchronizer(self.farm_entity)
 
 
 class ChickenView(View):
@@ -89,15 +100,19 @@ class ChickenView(View):
         chickens: list[GeneratedChicken],
         player_cache_service: PlayerCacheService,
         farm_cache_service: FarmCacheService,
+        farm_repository: FarmRepositoryProtocol,
+        player_repository: PlayerRepositoryProtocol,
     ):
         super().__init__()
-        self.farm_entity = farm_entity
-        self.chickens = chickens
-        self.select = self.select_maker()
-        self.player_cache_service = player_cache_service
-        self.farm_cache_service = farm_cache_service
-        self.add_item(self.select)
-        self.select.callback = self.callback
+        self._farm_entity = farm_entity
+        self._chickens = chickens
+        self._select = self.select_maker()
+        self._player_cache_service = player_cache_service
+        self._farm_cache_service = farm_cache_service
+        self.add_item(self._select)
+        self._select.callback = self.callback
+        self._farm_repository = farm_repository
+        self._player_repository = player_repository
 
     def select_maker(self):
         return Select(
@@ -110,27 +125,31 @@ class ChickenView(View):
                     value=str(chicken.position),
                     emoji=chicken.emoji,
                 )
-                for chicken in self.chickens
+                for chicken in self._chickens
             ],
         )
 
+    @atomic()
     async def callback(self, interaction: Interaction) -> None:
-        if interaction.user.id != self.farm_entity.discord_user_id:
+        if interaction.user.id != self._farm_entity.discord_user_id:
             await send_failed_embed(interaction, REASON_NO_PERMISSION)
             return
 
         selected_position = int(interaction.data["values"][0])  # type: ignore
-        selected_chicken = self.chickens[selected_position - 1]
+        selected_chicken = self._chickens[selected_position - 1]
 
-        if not self.farm_entity.farmer == "Warrior":
+        if (
+            len(self._farm_entity.chickens) >= FARM_MAX_CHICKENS + farmers_dict["warrior"]
+            and self._farm_entity.farmer == "Warrior"
+        ):
             await send_failed_embed(interaction, REASON_FARM_IS_FULL)
             return
 
-        if len(self.farm_entity.chickens) >= FARM_MAX_CHICKENS + farmers_dict["warrior"]:
+        if len(self._farm_entity.chickens) >= FARM_MAX_CHICKENS:
             await send_failed_embed(interaction, REASON_FARM_IS_FULL)
             return
 
-        player_entity = await self.player_cache_service.get_or_fetch_player_entity(interaction.user.id)
+        player_entity = await self._player_cache_service.get_or_fetch_player_entity(interaction.user.id)
 
         if not player_entity:
             return
@@ -141,22 +160,27 @@ class ChickenView(View):
             return
 
         chicken_entity = generated_chicken_to_chicken_entity(selected_chicken, "farm")
-        self.farm_entity.chickens.append(chicken_entity)
+        self._farm_entity.chickens.append(chicken_entity)
         player_entity.balance -= selected_chicken.price
-        self.chickens.remove(selected_chicken)
+        self._chickens.remove(selected_chicken)
         self.clear_items()
-        self.select = self.select_maker()
-        self.add_item(self.select)
+        self._select = self.select_maker()
+        self.add_item(self._select)
 
         embed = embed_builder(
             embed_params={
                 "title": "Here are the chickens that were generated for you!",
                 "description": "\n".join(
                     f"{chicken.emoji} **{chicken.rarity} {chicken.name}** - {chicken.price} eggbux"
-                    for chicken in self.chickens
+                    for chicken in self._chickens
                 ),
             },
         )
+
+        async with self._farm_cache_service.remove_if_exception(self._farm_entity.discord_user_id):
+            async with self._player_cache_service.remove_if_exception(interaction.user.id, propagate_exception=True):
+                await self._player_repository.update_player(player_entity)
+                await self._farm_repository.upsert_farm_chicken(self._farm_entity.id, chicken_entity)
 
         await interaction.message.edit(view=self, embed=embed)  # type: ignore
         await send_bot_embed(
@@ -167,7 +191,3 @@ class ChickenView(View):
                 + f" for **{selected_chicken.price}** eggbux!"
             },
         )
-
-        async with in_transaction():
-            await self.player_cache_service.synchronizer(player_entity)
-            await self.farm_cache_service.synchronizer(self.farm_entity)

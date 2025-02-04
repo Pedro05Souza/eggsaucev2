@@ -2,7 +2,6 @@ from typing import Any, AsyncGenerator, List, Tuple
 from contextlib import asynccontextmanager
 from cachetools import TTLCache, Cache
 from tools.utils import get_logger
-from ._proxy_object import MutableProxy
 from ._cache_base import CacheBase
 from ._types import KT, VT
 
@@ -46,25 +45,42 @@ class TTLCacheService(CacheBase[KT, VT]):
         return items
 
     @asynccontextmanager
-    async def _revert_if_exception(
-        self, entity: VT, previous_state: dict[str, Any], proxy_object: MutableProxy[VT]
-    ) -> AsyncGenerator[None, Any]:
-        """Reverts the entity to its previous state if an exception occurs.
+    async def remove_if_exception(self, *keys: KT, propagate_exception: bool = False) -> AsyncGenerator[None, Any]:
+        """Removes the item if an exception occurs
 
         Args:
-            entity (type(entity)): The entity to revert.
-            previous_state (dict[str, Any]): The previous state of the entity.
+            key (KT): The key of the item to remove
+            propagate_exception (bool, optional): Whether to raise the exception after removing the item. 
+            Defaults to False.
+            This is useful when there are nested context managers 
+            and the exception should be propagated to the outer context manager.
 
+            Example:
+
+            ```python
+            async with self._cache.remove_if_exception(key):
+                async with self._another_cache.remove_if_exception(another_key, propagate_exception=True):
+                    # Do something
+
+            # If an exception occurs in the inner context manager, 
+            # the error will be propagated to the outer context manager, deleting both items.
+            ```
         Returns:
-            AsyncGenerator[None, Any]: An async generator.
+            AsyncGenerator[None, Any]: _description_
         """
         try:
             yield
-        except Exception as e:
-            for key, value in previous_state.items():
-                setattr(entity, key, value)
-                proxy_object.modified_fields.pop(key)
-            self._logger.exception("Failed to update cache: %s", e)
+        except Exception:
+            for key in keys:
+                self._cache.pop(key)
+
+            if propagate_exception:
+                self._logger.exception("An exception occurred, removing the items with keys: %s", keys)
+                raise
+
+    async def _save_expired_or_removed_items(self) -> None:
+        """Saves the expired or removed items to the database."""
+        raise NotImplementedError("This method must be implemented in a subclass")
 
     @property
     def cache(self) -> _TrackEvictCache[KT, VT] | TTLCache[KT, VT]:
