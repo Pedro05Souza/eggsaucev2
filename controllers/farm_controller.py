@@ -89,7 +89,7 @@ class FarmController(Cog):
         )
         await buy_farmer_usecase.buy_farmer()
 
-    @hybrid_command(name="chickeninfo", aliases=["ci"], description="🐔 View information about a chicken!")
+    @hybrid_command(name="inspectchicken", aliases=["ic"], description="🐔 Retrieve detailed information about a specific chicken")
     @before_invoke(_ensure_farm_user)
     @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
     async def chicken_info(self, ctx: Context[BotT], position: int) -> None:
