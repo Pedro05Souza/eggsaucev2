@@ -1,14 +1,13 @@
 from __future__ import annotations
 from logging import Logger, config, getLogger
 from typing import TYPE_CHECKING, Optional
-from models import Player, Chicken
-from entities import ChickenEntity
+from models import Player,Farm
 from .constants import LOGGING_CONFIG, get_titles_salaries
 
 if TYPE_CHECKING:
     from services import AwayTimeEarningsService, EarningsType
     from repositories import PlayerRepositoryProtocol
-    from entities import PlayerEntity
+    from entities import PlayerEntity, FarmEntity
 
 __all__ = [
     "get_logger",
@@ -16,9 +15,9 @@ __all__ = [
     "deduct_from_balance_and_bank",
     "get_salary_from_title",
     "player_entity_to_model",
-    "chicken_entity_to_model",
     "calculate_away_time_earnings",
     "format_earnings_type",
+    'farm_entity_to_model'
 ]
 
 
@@ -56,17 +55,16 @@ async def player_entity_to_model(player_entity: "PlayerEntity") -> Player:
     )
 
 
-async def chicken_entity_to_model(farm_id: str, chicken_entity: ChickenEntity) -> Chicken:
-    return Chicken(
-        id=chicken_entity.id,
-        name=chicken_entity.name,
-        eggs_generated=chicken_entity.eggs_generated,
-        quality=chicken_entity.quality,
-        rarity=chicken_entity.rarity.lower(),
-        location_status=chicken_entity.location_status,
-        happiness=chicken_entity.happiness,
-        farm_id=farm_id,
+async def farm_entity_to_model(farm_entity: "FarmEntity") -> Farm:
+    return Farm(
+        id=farm_entity.id,
+        farm_title=farm_entity.farm_title,
+        farmer=farm_entity.farmer,
+        next_drop_time=farm_entity.next_drop_time,
+        remaining_rolls=farm_entity.remaining_rolls,
+        next_chicken_roll_time=farm_entity.next_chicken_roll_time,
     )
+
 
 async def calculate_away_time_earnings(
     player_entity: "PlayerEntity",
