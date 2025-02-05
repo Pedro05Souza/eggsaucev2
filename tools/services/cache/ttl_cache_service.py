@@ -61,7 +61,7 @@ class TTLCacheService(CacheBase[KT, VT]):
                     # Do something
 
             # If an exception occurs in the inner context manager,
-            # the error will be propagated to the outer context manager, deleting both items.
+            # the error will be propagated to the outer context manager, deleting both items in both caches.
             ```
         Returns:
             AsyncGenerator[None, Any]: _description_
