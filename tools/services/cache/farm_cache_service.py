@@ -19,7 +19,7 @@ class FarmCacheService(TTLCacheService[int, "FarmEntity"]):
         track_evict: bool,
         farm_repository: FarmRepositoryProtocol,
         maxsize: int = 250,
-        expiration_time: float = 0.05,
+        expiration_time: float = 300,
     ) -> None:
         super().__init__(track_evict, maxsize, expiration_time)
         self._lock = Lock()
