@@ -68,7 +68,7 @@ class PlayerCacheService(TTLCacheService[int, "PlayerEntity"]):
 
         async with in_transaction():
             await self.player_repository.bulk_update_players(items)
-        self._logger.info("Saved %s expired or removed items to the database.", len(items))
+        self._logger.info("Saved %s expired or removed player entities to the database.", len(items))
 
     @property
     def player_repository(self) -> PlayerRepositoryProtocol:
