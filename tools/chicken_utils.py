@@ -27,6 +27,9 @@ async def calculate_base_egg_production(chicken_quality_index: int) -> int:
     if chicken_quality_index < 1:
         return 0
 
+    if chicken_quality_index == 18:
+        return 8 * (DELTA_EGG_VALUE * (17**2))
+
     return DELTA_EGG_VALUE * (chicken_quality_index**2)
 
 
@@ -35,6 +38,13 @@ async def calculate_food_consuption(chicken_quality_index: int) -> int:
         return 0
 
     return DELTA_FOOD_CONSUMPTION * chicken_quality_index
+
+
+def generate_chicken_quality(chicken_rarity: str) -> float:
+    if chicken_rarity == "ETHEREAL":
+        return 1
+
+    return round(uniform(0.2, 1), 2)
 
 
 async def generated_chicken_to_chicken_entity(
@@ -54,7 +64,7 @@ async def generated_chicken_to_chicken_entity(
     Returns:
         ChickenEntity: The new chicken entity.
     """
-    quality = round(uniform(0.2, 1), 2)
+    quality = generate_chicken_quality(generated_chicken.rarity)
 
     chicken_index = CHICKEN_RARITIES.index(generated_chicken.rarity)
     total_egg_production = await calculate_base_egg_production(chicken_index)
