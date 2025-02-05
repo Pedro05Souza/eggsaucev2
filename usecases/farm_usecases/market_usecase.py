@@ -61,6 +61,8 @@ class MarketUsecase:
             return
 
         self.farm_entity.remaining_rolls -= 1
+        # We don't update to the database to avoid unnecessary writes
+        # This will be updated when the cache entry is removed/expired
 
         if self.farm_entity.remaining_rolls == 0:
             if not self.farm_entity.next_chicken_roll_time:
