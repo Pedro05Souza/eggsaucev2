@@ -1,7 +1,9 @@
 from __future__ import annotations
 from typing import Optional, TYPE_CHECKING
 from asyncio import Lock
+from tortoise.transactions import in_transaction
 from repositories import FarmRepositoryProtocol
+from tools.utils import farm_entity_to_model
 from .ttl_cache_service import TTLCacheService
 
 if TYPE_CHECKING:
@@ -17,7 +19,7 @@ class FarmCacheService(TTLCacheService[int, "FarmEntity"]):
         track_evict: bool,
         farm_repository: FarmRepositoryProtocol,
         maxsize: int = 250,
-        expiration_time: float = 300,
+        expiration_time: float = 0.05,
     ) -> None:
         super().__init__(track_evict, maxsize, expiration_time)
         self._lock = Lock()
@@ -35,6 +37,8 @@ class FarmCacheService(TTLCacheService[int, "FarmEntity"]):
             Optional[FarmEntity]: The farm entity
         """
         async with self._lock:
+            await self._save_expired_or_removed_items()
+
             farm_entity = self.get_item(discord_user_id)
 
             if farm_entity is None:
@@ -47,5 +51,15 @@ class FarmCacheService(TTLCacheService[int, "FarmEntity"]):
             return farm_entity
 
     async def _save_expired_or_removed_items(self):
-        # TODO: Implement this method
-        return await super()._save_expired_or_removed_items()
+        items_to_update = await self._get_expired_or_removed_items()
+
+        if len(items_to_update) == 0:
+            return
+
+        items_to_update = [item[1] for item in items_to_update]
+
+        farm_models = [await farm_entity_to_model(farm_entity) for farm_entity in items_to_update]
+
+        async with in_transaction():
+            await self.farm_repository.bulk_update_farm(farm_models)
+            self._logger.info("Saved %s expired or removed farm entities to the database.", len(farm_models))
