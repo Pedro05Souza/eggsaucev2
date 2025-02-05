@@ -1,11 +1,9 @@
 from __future__ import annotations
 from logging import Logger, config, getLogger
-from typing import Literal, TYPE_CHECKING, Optional
-from uuid import uuid4
-from random import uniform, randint
+from typing import TYPE_CHECKING, Optional
 from models import Player, Chicken
 from entities import ChickenEntity
-from .constants import LOGGING_CONFIG, get_titles_salaries, GeneratedChicken
+from .constants import LOGGING_CONFIG, get_titles_salaries
 
 if TYPE_CHECKING:
     from services import AwayTimeEarningsService, EarningsType
@@ -18,7 +16,6 @@ __all__ = [
     "deduct_from_balance_and_bank",
     "get_salary_from_title",
     "player_entity_to_model",
-    "generated_chicken_to_chicken_entity",
     "chicken_entity_to_model",
     "calculate_away_time_earnings",
     "format_earnings_type",
@@ -70,38 +67,6 @@ async def chicken_entity_to_model(farm_id: str, chicken_entity: ChickenEntity) -
         happiness=chicken_entity.happiness,
         farm_id=farm_id,
     )
-
-
-def generated_chicken_to_chicken_entity(
-    generated_chicken: GeneratedChicken, location_status: Literal["farm", "bench", "market", "redeemables"]
-) -> ChickenEntity:
-    """Creates a new chicken entity from a generated chicken.
-
-    Args:
-        generated_chicken (GeneratedChicken): The generated chicken.
-        location_status (Literal["farm", "bench", "market", "redeemables"]): The location status of the chicken.
-
-        * farm: The chicken is being added to the farm.
-        * bench: The chicken is being added to
-        * market: The chicken is being added to the market.
-        * redeemables: The chicken is being added to the redeemables.
-
-    Returns:
-        ChickenEntity: The new chicken entity.
-    """
-    return ChickenEntity(
-        id=str(uuid4()),
-        eggs_generated=0,
-        name=generated_chicken.name,
-        quality=round(uniform(0.2, 1), 2),
-        rarity=generated_chicken.rarity,
-        price=generated_chicken.price,
-        emoji=generated_chicken.emoji,
-        happiness=randint(50, 100),
-        location_status=location_status,
-        is_newly_generated=True,
-    )
-
 
 async def calculate_away_time_earnings(
     player_entity: "PlayerEntity",
