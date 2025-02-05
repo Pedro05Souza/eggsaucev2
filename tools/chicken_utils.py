@@ -28,7 +28,7 @@ async def calculate_base_egg_production(chicken_quality_index: int) -> int:
         return 0
 
     if chicken_quality_index == 18:
-        return 8 * (DELTA_EGG_VALUE * (17**2))
+        return 8 * (DELTA_EGG_VALUE * (chicken_quality_index - 1**2))
 
     return DELTA_EGG_VALUE * (chicken_quality_index**2)
 
