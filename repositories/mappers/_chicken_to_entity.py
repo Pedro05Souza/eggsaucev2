@@ -1,9 +1,13 @@
-from tools.constants import ChickenRaritiesEmojis, ChickenPricesMultiplier, BASE_CHICKEN_PRICE
+from tools.constants import ChickenRaritiesEmojis, ChickenPricesMultiplier, BASE_CHICKEN_PRICE, CHICKEN_RARITIES
+from tools.chicken_utils import calculate_base_egg_production, calculate_food_consuption
 from models import Chicken
 from entities import ChickenEntity
 
 
 async def chicken_model_to_entity(chicken: Chicken) -> ChickenEntity:
+    chicken_index = CHICKEN_RARITIES.index(chicken.rarity.name)
+    total_egg_production = await calculate_base_egg_production(chicken_index)
+
     return ChickenEntity(
         id=str(chicken.id),
         eggs_generated=chicken.eggs_generated,
@@ -14,5 +18,7 @@ async def chicken_model_to_entity(chicken: Chicken) -> ChickenEntity:
         happiness=chicken.happiness,
         price=int(BASE_CHICKEN_PRICE * ChickenPricesMultiplier[chicken.rarity.name].value),
         emoji=ChickenRaritiesEmojis[chicken.rarity.name].value,
-        is_newly_generated=False,
+        total_egg_production=total_egg_production,
+        actual_egg_production=int(total_egg_production * chicken.quality),
+        food_consumption=await calculate_food_consuption(chicken_index),
     )

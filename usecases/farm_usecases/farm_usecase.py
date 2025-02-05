@@ -48,10 +48,10 @@ class FarmUseCase:
         )
         farm_chickens = "\n\n".join(
             [
-                f"{chicken.emoji} - **{chicken.rarity} {chicken.name}**"
+                f"**{index}.**{chicken.emoji} - **{chicken.rarity} {chicken.name}**"
                 + f"\n✨ Happiness: **{chicken.happiness}%**"
                 + f"\n📈 Quality: **{get_quality_text(chicken.quality)}**"
-                for chicken in farm_entity.chickens
+                for index, chicken in enumerate(farm_entity.chickens, start=1)
             ]
             if farm_entity.chickens
             else ["No chickens in the farm yet!"]

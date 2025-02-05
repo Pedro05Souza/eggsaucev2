@@ -159,7 +159,7 @@ class ChickenView(View):
             await interaction.message.edit(view=self)  # type: ignore
             return
 
-        chicken_entity = generated_chicken_to_chicken_entity(selected_chicken, "farm")
+        chicken_entity = await generated_chicken_to_chicken_entity(selected_chicken, "farm")
         self._farm_entity.chickens.append(chicken_entity)
         player_entity.balance -= selected_chicken.price
         self._chickens.remove(selected_chicken)

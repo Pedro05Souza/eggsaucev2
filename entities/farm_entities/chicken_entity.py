@@ -16,7 +16,9 @@ class ChickenEntity:
         "name",
         "happiness",
         "emoji",
-        "is_newly_generated", 
+        "total_egg_production",
+        "actual_egg_production",
+        "food_consumption",
     ]
 
     id: str
@@ -28,4 +30,6 @@ class ChickenEntity:
     name: str
     happiness: int
     emoji: str
-    is_newly_generated: bool
+    total_egg_production: int
+    actual_egg_production: int
+    food_consumption: int
