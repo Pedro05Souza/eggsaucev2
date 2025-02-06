@@ -4,17 +4,17 @@ from entities import FarmEntity
 from tools import send_bot_embed, send_failed_embed
 
 
-__all__ = ["ChickenInfoUseCase"]
+__all__ = ["InspectChickenUseCase"]
 
 
-class ChickenInfoUseCase:
+class InspectChickenUseCase:
 
     def __init__(self, ctx: Context[BotT], farm_entity: FarmEntity, index: int) -> None:
         self.ctx = ctx
         self.farm_entity = farm_entity
         self.index = index
 
-    async def chicken_info(self):
+    async def inspect_chicken(self):
         if self.index < 0 or self.index > len(self.farm_entity.chickens):
             await send_failed_embed(self.ctx, "Invalid index")
             return
