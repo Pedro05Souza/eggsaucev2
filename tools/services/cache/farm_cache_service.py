@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Optional, TYPE_CHECKING
 from asyncio import Lock
-from tortoise.transactions import in_transaction
+from tortoise.transactions import atomic
 from repositories import FarmRepositoryProtocol
 from tools.utils import farm_entity_to_model
 from .ttl_cache_service import TTLCacheService
@@ -50,6 +50,7 @@ class FarmCacheService(TTLCacheService[int, "FarmEntity"]):
                 self.add_item(discord_user_id, farm_entity)
             return farm_entity
 
+    @atomic()
     async def _save_expired_or_removed_items(self):
         items_to_update = await self._get_expired_or_removed_items()
 
@@ -60,6 +61,5 @@ class FarmCacheService(TTLCacheService[int, "FarmEntity"]):
 
         farm_models = [await farm_entity_to_model(farm_entity) for farm_entity in items_to_update]
 
-        async with in_transaction():
-            await self.farm_repository.bulk_update_farm(farm_models)
-            self._logger.info("Saved %s expired or removed farm entities to the database.", len(farm_models))
+        await self.farm_repository.bulk_update_farm(farm_models)
+        self._logger.info("Saved %s expired or removed farm entities to the database.", len(farm_models))
