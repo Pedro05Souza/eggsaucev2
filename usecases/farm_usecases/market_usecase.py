@@ -117,7 +117,7 @@ class ChickenView(View):
         self._player_repository = player_repository
 
     def select_maker(self):
-        return Select(
+        return Select[ChickenView](
             placeholder="Select a chicken to buy",
             min_values=1,
             max_values=1,
