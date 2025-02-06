@@ -32,7 +32,6 @@ class WithdrawUsecase:
 
     @atomic()
     async def withdraw(self) -> None:
-
         if self._amount.lower() == "all":
             self._amount = self._player_entity.bank_balance
 
