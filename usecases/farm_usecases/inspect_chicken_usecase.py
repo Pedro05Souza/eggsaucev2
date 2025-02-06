@@ -1,7 +1,4 @@
-from discord.ext.commands import Context
-from discord.ext.commands._types import BotT
-from entities import FarmEntity
-from tools import send_bot_embed, send_failed_embed
+from eggsauce_context import EggsauceContext
 
 
 __all__ = ["InspectChickenUseCase"]
@@ -9,23 +6,22 @@ __all__ = ["InspectChickenUseCase"]
 
 class InspectChickenUseCase:
 
-    def __init__(self, ctx: Context[BotT], farm_entity: FarmEntity, index: int) -> None:
-        self.ctx = ctx
-        self.farm_entity = farm_entity
-        self.index = index
+    def __init__(self, ctx: EggsauceContext, index: int) -> None:
+        self._ctx = ctx
+        self._farm_entity = ctx.farm_entity
+        self._index = index
 
     async def inspect_chicken(self):
-        if self.index < 0 or self.index > len(self.farm_entity.chickens):
-            await send_failed_embed(self.ctx, "Invalid index")
+        if self._index < 0 or self._index > len(self._farm_entity.chickens):
+            await self._ctx.send_failed_embed("Invalid index")
             return
 
-        chicken = self.farm_entity.chickens[self.index - 1]
+        chicken = self._farm_entity.chickens[self._index - 1]
 
         happiness_penalty = int(chicken.total_egg_production * (100 - chicken.happiness) / 100)
 
         egg_production_with_happiness = chicken.actual_egg_production - happiness_penalty
-        await send_bot_embed(
-            self.ctx,
+        await self._ctx.send_bot_embed(
             embed_params={
                 "title": f"{chicken.emoji} **{chicken.rarity} {chicken.name}**",
                 "description": f"**🎉 Happiness:** {chicken.happiness}%**"

@@ -1,11 +1,8 @@
 from random import Random
-from discord.ext.commands import Context
-from discord.ext.commands._types import BotT
 from discord import Member
 from tortoise.transactions import atomic
-from entities import PlayerEntity
 from repositories import PlayerRepositoryProtocol
-from tools import send_failed_embed, send_bot_embed, PlayerCacheService
+from tools import PlayerCacheService
 from tools.constants import (
     MAX_PERCETANGE_TO_STEAL,
     STEAL_FAILURE_CHANCE,
@@ -14,6 +11,7 @@ from tools.constants import (
     REASON_STEAL_NO_MONEY,
     MIN_AMOUNT_TO_STEAL,
 )
+from eggsauce_context import EggsauceContext
 
 __all__ = ("StealUsecase",)
 
@@ -22,14 +20,13 @@ class StealUsecase:
 
     def __init__(
         self,
-        ctx: Context[BotT],
-        stealer: PlayerEntity,
+        ctx: EggsauceContext,
         target: Member,
         player_cache: PlayerCacheService,
         player_repository: PlayerRepositoryProtocol,
     ) -> None:
         self._ctx = ctx
-        self._stealer = stealer
+        self._stealer = ctx.player_entity
         self._target = target
         self._player_cache = player_cache
         self._random = Random()
@@ -38,19 +35,19 @@ class StealUsecase:
     @atomic()
     async def steal(self) -> None:
         if self._target.id == self._stealer.discord_user_id:
-            return await send_failed_embed(self._ctx, REASON_CANT_ACTION_SELF)
+            return await self._ctx.send_failed_embed(REASON_CANT_ACTION_SELF)
 
         target_entity = await self._player_cache.get_or_fetch_player_entity(self._target.id)
 
         if not target_entity:
-            return await send_failed_embed(self._ctx, REASON_INVALID_USER)
+            return await self._ctx.send_failed_embed(REASON_INVALID_USER)
 
         if target_entity.balance == 0:
-            return await send_failed_embed(self._ctx, REASON_STEAL_NO_MONEY)
+            return await self._ctx.send_failed_embed(REASON_STEAL_NO_MONEY)
 
         if target_entity.balance < MIN_AMOUNT_TO_STEAL:
-            return await send_failed_embed(
-                self._ctx, f"The target user must have at least **{MIN_AMOUNT_TO_STEAL}** eggbux to steal."
+            return await self._ctx.send_failed_embed(
+                f"The target user must have at least **{MIN_AMOUNT_TO_STEAL}** eggbux to steal."
             )
 
         max_steal_amount = int(target_entity.balance * MAX_PERCETANGE_TO_STEAL)
@@ -58,7 +55,7 @@ class StealUsecase:
         random_number = self._random.random()
 
         if random_number < STEAL_FAILURE_CHANCE:
-            return await send_failed_embed(self._ctx, "Your attempt to steal failed.")
+            return await self._ctx.send_failed_embed("Your attempt to steal failed.")
 
         stolen_amount = self._random.randint(1, max_steal_amount)
 
@@ -69,8 +66,7 @@ class StealUsecase:
             await self._player_repository.update_player(self._stealer)
             await self._player_repository.update_player(target_entity)
 
-            return await send_bot_embed(
-                ctx=self._ctx,
+            return await self._ctx.send_bot_embed(
                 embed_params={
                     "title": "✅ Steal successful",
                     "description": f"You stole **{stolen_amount}** eggbux from {self._target.mention}",

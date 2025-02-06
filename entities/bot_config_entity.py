@@ -1,20 +1,19 @@
 from typing import Set
 from dataclasses import dataclass
+from ._entity_base import EntityBase
 
 __all__ = ["BotConfigEntity"]
 
 
 @dataclass
-class BotConfigEntity:
+class BotConfigEntity(EntityBase):
 
     __slots__ = [
-        "id",
         "guild_id",
         "prefix",
         "allowed_channels",
     ]
 
-    id: str
     guild_id: int
     prefix: str
     allowed_channels: Set[int]

@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 from entities.farm_entities.chicken_entity import ChickenEntity
+from .._entity_base import EntityBase
 
 __all__ = ["FarmRedeemables"]
 
 
 @dataclass
-class FarmRedeemables:
+class FarmRedeemables(EntityBase):
 
-    __slots__ = ["farm_id", "chickens"]
+    __slots__ = ["chickens"]
 
-    farm_id: str
     chickens: list[ChickenEntity]

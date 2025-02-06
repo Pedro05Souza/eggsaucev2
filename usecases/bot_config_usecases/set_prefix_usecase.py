@@ -1,8 +1,7 @@
-from discord.ext.commands import Context
-from discord.ext.commands._types import BotT
 from entities import BotConfigEntity
 from repositories import BotConfigRepositoryProtocol
-from tools import BotConfigCacheService, send_bot_embed
+from tools import BotConfigCacheService
+from eggsauce_context import EggsauceContext
 
 __all__ = ["SetPrefixUsecase"]
 
@@ -11,7 +10,7 @@ class SetPrefixUsecase:
 
     def __init__(
         self,
-        ctx: Context[BotT],
+        ctx: EggsauceContext,
         bot_config_entity: BotConfigEntity,
         bot_config_cache: BotConfigCacheService,
         bot_config_repository: BotConfigRepositoryProtocol,
@@ -29,8 +28,7 @@ class SetPrefixUsecase:
         async with self._bot_config_cache.remove_if_exception(self._bot_config_entity.guild_id):
             await self._bot_config_repository.update_bot_config(self._bot_config_entity)
 
-        await send_bot_embed(
-            ctx=self._ctx,
+        await self._ctx.send_bot_embed(
             embed_params={
                 "title": "✅ Prefix updated",
                 "description": f"Prefix has been updated to **{self._new_prefix}**",

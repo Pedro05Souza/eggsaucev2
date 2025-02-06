@@ -1,14 +1,10 @@
-from discord.ext.commands import Context
-from discord.ext.commands._types import BotT
 from tortoise.transactions import atomic
-from entities import PlayerEntity
 from repositories import PlayerRepositoryProtocol
 from tools import (
     PlayerCacheService,
-    send_bot_embed,
-    send_failed_embed,
 )
 from tools.constants import REASON_INVALID_AMOUNT, REASON_INSUFFICIENT_BALANCE
+from eggsauce_context import EggsauceContext
 
 
 __all__ = ["WithdrawUsecase"]
@@ -18,14 +14,13 @@ class WithdrawUsecase:
 
     def __init__(
         self,
-        ctx: Context[BotT],
-        player_entity: PlayerEntity,
+        ctx: EggsauceContext,
         player_cache: PlayerCacheService,
         amount: str,
         player_repository: PlayerRepositoryProtocol,
     ) -> None:
         self._ctx = ctx
-        self._player_entity = player_entity
+        self._player_entity = ctx.player_entity
         self._player_cache = player_cache
         self._amount = amount
         self._player_repository = player_repository
@@ -39,13 +34,13 @@ class WithdrawUsecase:
             try:
                 self._amount = int(self._amount)
             except ValueError:
-                return await send_failed_embed(self._ctx, REASON_INVALID_AMOUNT)
+                return await self._ctx.send_failed_embed(REASON_INVALID_AMOUNT)
 
         if self._amount <= 0:
-            return await send_failed_embed(self._ctx, REASON_INVALID_AMOUNT)
+            return await self._ctx.send_failed_embed(REASON_INVALID_AMOUNT)
 
         if self._amount > self._player_entity.bank_balance:
-            return await send_failed_embed(self._ctx, REASON_INSUFFICIENT_BALANCE)
+            return await self._ctx.send_failed_embed(REASON_INSUFFICIENT_BALANCE)
 
         self._player_entity.bank_balance -= self._amount
         self._player_entity.balance += self._amount
@@ -54,8 +49,7 @@ class WithdrawUsecase:
             await self._player_repository.update_player(self._player_entity)
             await self._player_repository.update_player_bank(self._player_entity)
 
-        return await send_bot_embed(
-            ctx=self._ctx,
+        return await self._ctx.send_bot_embed(
             embed_params={
                 "title": "✅ Success!",
                 "description": f"You withdrew **{self._amount}** eggbux from the bank.",

@@ -2,14 +2,14 @@ from typing import Literal, Optional
 from dataclasses import dataclass
 from datetime import datetime
 from entities.farm_entities.chicken_entity import ChickenEntity
+from .._entity_base import EntityBase
 
 __all__ = ["FarmEntity"]
 
 
 @dataclass
-class FarmEntity:
+class FarmEntity(EntityBase):
     __slots__ = [
-        "id",
         "player_id",
         "discord_user_id",
         "farm_title",
@@ -20,7 +20,6 @@ class FarmEntity:
         "chickens",
     ]
 
-    id: str
     player_id: str
     discord_user_id: int
     farm_title: str
