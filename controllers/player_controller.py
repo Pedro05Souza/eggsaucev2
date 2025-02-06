@@ -41,6 +41,7 @@ class PlayerController(Cog):
         away_time_earnings_service: AwayTimeEarningsService,
         bot_config_cache: BotConfigCacheService,
         player_repository: PlayerRepositoryProtocol,
+        gain_points_usecase: GainPointsUsecase,
     ) -> None:
         self.bot = bot
         self.player_cache = player_cache
@@ -48,6 +49,7 @@ class PlayerController(Cog):
         self.away_time_earnings_service = away_time_earnings_service
         self.bot_config_cache = bot_config_cache
         self.player_repository = player_repository
+        self.gain_points_usecase = gain_points_usecase
 
     async def _ensure_database_player_decorator(self, ctx: Context[BotT]) -> None:
         await ensure_player(ctx, self.player_cache, self.player_repository)
@@ -135,13 +137,19 @@ class PlayerController(Cog):
 
         g = GainPointsUsecase()
 
-        await g.calculate_points_message(message.author.id, self.player_cache, self.points_service)
+        await g.calculate_points_message(
+            message.author.id,
+            self.player_cache,
+            self.player_repository,
+            self.points_service,
+        )
 
     @Cog.listener()
     async def on_voice_state_update(self, member: Member, before: VoiceState, after: VoiceState) -> None:
-        g = GainPointsUsecase()
 
-        await g.calculate_points_voice(member.id, self.player_cache, self.points_service, before, after)
+        await self.gain_points_usecase.calculate_points_voice(
+            member.id, self.player_cache, self.points_service, self.gain_points_usecase, before, after
+        )
 
 
 async def setup(bot: Bot) -> None:
@@ -149,6 +157,12 @@ async def setup(bot: Bot) -> None:
     away_time_earnings_service = AwayTimeEarningsService()
     await bot.add_cog(
         PlayerController(
-            bot, GlobalPlayerCache, points_service, away_time_earnings_service, GlobalBotConfigCache, PlayerRepository()
+            bot,
+            GlobalPlayerCache,
+            points_service,
+            away_time_earnings_service,
+            GlobalBotConfigCache,
+            PlayerRepository(),
+            GainPointsUsecase(),
         )
     )
