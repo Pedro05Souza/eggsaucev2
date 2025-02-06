@@ -148,7 +148,7 @@ class PlayerController(Cog):
     async def on_voice_state_update(self, member: Member, before: VoiceState, after: VoiceState) -> None:
 
         await self.gain_points_usecase.calculate_points_voice(
-            member.id, self.player_cache, self.points_service, self.gain_points_usecase, before, after
+            member.id, self.player_cache, self.points_service, self.player_repository, before, after
         )
 
 
