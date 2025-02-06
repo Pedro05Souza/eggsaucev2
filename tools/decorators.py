@@ -15,9 +15,9 @@ __all__ = [
     "dev_only",
     "spin_command_autocomplete",
     "admin_only",
-    "ensure_database_config",
-    "ensure_database_user",
-    "ensure_farm_user",
+    "ensure_guild_config",
+    "ensure_player",
+    "ensure_farm",
     "is_using_valid_channel",
 ]
 
@@ -53,7 +53,7 @@ async def is_using_valid_channel(ctx: Context[BotT], bot_config_cache: "BotConfi
     return False
 
 
-async def ensure_database_user(
+async def ensure_player(
     ctx: Context[BotT], player_cache: "PlayerCacheService", player_repository: "PlayerRepositoryProtocol"
 ) -> None:
     """Fetches or creates the player entity from the cache or database and attaches it to the context[BotT].
@@ -71,7 +71,7 @@ async def ensure_database_user(
     ctx.player_entity = player_entity
 
 
-async def ensure_farm_user(
+async def ensure_farm(
     ctx: Context[BotT], farm_cache: "FarmCacheService", farm_repository: "FarmRepositoryProtocol"
 ) -> None:
     """Fetches or creates the farm entity from the cache or database and attaches it to the context[BotT].
@@ -89,7 +89,7 @@ async def ensure_farm_user(
     ctx.farm_entity = farm_entity
 
 
-async def ensure_database_config(
+async def ensure_guild_config(
     ctx: Context[BotT], bot_config_cache: "BotConfigCacheService", bot_config_repository: BotConfigRepositoryProtocol
 ) -> None:
     """Fetches or creates the bot config entity from the cache or database and attaches it to the context[BotT].

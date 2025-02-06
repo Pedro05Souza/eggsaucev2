@@ -2,7 +2,7 @@ from discord.ext.commands import Bot, Cog, command, Context
 from discord.ext.commands._types import BotT
 from usecases import SetChannelUsecase, SetPrefixUsecase, UnsetChannelUsecase
 from repositories import BotConfigRepository, BotConfigRepositoryProtocol
-from tools import BotConfigCacheService, admin_only, ensure_database_config, GlobalBotConfigCache
+from tools import BotConfigCacheService, admin_only, ensure_guild_config, GlobalBotConfigCache
 
 
 class BotConfigController(Cog):
@@ -39,7 +39,7 @@ class BotConfigController(Cog):
         await unset_channel_usecase.unset_channel()
 
     async def cog_before_invoke(self, ctx: Context[BotT]) -> None:
-        await ensure_database_config(ctx, self.bot_config_cache, self.bot_config_repository)
+        await ensure_guild_config(ctx, self.bot_config_cache, self.bot_config_repository)
 
 
 async def setup(bot: Bot) -> None:

@@ -2,19 +2,19 @@ from typing import Optional
 from discord import Member
 from discord.ext.commands import Cog, Bot, hybrid_command, Context, before_invoke, cooldown, BucketType
 from discord.ext.commands._types import BotT
-from usecases import MarketUsecase, FarmUseCase, RenameFarmUsecase, BuyFarmerUseCase, ChickenInfoUseCase
+from usecases import MarketUsecase, FarmUseCase, RenameFarmUsecase, BuyFarmerUseCase, InspectChickenUseCase
 from repositories import FarmRepository, FarmRepositoryProtocol, PlayerRepositoryProtocol, PlayerRepository
 from tools import (
     ChickenGeneratorService,
     GlobalPlayerCache,
     GlobalFarmCache,
     GlobalBotConfigCache,
-    ensure_farm_user,
+    ensure_farm,
     FarmCacheService,
     PlayerCacheService,
     BotConfigCacheService,
     is_using_valid_channel,
-    ensure_database_user,
+    ensure_player
 )
 from tools.constants import REGULAR_COMMAND_COOLDOWN, SPAM_COMMAND_COOLDOWN
 
@@ -40,11 +40,11 @@ class FarmController(Cog):
         self.player_repository = player_repository
 
     async def _ensure_farm_user(self, ctx: Context[BotT]) -> None:
-        await ensure_farm_user(ctx, self.farm_cache, self.farm_repository)
+        await ensure_farm(ctx, self.farm_cache, self.farm_repository)
 
     async def _ensure_farm_and_player_user(self, ctx: Context[BotT]) -> None:
-        await ensure_farm_user(ctx, self.farm_cache, self.farm_repository)
-        await ensure_database_user(ctx, self.player_cache, self.player_repository)
+        await ensure_farm(ctx, self.farm_cache, self.farm_repository)
+        await ensure_player(ctx, self.player_cache, self.player_repository)
 
     @hybrid_command(name="market", aliases=["m"], description="🐔 Roll for a chicken in the market!")
     @before_invoke(_ensure_farm_user)
@@ -94,9 +94,9 @@ class FarmController(Cog):
     )
     @before_invoke(_ensure_farm_user)
     @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
-    async def chicken_info(self, ctx: Context[BotT], position: int) -> None:
-        chicken_info_usecase = ChickenInfoUseCase(ctx, ctx.farm_entity, position)
-        await chicken_info_usecase.chicken_info()
+    async def inspect_chicken(self, ctx: Context[BotT], position: int) -> None:
+        chicken_info_usecase = InspectChickenUseCase(ctx, ctx.farm_entity, position)
+        await chicken_info_usecase.inspect_chicken()
 
     async def cog_check(self, ctx: Context[BotT]) -> bool:  # type: ignore
         return await is_using_valid_channel(ctx, self.bot_config_cache)

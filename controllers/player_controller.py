@@ -13,7 +13,7 @@ from tools import (
     GlobalPlayerCache,
     GlobalBotConfigCache,
     spin_command_autocomplete,
-    ensure_database_user,
+    ensure_player,
     is_using_valid_channel,
 )
 from tools.constants import REGULAR_COMMAND_COOLDOWN
@@ -50,7 +50,7 @@ class PlayerController(Cog):
         self.player_repository = player_repository
 
     async def _ensure_database_player_decorator(self, ctx: Context[BotT]) -> None:
-        await ensure_database_user(ctx, self.player_cache, self.player_repository)
+        await ensure_player(ctx, self.player_cache, self.player_repository)
 
     @hybrid_command(
         name="balance", aliases=["bal", "points", "p"], description="💰 Check your balance or another user's!"
@@ -104,17 +104,17 @@ class PlayerController(Cog):
         )
         await upgrade_bank_limit_usecase.upgrade_bank_limit()
 
-    @hybrid_command(name="withdraw", aliases=["with"], description="💸 Withdraw money from your bank account!")
+    @hybrid_command(name="withdraw", aliases=["with", "w"], description="💸 Withdraw money from your bank account!")
     @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
     @before_invoke(_ensure_database_player_decorator)
-    async def withdraw(self, ctx: Context[BotT], amount: int) -> None:
+    async def withdraw(self, ctx: Context[BotT], amount: str) -> None:
         withdraw_usecase = WithdrawUsecase(ctx, ctx.player_entity, self.player_cache, amount, self.player_repository)
         await withdraw_usecase.withdraw()
 
     @hybrid_command(name="deposit", aliases=["dep"], descriptiom="💸Deposit money in your bank account!")
     @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
     @before_invoke(_ensure_database_player_decorator)
-    async def deposit(self, ctx: Context[BotT], amount: int) -> None:
+    async def deposit(self, ctx: Context[BotT], amount: str) -> None:
         deposit_usecase = DepositUsecase(ctx, ctx.player_entity, self.player_cache, amount, self.player_repository)
         await deposit_usecase.deposit()
 
