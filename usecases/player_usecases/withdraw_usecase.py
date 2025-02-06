@@ -1,5 +1,6 @@
 from discord.ext.commands import Context
 from discord.ext.commands._types import BotT
+from tortoise.transactions import atomic
 from entities import PlayerEntity
 from repositories import PlayerRepositoryProtocol
 from tools import (
@@ -20,7 +21,7 @@ class WithdrawUsecase:
         ctx: Context[BotT],
         player_entity: PlayerEntity,
         player_cache: PlayerCacheService,
-        amount: int,
+        amount: str,
         player_repository: PlayerRepositoryProtocol,
     ) -> None:
         self._ctx = ctx
@@ -29,9 +30,19 @@ class WithdrawUsecase:
         self._amount = amount
         self._player_repository = player_repository
 
+    @atomic()
     async def withdraw(self) -> None:
 
-        if self._amount < 0:
+        if self._amount.lower() == "all":
+            self._amount = self._player_entity.bank_balance
+
+        else:
+            try:
+                self._amount = int(self._amount)
+            except ValueError:
+                return await send_failed_embed(self._ctx, REASON_INVALID_AMOUNT)
+
+        if self._amount <= 0:
             return await send_failed_embed(self._ctx, REASON_INVALID_AMOUNT)
 
         if self._amount > self._player_entity.bank_balance:
@@ -42,6 +53,7 @@ class WithdrawUsecase:
 
         async with self._player_cache.remove_if_exception(self._player_entity.discord_user_id):
             await self._player_repository.update_player(self._player_entity)
+            await self._player_repository.update_player_bank(self._player_entity)
 
         return await send_bot_embed(
             ctx=self._ctx,

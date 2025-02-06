@@ -21,7 +21,7 @@ class DepositUsecase:
         ctx: Context[BotT],
         player_entity: PlayerEntity,
         player_cache: PlayerCacheService,
-        amount: int,
+        amount: str,
         player_repository: PlayerRepositoryProtocol,
     ) -> None:
         self._ctx = ctx
@@ -32,6 +32,15 @@ class DepositUsecase:
 
     @atomic()
     async def deposit(self) -> None:
+
+        if self._amount.lower() == "all":
+            self._amount = self._player_entity.balance
+
+        else:
+            try:
+                self._amount = int(self._amount)
+            except ValueError:
+                return await send_failed_embed(self._ctx, REASON_INVALID_AMOUNT)
 
         if self._amount <= 0:
             return await send_failed_embed(self._ctx, REASON_INVALID_AMOUNT)
