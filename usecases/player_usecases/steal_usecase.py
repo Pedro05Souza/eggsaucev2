@@ -37,12 +37,12 @@ class StealUsecase:
 
     @atomic()
     async def steal(self) -> None:
-        if self._target.id == self._stealer.id:
+        if self._target.id == self._stealer.discord_user_id:
             return await send_failed_embed(self._ctx, REASON_CANT_ACTION_SELF)
 
         target_entity = await self._player_cache.get_or_fetch_player_entity(self._target.id)
 
-        if not target_entity or target_entity.id == self._stealer.id:
+        if not target_entity:
             return await send_failed_embed(self._ctx, REASON_INVALID_USER)
 
         if target_entity.balance == 0:

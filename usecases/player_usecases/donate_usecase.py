@@ -40,7 +40,7 @@ class DonateUsecase:
         if not recipient_entity:
             return await send_failed_embed(self._ctx, REASON_INVALID_USER)
 
-        if self._recipient.id == self._donator.id:
+        if self._recipient.id == self._donator.discord_user_id:
             return await send_failed_embed(self._ctx, REASON_CANT_ACTION_SELF)
 
         if self._donation_amount <= 0:
