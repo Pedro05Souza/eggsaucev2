@@ -1,7 +1,6 @@
 from typing import Optional
 from entities import FarmCornfieldEntity
-from entities.farm_entities.farm_player_entity import FarmEntity
-from models import FarmCornfield, Player, Farm
+from models import FarmCornfield, Farm
 from .mappers import farm_cornfield_model_to_entity
 
 __all__ = ["CornfieldRepository"]
@@ -11,9 +10,7 @@ class CornfieldRepository:
 
     async def get_cornfield_by_user_discord_id(self, discord_user_id: int) -> Optional[FarmCornfieldEntity]:
         cornfield = (
-            await FarmCornfield.filter(farm__player__discord_user_id=discord_user_id)
-            .select_related("farm")
-            .first()
+            await FarmCornfield.filter(farm__player__discord_user_id=discord_user_id).select_related("farm").first()
         )
         if not cornfield:
             return None
@@ -26,7 +23,7 @@ class CornfieldRepository:
 
     async def update_cornfield(self, farm_cornfield_entity: FarmCornfieldEntity) -> FarmCornfieldEntity:
         await FarmCornfield.filter(id=farm_cornfield_entity.farm_cornfield_id).update(
-            id=farm_cornfield_entity.farm_cornfield_id, 
+            id=farm_cornfield_entity.farm_cornfield_id,
             farm=farm_cornfield_entity.farm_id,
             cornfield_name=farm_cornfield_entity.cornfield_name,
             current_corn=farm_cornfield_entity.current_corn,
