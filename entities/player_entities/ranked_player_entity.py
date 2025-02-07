@@ -7,7 +7,7 @@ __all__ = ["RankedPlayerEntity"]
 @dataclass
 class RankedPlayerEntity(EntityBase):
 
-    __slots__ = ["discord_userid", "current_mmr", "highest_mmr", "wins", "losses"]
+    __slots__ = ["discord_user_id", "current_mmr", "highest_mmr", "wins", "losses"]
 
     discord_user_id: int
     current_mmr: int

@@ -54,7 +54,7 @@ class BuyFarmerUseCase:
         view = _FarmersView()
         message = await self._ctx.send(embed=embed, view=view)
         await view.wait()
-        await self._handle_farmer_purchase(message, view._selected_farmer)
+        await self._handle_farmer_purchase(message, view.selected_farmer)
 
     @atomic()
     async def _handle_farmer_purchase(self, message: Message, farmer: Optional[str]) -> None:
@@ -109,33 +109,33 @@ class _FarmersView(View):
         self,
     ) -> None:
         super().__init__(timeout=40)
-        self._selected_farmer = None
+        self.selected_farmer = None
 
     @button(style=ButtonStyle.gray, custom_id="Rich", emoji="💰")
     async def rich(self, interaction: Interaction, _: Button[View]) -> None:
-        self._selected_farmer = "Rich"
+        self.selected_farmer = "Rich"
         self.stop()
 
     @button(style=ButtonStyle.gray, custom_id="Guardian", emoji="🛡️")
     async def guardian(self, interaction: Interaction, _: Button[View]) -> None:
-        self._selected_farmer = "Guardian"
+        self.selected_farmer = "Guardian"
 
     @button(style=ButtonStyle.gray, custom_id="Executive", emoji="👔")
     async def executive(self, interaction: Interaction, _: Button[View]) -> None:
-        self._selected_farmer = "Executive"
+        self.selected_farmer = "Executive"
         self.stop()
 
     @button(style=ButtonStyle.gray, custom_id="Warrior", emoji="⚔️")
     async def warrior(self, interaction: Interaction, _: Button[View]) -> None:
-        self._selected_farmer = "Warrior"
+        self.selected_farmer = "Warrior"
         self.stop()
 
     @button(style=ButtonStyle.gray, custom_id="Generous", emoji="🎁")
     async def generous(self, interaction: Interaction, _: Button[View]) -> None:
-        self._selected_farmer = "Generous"
+        self.selected_farmer = "Generous"
         self.stop()
 
     @button(style=ButtonStyle.gray, custom_id="Sustainable", emoji="🌱")
     async def sustainable(self, interaction: Interaction, _: Button[View]) -> None:
-        self._selected_farmer = "Sustainable"
+        self.selected_farmer = "Sustainable"
         self.stop()

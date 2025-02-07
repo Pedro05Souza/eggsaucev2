@@ -23,11 +23,20 @@ class UpgradeBankUsecase:
     async def upgrade_bank_limit(self) -> None:
         bank_upgrade_price = self._player_entity.bank_capacity
 
-        has_confirmed = await self._ctx.confirmation_popup(
+        has_confirmed, message = await self._ctx.confirmation_popup(
             description=f"Would you like to upgrade your bank limit for **{bank_upgrade_price}** eggbux?"
         )
 
         if not has_confirmed:
+            await message.edit(
+                content="", embed=self._ctx.embed_builder(embed_params={"description": "❌ Bank upgrade timed out."})
+            )
+            return
+
+        if has_confirmed is False:
+            await message.edit(
+                content="", embed=self._ctx.embed_builder(embed_params={"description": "❌ Bank upgrade cancelled."})
+            )
             return
 
         balance_diff = get_balance_diff(self._player_entity, bank_upgrade_price)

@@ -44,15 +44,26 @@ class BuyTitleUsecase:
         description = "\n\n".join([self._format_title(title) for title in title_names])
         description += f"\n\n The titles give a salary every **{SECONDS_TO_SALARY_DROP // 60}** minutes."
 
-        has_confirmed = await self._ctx.confirmation_popup(
+        has_confirmed, message = await self._ctx.confirmation_popup(
             ephemeral=False, title=f"Do you want to buy the title ``{next_title}``?", description=description
         )
 
         if has_confirmed:
+
+            if has_confirmed is False:
+                await message.edit(
+                    content="",
+                    embed=self._ctx.embed_builder(embed_params={"description": "❌ Title purchase cancelled."}),
+                )
+                return
+
             title_price: int = self._get_titles_prices[next_title]
 
             if title_price > self._player_entity.balance + self._player_entity.bank_balance:
-                await self._ctx.send_failed_embed(REASON_INSUFFICIENT_BALANCE)
+                await message.edit(
+                    content="",
+                    embed=self._ctx.embed_builder(embed_params={"description": REASON_INSUFFICIENT_BALANCE}),
+                )
                 return
 
             self._player_entity.last_bought_title = next_title
@@ -63,8 +74,14 @@ class BuyTitleUsecase:
             async with self._player_cache.remove_if_exception(self._player_entity.discord_user_id):
                 await self._player_repository.update_player(self._player_entity)
 
-            await self._ctx.send_bot_embed(
-                embed_params={"description": f"Title **{next_title}** has been bought successfully."}
+            await message.edit(
+                embed=self._ctx.embed_builder(
+                    embed_params={"description": f"Title **{next_title}** has been bought successfully."}
+                )
+            )
+        else:
+            await message.edit(
+                content="", embed=self._ctx.embed_builder(embed_params={"description": "❌ Title purchase timed out."})
             )
 
     def _get_next_title(self, title_names: list[str]) -> Optional[str]:

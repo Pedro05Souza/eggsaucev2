@@ -205,7 +205,7 @@ class EggsauceContext(Context):
 
     async def confirmation_popup(
         self, description: str, title: str = "🔔 Please Confirm Your Action", ephemeral: bool = True
-    ) -> Optional[bool]:
+    ):
         """This function is responsable for creating a confirmation popup.
 
         Args:
@@ -216,9 +216,9 @@ class EggsauceContext(Context):
         """
         embed = Embed(title=title, description=description)
         confirmation_popup = _ConfirmationPopUp(embed, ephemeral)
-        await self.send(embed=embed, view=confirmation_popup)
+        message = await self.send(embed=embed, view=confirmation_popup)
         await confirmation_popup.wait()
-        return confirmation_popup.value
+        return confirmation_popup.value, message
 
 
 class _ConfirmationPopUp(View):
@@ -228,7 +228,7 @@ class _ConfirmationPopUp(View):
         embed: Embed,
         ephemeral: bool = True,
     ) -> None:
-        super().__init__(timeout=None)
+        super().__init__(timeout=50)
         self.value = None
         self.embed = embed
         self.ephemeral = ephemeral
