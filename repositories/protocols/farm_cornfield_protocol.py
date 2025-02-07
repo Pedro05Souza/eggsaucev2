@@ -1,6 +1,5 @@
 from typing import Protocol, Optional
 from entities.farm_entities.farm_cornfield_entity import FarmCornfieldEntity
-from entities.farm_entities.farm_player_entity import FarmEntity
 
 
 __all__ = ["FarmCornfieldProtocol"]
