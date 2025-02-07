@@ -1,9 +1,10 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
+from random import choice
 from logging import Logger, config, getLogger
 from discord import Member
 from models import Player, Farm
-from .constants import LOGGING_CONFIG, get_titles_salaries
+from .constants import LOGGING_CONFIG, get_titles_salaries, tips
 
 if TYPE_CHECKING:
     from services import AwayTimeEarningsService, EarningsType
@@ -20,6 +21,7 @@ __all__ = [
     "format_earnings_type",
     "farm_entity_to_model",
     "extract_discord_user",
+    "get_random_tip_message",
 ]
 
 
@@ -114,3 +116,6 @@ def extract_discord_user(author: Member, mentioned_user: Optional[Member]) -> Me
     if mentioned_user:
         return mentioned_user
     return author
+
+def get_random_tip_message() -> str:
+    return choice(tips)

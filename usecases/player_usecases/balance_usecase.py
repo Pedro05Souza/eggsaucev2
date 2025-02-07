@@ -7,6 +7,7 @@ from tools import (
     AwayTimeEarningsService,
     extract_discord_user,
     format_earnings_type,
+    get_random_tip_message,
 )
 from tools.constants import REASON_INVALID_USER
 from eggsauce_context import EggsauceContext
@@ -66,4 +67,5 @@ class BalanceUsecase:
         return await self._ctx.send_bot_embed(
             embed_params={"title": f"💼 {self._ctx.author.display_name}'s balance", "description": description},
             thumbnail_url=avatar_to_send,
+            footer_text=get_random_tip_message(),
         )

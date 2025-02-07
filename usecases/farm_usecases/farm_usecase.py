@@ -1,7 +1,7 @@
 from discord import Member
 from repositories import FarmRepositoryProtocol
 from tools.constants import REASON_INVALID_USER
-from tools import get_quality_text, FarmCacheService
+from tools import get_quality_text, FarmCacheService, get_random_tip_message
 from eggsauce_context import EggsauceContext
 
 __all__ = ["FarmUseCase"]
@@ -60,4 +60,5 @@ class FarmUseCase:
                 "description": farm_chickens,
             },
             thumbnail_url=avatar_to_send,
+            footer_text=get_random_tip_message(),
         )
