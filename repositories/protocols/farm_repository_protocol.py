@@ -1,10 +1,10 @@
-from typing import Protocol, Optional
+from typing import Protocol, Optional, runtime_checkable
 from entities import FarmEntity, ChickenEntity
 from models import Farm
 
 __all__ = ["FarmRepositoryProtocol"]
 
-
+@runtime_checkable
 class FarmRepositoryProtocol(Protocol):
     async def get_farm_by_discord_user_id(self, discord_user_id: int) -> Optional[FarmEntity]: ...
 
