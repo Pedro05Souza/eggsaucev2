@@ -8,7 +8,7 @@ async def farm_cornfield_model_to_entity(farm_cornfield: FarmCornfield) -> FarmC
 
     return FarmCornfieldEntity(
         id=str(farm_cornfield.id),
-        farm_id=farm_cornfield.farm_id,
+        farm_id=farm_cornfield.farm.id,
         cornfield_name=farm_cornfield.cornfield_name,
         current_corn=farm_cornfield.current_corn,
         corn_limit=farm_cornfield.corn_limit,
