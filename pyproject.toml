@@ -35,6 +35,7 @@ exclude = [
     "**/build/**",
     "**/__init__.py",
     "**/__pycache__/**",
+    "**/models/**",
 ]
 pythonVersion = "3.12"
 typeCheckingMode = "basic"
