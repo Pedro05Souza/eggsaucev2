@@ -84,7 +84,7 @@ class FarmController(Cog):
             self.farm_repository,
             self.player_repository,
         )
-        #await buy_farmer_usecase.buy_farmer()
+        await buy_farmer_usecase.buy_farmer()
 
     @hybrid_command(
         name="inspectchicken", aliases=["ic"], description="🐔 Retrieve detailed information about a specific chicken"
