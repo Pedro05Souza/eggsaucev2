@@ -189,4 +189,5 @@ class ChickenView(View):
                 + f"{selected_chicken.emoji} **{selected_chicken.rarity} {selected_chicken.name}**"
                 + f" for **{selected_chicken.price}** eggbux!"
             },
+            ephemeral=False
         )
