@@ -37,6 +37,12 @@ class FarmRepository:
         )
         return farm_entity
 
+    async def bulk_update_farm(self, farm_entities: list[Farm]) -> None:
+        await Farm.bulk_update(
+            farm_entities,
+            fields=["farm_title", "farmer", "next_drop_time", "remaining_rolls", "next_chicken_roll_time"],
+        )
+
     async def upsert_farm_chicken(self, farm_id: str, chicken: ChickenEntity) -> None:
         await Chicken.update_or_create(
             id=chicken.id,

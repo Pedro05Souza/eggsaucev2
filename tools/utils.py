@@ -1,16 +1,15 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING, Optional
+from random import choice
 from logging import Logger, config, getLogger
-from typing import Literal, TYPE_CHECKING, Optional
-from uuid import uuid4
-from random import uniform, randint
-from models import Player, Chicken
-from entities import ChickenEntity
-from .constants import LOGGING_CONFIG, get_titles_salaries, GeneratedChicken
+from discord import Member
+from models import Player, Farm
+from .constants import LOGGING_CONFIG, get_titles_salaries, tips
 
 if TYPE_CHECKING:
     from services import AwayTimeEarningsService, EarningsType
     from repositories import PlayerRepositoryProtocol
-    from entities import PlayerEntity
+    from entities import PlayerEntity, FarmEntity
 
 __all__ = [
     "get_logger",
@@ -18,10 +17,11 @@ __all__ = [
     "deduct_from_balance_and_bank",
     "get_salary_from_title",
     "player_entity_to_model",
-    "generated_chicken_to_chicken_entity",
-    "chicken_entity_to_model",
     "calculate_away_time_earnings",
     "format_earnings_type",
+    "farm_entity_to_model",
+    "extract_discord_user",
+    "get_random_tip_message",
 ]
 
 
@@ -59,47 +59,14 @@ async def player_entity_to_model(player_entity: "PlayerEntity") -> Player:
     )
 
 
-async def chicken_entity_to_model(farm_id: str, chicken_entity: ChickenEntity) -> Chicken:
-    return Chicken(
-        id=chicken_entity.id,
-        name=chicken_entity.name,
-        eggs_generated=chicken_entity.eggs_generated,
-        quality=chicken_entity.quality,
-        rarity=chicken_entity.rarity.lower(),
-        location_status=chicken_entity.location_status,
-        happiness=chicken_entity.happiness,
-        farm_id=farm_id,
-    )
-
-
-def generated_chicken_to_chicken_entity(
-    generated_chicken: GeneratedChicken, location_status: Literal["farm", "bench", "market", "redeemables"]
-) -> ChickenEntity:
-    """Creates a new chicken entity from a generated chicken.
-
-    Args:
-        generated_chicken (GeneratedChicken): The generated chicken.
-        location_status (Literal["farm", "bench", "market", "redeemables"]): The location status of the chicken.
-
-        * farm: The chicken is being added to the farm.
-        * bench: The chicken is being added to
-        * market: The chicken is being added to the market.
-        * redeemables: The chicken is being added to the redeemables.
-
-    Returns:
-        ChickenEntity: The new chicken entity.
-    """
-    return ChickenEntity(
-        id=str(uuid4()),
-        eggs_generated=0,
-        name=generated_chicken.name,
-        quality=round(uniform(0.2, 1), 2),
-        rarity=generated_chicken.rarity,
-        price=generated_chicken.price,
-        emoji=generated_chicken.emoji,
-        happiness=randint(50, 100),
-        location_status=location_status,
-        is_newly_generated=True,
+async def farm_entity_to_model(farm_entity: "FarmEntity") -> Farm:
+    return Farm(
+        id=farm_entity.id,
+        farm_title=farm_entity.farm_title,
+        farmer=farm_entity.farmer,
+        next_drop_time=farm_entity.next_drop_time,
+        remaining_rolls=farm_entity.remaining_rolls,
+        next_chicken_roll_time=farm_entity.next_chicken_roll_time,
     )
 
 
@@ -134,3 +101,21 @@ def format_earnings_type(earnings_type: "EarningsType") -> str:
         base_description += f"\n🌽 **{earnings_type['cornfield']}** eggbux from your cornfield"
 
     return base_description
+
+
+def extract_discord_user(author: Member, mentioned_user: Optional[Member]) -> Member:
+    """Extracts the discord user from the command.
+
+    Args:
+        author (Member): The author of the command.
+        possible_mentioned_user (Member): The possible mentioned user.
+
+    Returns:
+        Member: The discord user.
+    """
+    if mentioned_user:
+        return mentioned_user
+    return author
+
+def get_random_tip_message() -> str:
+    return choice(tips)

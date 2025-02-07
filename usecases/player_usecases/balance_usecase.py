@@ -1,18 +1,16 @@
-from discord.ext.commands import Context
-from discord.ext.commands._types import BotT
 from discord import Member
 from discord.utils import format_dt
 from repositories import PlayerRepositoryProtocol
 from tools import (
-    send_bot_embed,
     PlayerCacheService,
-    send_failed_embed,
     calculate_away_time_earnings,
     AwayTimeEarningsService,
     extract_discord_user,
     format_earnings_type,
+    get_random_tip_message,
 )
 from tools.constants import REASON_INVALID_USER
+from eggsauce_context import EggsauceContext
 
 __all__ = ["BalanceUsecase"]
 
@@ -21,7 +19,7 @@ class BalanceUsecase:
 
     def __init__(
         self,
-        ctx: Context[BotT],
+        ctx: EggsauceContext,
         discord_member: Member | None,
         player_cache: PlayerCacheService,
         away_time_earnings_service: AwayTimeEarningsService,
@@ -41,8 +39,7 @@ class BalanceUsecase:
 
         if not player_entity:
             if self._discord_member:
-                return await send_failed_embed(
-                    self._ctx,
+                return await self._ctx.send_failed_embed(
                     REASON_INVALID_USER,
                 )
             player_entity = await self._player_repository.create_player(member_to_send.id)
@@ -67,8 +64,8 @@ class BalanceUsecase:
             formatted_earning_types = format_earnings_type(earning_types)
             description += f"\n\n{formatted_earning_types}"
 
-        return await send_bot_embed(
-            ctx=self._ctx,
+        return await self._ctx.send_bot_embed(
             embed_params={"title": f"💼 {self._ctx.author.display_name}'s balance", "description": description},
             thumbnail_url=avatar_to_send,
+            footer_text=get_random_tip_message(),
         )

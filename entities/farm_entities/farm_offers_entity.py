@@ -1,15 +1,15 @@
 from dataclasses import dataclass
 from datetime import datetime
+from .._entity_base import EntityBase
 
 __all__ = ["FarmOfferEntity"]
 
 
 @dataclass
-class FarmOfferEntity:
+class FarmOfferEntity(EntityBase):
 
-    __slots__ = ["offer_id", "farm_id", "chicken_id", "price", "description", "expires_at"]
+    __slots__ = ["farm_id", "chicken_id", "price", "description", "expires_at"]
 
-    offer_id: str
     farm_id: str
     chicken_id: str
     price: int

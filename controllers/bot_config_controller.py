@@ -1,8 +1,8 @@
-from discord.ext.commands import Bot, Cog, command, Context
-from discord.ext.commands._types import BotT
+from discord.ext.commands import Bot, Cog, command
 from usecases import SetChannelUsecase, SetPrefixUsecase, UnsetChannelUsecase
 from repositories import BotConfigRepository, BotConfigRepositoryProtocol
-from tools import BotConfigCacheService, admin_only, ensure_database_config, GlobalBotConfigCache
+from tools import BotConfigCacheService, admin_only, ensure_guild_config, GlobalBotConfigCache
+from eggsauce_context import EggsauceContext
 
 
 class BotConfigController(Cog):
@@ -16,30 +16,32 @@ class BotConfigController(Cog):
 
     @command(name="setprefix")
     @admin_only()
-    async def set_prefix(self, ctx: Context[BotT], prefix: str) -> None:
+    async def set_prefix(self, ctx: EggsauceContext, prefix: str) -> None:
         set_prefix_usecase = SetPrefixUsecase(
-            ctx, ctx.guild_config_entity, self.bot_config_cache, self.bot_config_repository, prefix
+            ctx, ctx.bot_config_entity, self.bot_config_cache, self.bot_config_repository, prefix
         )
         await set_prefix_usecase.set_prefix()
 
     @command(name="setchannel")
     @admin_only()
-    async def set_channel(self, ctx: Context[BotT]) -> None:
+    async def set_channel(self, ctx: EggsauceContext) -> None:
         set_channel_usecase = SetChannelUsecase(
-            ctx, ctx.channel.id, ctx.guild_config_entity, self.bot_config_cache, self.bot_config_repository
+            ctx, ctx.channel.id, ctx.bot_config_entity, self.bot_config_cache, self.bot_config_repository
         )
         await set_channel_usecase.set_channel()
 
     @command(name="unsetchannel")
     @admin_only()
-    async def unset_channel(self, ctx: Context[BotT]) -> None:
+    async def unset_channel(self, ctx: EggsauceContext) -> None:
         unset_channel_usecase = UnsetChannelUsecase(
-            ctx, ctx.channel.id, ctx.guild_config_entity, self.bot_config_cache, self.bot_config_repository
+            ctx, ctx.channel.id, ctx.bot_config_entity, self.bot_config_cache, self.bot_config_repository
         )
         await unset_channel_usecase.unset_channel()
 
-    async def cog_before_invoke(self, ctx: Context[BotT]) -> None:
-        await ensure_database_config(ctx, self.bot_config_cache, self.bot_config_repository)
+    async def cog_before_invoke(  # pyright: ignore[reportIncompatibleMethodOverride]
+        self, ctx: EggsauceContext
+    ) -> None:
+        await ensure_guild_config(ctx, self.bot_config_cache, self.bot_config_repository)
 
 
 async def setup(bot: Bot) -> None:

@@ -1,8 +1,9 @@
 from pathlib import Path
-from discord import Intents, Message
+from discord import Intents, Message, Interaction
 from discord.ext.commands import Bot
 from tools import get_logger, BotConfigCacheService
 from tools.constants import get_env_var
+from eggsauce_context import EggsauceContext
 
 
 class Eggsauce(Bot):
@@ -62,3 +63,6 @@ class Eggsauce(Bot):
             bot_config = await self.bot_config_cache.create_bot_config(message.guild.id)
 
         return bot_config.prefix
+
+    async def get_context(self, message: Message | Interaction , /, *, cls=EggsauceContext):
+        return await super().get_context(message, cls=EggsauceContext)

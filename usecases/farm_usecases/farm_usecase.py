@@ -1,9 +1,8 @@
-from discord.ext.commands import Context
-from discord.ext.commands._types import BotT
 from discord import Member
 from repositories import FarmRepositoryProtocol
 from tools.constants import REASON_INVALID_USER
-from tools import get_quality_text, FarmCacheService, send_bot_embed, send_failed_embed
+from tools import get_quality_text, FarmCacheService, get_random_tip_message
+from eggsauce_context import EggsauceContext
 
 __all__ = ["FarmUseCase"]
 
@@ -12,7 +11,7 @@ class FarmUseCase:
 
     def __init__(
         self,
-        ctx: Context[BotT],
+        ctx: EggsauceContext,
         discord_member: Member | None,
         farm_cache_service: FarmCacheService,
         farm_repository: FarmRepositoryProtocol,
@@ -35,8 +34,7 @@ class FarmUseCase:
 
         if not farm_entity:
             if self._discord_member:
-                return await send_failed_embed(
-                    self._ctx,
+                return await self._ctx.send_failed_embed(
                     REASON_INVALID_USER,
                 )
             farm_entity = await self._farm_repository.create_farm(self._ctx.author.id)
@@ -48,19 +46,19 @@ class FarmUseCase:
         )
         farm_chickens = "\n\n".join(
             [
-                f"{chicken.emoji} - **{chicken.rarity} {chicken.name}**"
+                f"**{index}.**{chicken.emoji} - **{chicken.rarity} {chicken.name}**"
                 + f"\n✨ Happiness: **{chicken.happiness}%**"
                 + f"\n📈 Quality: **{get_quality_text(chicken.quality)}**"
-                for chicken in farm_entity.chickens
+                for index, chicken in enumerate(farm_entity.chickens, start=1)
             ]
             if farm_entity.chickens
             else ["No chickens in the farm yet!"]
         )
-        await send_bot_embed(
-            self._ctx,
+        await self._ctx.send_bot_embed(
             embed_params={
                 "title": farm_title,
                 "description": farm_chickens,
             },
             thumbnail_url=avatar_to_send,
+            footer_text=get_random_tip_message(),
         )

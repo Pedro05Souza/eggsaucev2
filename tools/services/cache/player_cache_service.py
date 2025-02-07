@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Optional, TYPE_CHECKING
 from asyncio import Lock
-from tortoise.transactions import in_transaction
+from tortoise.transactions import atomic
 from repositories import PlayerRepositoryProtocol
 from tools.utils import player_entity_to_model
 from .ttl_cache_service import TTLCacheService
@@ -56,6 +56,7 @@ class PlayerCacheService(TTLCacheService[int, "PlayerEntity"]):
             if not player_entity:
                 return None
 
+    @atomic()
     async def _save_expired_or_removed_items(self):
         """Saves the expired or removed items to the database."""
         items = await self._get_expired_or_removed_items()
@@ -66,9 +67,8 @@ class PlayerCacheService(TTLCacheService[int, "PlayerEntity"]):
         items = [item[1] for item in items]
         items = [await player_entity_to_model(item) for item in items]
 
-        async with in_transaction():
-            await self.player_repository.bulk_update_players(items)
-        self._logger.info("Saved %s expired or removed items to the database.", len(items))
+        await self.player_repository.bulk_update_players(items)
+        self._logger.info("Saved %s expired or removed player entities to the database.", len(items))
 
     @property
     def player_repository(self) -> PlayerRepositoryProtocol:

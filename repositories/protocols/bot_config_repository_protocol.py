@@ -1,9 +1,10 @@
-from typing import Protocol, Optional
+from typing import Protocol, Optional, runtime_checkable
 from entities import BotConfigEntity
 
 __all__ = ["BotConfigRepositoryProtocol"]
 
 
+@runtime_checkable
 class BotConfigRepositoryProtocol(Protocol):
     async def get_guild_config_by_discord_guild_id(self, discord_guild_id: int) -> Optional[BotConfigEntity]: ...
 

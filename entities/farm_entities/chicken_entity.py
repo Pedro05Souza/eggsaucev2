@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 from typing import Literal
+from .._entity_base import EntityBase
 
 __all__ = ["ChickenEntity"]
 
 
 @dataclass
-class ChickenEntity:
+class ChickenEntity(EntityBase):
     __slots__ = [
-        "id",
         "eggs_generated",
         "quality",
         "rarity",
@@ -16,10 +16,11 @@ class ChickenEntity:
         "name",
         "happiness",
         "emoji",
-        "is_newly_generated", 
+        "total_egg_production",
+        "actual_egg_production",
+        "food_consumption",
     ]
 
-    id: str
     eggs_generated: int
     quality: float
     rarity: str
@@ -28,4 +29,6 @@ class ChickenEntity:
     name: str
     happiness: int
     emoji: str
-    is_newly_generated: bool
+    total_egg_production: int
+    actual_egg_production: int
+    food_consumption: int

@@ -2,6 +2,8 @@ from enum import Enum
 from typing import NamedTuple, TypedDict
 
 BASE_CHICKEN_PRICE = 400
+DELTA_EGG_VALUE = 10
+DELTA_FOOD_CONSUMPTION = 20
 FARM_MAX_CHICKENS = 8
 BENCH_MAX_CHICKENS = 5
 BASE_FARMER_PRICE = 5000
@@ -173,30 +175,7 @@ class ChickenPricesMultiplier(Enum):
     BETA = 17
     ETHEREAL = 250
 
-
-class ChickenEggValue(Enum):
-    DEAD = 0
-    COMMON = 2
-    UNCOMMON = 4
-    RARE = 9
-    EXCEPTIONAL = 16
-    EPIC = 25
-    LEGENDARY = 36
-    MYTHICAL = 49
-    ULTIMATE = 64
-    COSMIC = 81
-    DIVINE = 100
-    GALACTIC = 121
-    OMINOUS = 144
-    CELESTIAL = 169
-    BETA = 174
-    IMMORTAL = 196
-    CHOSEN = 225
-    ASCENDED = 256
-    ETHEREAL = 1000
-
-
-RARITIES = (
+CHICKEN_RARITIES = [
     "DEAD",
     "COMMON",
     "UNCOMMON",
@@ -216,7 +195,7 @@ RARITIES = (
     "CHOSEN",
     "ASCENDED",
     "ETHEREAL",
-)
+]
 
 NON_TRADEABLE_RARITIES = ("DEAD", "ETHEREAL")
 

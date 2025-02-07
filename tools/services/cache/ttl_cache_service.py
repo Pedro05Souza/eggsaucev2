@@ -27,9 +27,7 @@ class TTLCacheService(CacheBase[KT, VT]):
             if track_evict
             else TTLCache(maxsize=maxsize, ttl=expiration_time)
         )
-        super().__init__(cache_instance)
         self._cache = cache_instance
-
         super().__init__(self._cache)
         self._logger = get_logger(__name__)
 
@@ -50,9 +48,9 @@ class TTLCacheService(CacheBase[KT, VT]):
 
         Args:
             key (KT): The key of the item to remove
-            propagate_exception (bool, optional): Whether to raise the exception after removing the item. 
+            propagate_exception (bool, optional): Whether to raise the exception after removing the item.
             Defaults to False.
-            This is useful when there are nested context managers 
+            This is useful when there are nested context managers
             and the exception should be propagated to the outer context manager.
 
             Example:
@@ -62,8 +60,8 @@ class TTLCacheService(CacheBase[KT, VT]):
                 async with self._another_cache.remove_if_exception(another_key, propagate_exception=True):
                     # Do something
 
-            # If an exception occurs in the inner context manager, 
-            # the error will be propagated to the outer context manager, deleting both items.
+            # If an exception occurs in the inner context manager,
+            # the error will be propagated to the outer context manager, deleting both items in both caches.
             ```
         Returns:
             AsyncGenerator[None, Any]: _description_

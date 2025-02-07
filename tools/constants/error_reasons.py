@@ -1,7 +1,7 @@
 REASON_DM_FAILURE = "An error occurred while sending a message. Please ensure messaging is enabled."
 REASON_INVALID_USER = "The specified user is invalid."
 REASON_INVALID_AMOUNT = "The amount must be a positive number."
-REASON_INSUFFICIENT_BALANCE = "Insufficient balance to complete the transaction."
+REASON_INSUFFICIENT_BALANCE = "Insufficient wallet balance to complete the transaction."
 REASON_CANT_ACTION_SELF = "This action cannot be performed on yourself."
 REASON_STEAL_NO_MONEY = "The target user has no money to steal."
 REASON_INSUFFICIENT_BANK_CAPACITY = "Insufficient bank capacity to complete the transaction."

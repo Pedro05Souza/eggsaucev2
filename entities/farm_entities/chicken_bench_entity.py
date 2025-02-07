@@ -1,13 +1,11 @@
 from dataclasses import dataclass
 from entities.farm_entities.chicken_entity import ChickenEntity
+from .._entity_base import EntityBase
 
 __all__ = ["ChickenBenchEntity"]
 
 
 @dataclass
-class ChickenBenchEntity:
-    __slots__ = ["chicken_bench_id", "farm_id", "chickens"]
-
-    chicken_bench_id: int
-    farm_id: str
+class ChickenBenchEntity(EntityBase):
+    __slots__ = ["chickens"]
     chickens: list[ChickenEntity]
