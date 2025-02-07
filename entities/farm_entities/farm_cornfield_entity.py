@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 from datetime import datetime
+from .._entity_base import EntityBase
 
 __all__ = ["FarmCornfieldEntity"]
 
 
 @dataclass
-class FarmCornfieldEntity:
+class FarmCornfieldEntity(EntityBase):
     __slots__ = [
-        "farm_cornfield_id",
         "farm_id",
         "cornfield_name",
         "current_corn",
@@ -16,7 +16,6 @@ class FarmCornfieldEntity:
         "last_corn_drop",
     ]
 
-    farm_cornfield_id: str
     farm_id: str
     cornfield_name: str
     current_corn: int

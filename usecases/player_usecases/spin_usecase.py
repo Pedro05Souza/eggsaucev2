@@ -1,12 +1,10 @@
 from enum import Enum
 from typing import NamedTuple, Literal
 from random import Random
-from discord.ext.commands import Context
-from discord.ext.commands._types import BotT
-from entities import PlayerEntity
 from repositories import PlayerRepositoryProtocol
-from tools import PlayerCacheService, send_failed_embed, send_bot_embed
+from tools import PlayerCacheService
 from tools.constants import REASON_INSUFFICIENT_BALANCE, REASON_INVALID_AMOUNT, MIN_AMOUNT_SPIN
+from eggsauce_context import EggsauceContext
 
 __all__ = ["SpinUsecase"]
 
@@ -26,14 +24,13 @@ class SpinUsecase:
 
     def __init__(
         self,
-        ctx: Context[BotT],
-        player_entity: PlayerEntity,
+        ctx: EggsauceContext,
         player_cache: PlayerCacheService,
         color_choice: str,
         amount_betted: int,
         player_repository: PlayerRepositoryProtocol,
     ) -> None:
-        self._player_entity = player_entity
+        self._player_entity = ctx.player_entity
         self._player_cache = player_cache
         self._amount_betted = amount_betted
         self._ctx = ctx
@@ -43,15 +40,15 @@ class SpinUsecase:
 
     async def spin(self) -> None:
         if self._amount_betted > self._player_entity.balance:
-            await send_failed_embed(self._ctx, REASON_INSUFFICIENT_BALANCE)
+            await self._ctx.send_failed_embed(REASON_INSUFFICIENT_BALANCE)
             return
 
         if self._amount_betted <= 0:
-            await send_failed_embed(self._ctx, REASON_INVALID_AMOUNT)
+            await self._ctx.send_failed_embed(REASON_INVALID_AMOUNT)
             return
 
         if self._amount_betted < MIN_AMOUNT_SPIN:
-            await send_failed_embed(self._ctx, f"The minimum amount to spin is **{MIN_AMOUNT_SPIN}** eggbux.")
+            await self._ctx.send_failed_embed(f"The minimum amount to spin is **{MIN_AMOUNT_SPIN}** eggbux.")
             return
 
         spin_data = await self._calculate_spin_result()
@@ -70,8 +67,7 @@ class SpinUsecase:
         async with self._player_cache.remove_if_exception(self._player_entity.discord_user_id):
             await self._player_repository.update_player(self._player_entity)
 
-        await send_bot_embed(
-            ctx=self._ctx,
+        await self._ctx.send_bot_embed(
             embed_params={
                 "title": "🎰 Spin result",
                 "description": embed_description,

@@ -1,7 +1,8 @@
 from __future__ import annotations
-from logging import Logger, config, getLogger
 from typing import TYPE_CHECKING, Optional
-from models import Player,Farm
+from logging import Logger, config, getLogger
+from discord import Member
+from models import Player, Farm
 from .constants import LOGGING_CONFIG, get_titles_salaries
 
 if TYPE_CHECKING:
@@ -17,7 +18,8 @@ __all__ = [
     "player_entity_to_model",
     "calculate_away_time_earnings",
     "format_earnings_type",
-    'farm_entity_to_model'
+    "farm_entity_to_model",
+    "extract_discord_user",
 ]
 
 
@@ -97,3 +99,18 @@ def format_earnings_type(earnings_type: "EarningsType") -> str:
         base_description += f"\n🌽 **{earnings_type['cornfield']}** eggbux from your cornfield"
 
     return base_description
+
+
+def extract_discord_user(author: Member, mentioned_user: Optional[Member]) -> Member:
+    """Extracts the discord user from the command.
+
+    Args:
+        author (Member): The author of the command.
+        possible_mentioned_user (Member): The possible mentioned user.
+
+    Returns:
+        Member: The discord user.
+    """
+    if mentioned_user:
+        return mentioned_user
+    return author

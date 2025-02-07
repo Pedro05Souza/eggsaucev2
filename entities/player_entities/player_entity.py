@@ -1,15 +1,15 @@
 from datetime import datetime
 from typing import Optional
 from dataclasses import dataclass
+from .._entity_base import EntityBase
 
 __all__ = ["PlayerEntity"]
 
 
 @dataclass
-class PlayerEntity:
+class PlayerEntity(EntityBase):
 
     __slots__ = [
-        "id",
         "discord_user_id",
         "balance",
         "last_bought_title",
@@ -19,7 +19,6 @@ class PlayerEntity:
         "upgrade_level",
     ]
 
-    id: str
     discord_user_id: int
     balance: int
     last_bought_title: Optional[str]
