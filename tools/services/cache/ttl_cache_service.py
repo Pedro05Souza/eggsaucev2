@@ -32,7 +32,7 @@ class TTLCacheService(CacheBase[KT, VT]):
         self._logger = get_logger(__name__)
 
     async def _get_expired_or_removed_items(self) -> list[tuple[KT, VT]]:
-        if not hasattr(self._cache, "evicted_items"):
+        if not isinstance(self._cache, self._TrackEvictCache):
             raise ValueError("This method is only available when track_evict is set to True")
 
         items = self._cache.expire()
