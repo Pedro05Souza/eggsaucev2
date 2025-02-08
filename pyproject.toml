@@ -38,16 +38,16 @@ exclude = [
     "**/models/**",
 ]
 pythonVersion = "3.12"
-typeCheckingMode = "basic"
+typeCheckingMode = "standard"
 reportMissingModuleSource = "none"
 reportUnnecessaryTypeIgnoreComment = "error"
-reportAttributeAccessIssue = "none"
 reportUnusedImport = "warning"
 reportUnusedFunction = "warning"
 reportUnusedClass = "warning"
 reportUnusedVariable = "warning"
 reportIncompatibleMethodOverride = "error"
 reportMissingTypeStubs = "none"
+reportConstantRedefinition = "error"
 
 [tool.pytest.ini_options]
 pythonpath = ["tests"]
