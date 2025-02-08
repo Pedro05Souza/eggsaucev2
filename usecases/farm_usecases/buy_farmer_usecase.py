@@ -2,6 +2,7 @@ from typing import Optional
 from tortoise.transactions import atomic
 from discord.ui import View, button, Button
 from discord import ButtonStyle, Interaction, Message
+from entities import FarmerType
 from repositories import FarmRepositoryProtocol, PlayerRepositoryProtocol
 from tools.services import PlayerCacheService, FarmCacheService
 from tools import deduct_from_balance_and_bank
@@ -57,7 +58,7 @@ class BuyFarmerUseCase:
         await self._handle_farmer_purchase(message, view.selected_farmer)
 
     @atomic()
-    async def _handle_farmer_purchase(self, message: Message, farmer: Optional[str]) -> None:
+    async def _handle_farmer_purchase(self, message: Message, farmer: Optional[FarmerType]) -> None:
 
         if farmer is None:
             await message.edit(
@@ -109,7 +110,7 @@ class _FarmersView(View):
         self,
     ) -> None:
         super().__init__(timeout=40)
-        self.selected_farmer = None
+        self.selected_farmer: Optional[FarmerType] = None
 
     @button(style=ButtonStyle.gray, custom_id="Rich", emoji="💰")
     async def rich(self, interaction: Interaction, _: Button[View]) -> None:
