@@ -42,7 +42,7 @@ class MarketUsecase:
         self._chicken_generator_service = chicken_generator_service
         self._farm_cache_service = farm_cache_service
         self._player_cache_service = player_cache_service
-        self._farm_entity = ctx.farm_entity
+        self._farm_entity = ctx.entities.farm_entity
         self._farm_repository = farm_repository
         self._player_repository = player_repository
 
