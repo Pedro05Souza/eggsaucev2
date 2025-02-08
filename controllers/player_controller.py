@@ -4,7 +4,6 @@ from discord.ext.commands import Cog, hybrid_command, Bot, cooldown, before_invo
 from discord import Member, Message, VoiceState, app_commands
 from repositories import PlayerRepository, PlayerRepositoryProtocol
 from tools import (
-    AwayTimeEarningsService,
     PointsService,
     PlayerCacheService,
     BotConfigCacheService,
@@ -38,7 +37,6 @@ class PlayerController(Cog):
         bot: Bot,
         player_cache: PlayerCacheService,
         points_service: PointsService,
-        away_time_earnings_service: AwayTimeEarningsService,
         bot_config_cache: BotConfigCacheService,
         player_repository: PlayerRepositoryProtocol,
         gain_points_usecase: GainPointsUsecase,
@@ -46,7 +44,6 @@ class PlayerController(Cog):
         self.bot = bot
         self.player_cache = player_cache
         self.points_service = points_service
-        self.away_time_earnings_service = away_time_earnings_service
         self.bot_config_cache = bot_config_cache
         self.player_repository = player_repository
         self.gain_points_usecase = gain_points_usecase
@@ -59,18 +56,14 @@ class PlayerController(Cog):
     )
     @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
     async def balance(self, ctx: EggsauceContext, member: Optional[Member] = None) -> None:
-        balance_usecase = BalanceUsecase(
-            ctx, member, self.player_cache, self.away_time_earnings_service, self.player_repository
-        )
+        balance_usecase = BalanceUsecase(ctx, member, self.player_cache, self.player_repository)
         await balance_usecase.balance()
 
     @hybrid_command(name="donate", aliases=["give"], description="🤝 Share the love by donating eggbux to others!")
     @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
     @before_invoke(_ensure_database_player_decorator)
     async def donate(self, ctx: EggsauceContext, amount: int, recipient: Member) -> None:
-        donate_usecase = DonateUsecase(
-            ctx, amount, recipient, self.player_cache, self.player_repository
-        )
+        donate_usecase = DonateUsecase(ctx, amount, recipient, self.player_cache, self.player_repository)
         await donate_usecase.donate()
 
     @hybrid_command(name="steal", aliases=["rob"], description="🦹‍♂️ Steal some eggbux from another user!")
@@ -85,9 +78,7 @@ class PlayerController(Cog):
     @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
     @before_invoke(_ensure_database_player_decorator)
     async def spin(self, ctx: EggsauceContext, color_choice: str, amount: int) -> None:
-        spin_usecase = SpinUsecase(
-            ctx, self.player_cache, color_choice, amount, self.player_repository
-        )
+        spin_usecase = SpinUsecase(ctx, self.player_cache, color_choice, amount, self.player_repository)
         await spin_usecase.spin()
 
     @hybrid_command(name="slots", description="🎰 Play the slot machine to win some eggbux!")
@@ -101,9 +92,7 @@ class PlayerController(Cog):
     @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
     @before_invoke(_ensure_database_player_decorator)
     async def upgrade_bank_limit(self, ctx: EggsauceContext) -> None:
-        upgrade_bank_limit_usecase = UpgradeBankUsecase(
-            ctx, self.player_cache, self.player_repository
-        )
+        upgrade_bank_limit_usecase = UpgradeBankUsecase(ctx, self.player_cache, self.player_repository)
         await upgrade_bank_limit_usecase.upgrade_bank_limit()
 
     @hybrid_command(name="withdraw", aliases=["with", "w"], description="💸 Withdraw money from your bank account!")
@@ -154,13 +143,11 @@ class PlayerController(Cog):
 
 async def setup(bot: Bot) -> None:
     points_service = PointsService(LRUCacheService[int, datetime]())
-    away_time_earnings_service = AwayTimeEarningsService()
     await bot.add_cog(
         PlayerController(
             bot,
             GlobalPlayerCache,
             points_service,
-            away_time_earnings_service,
             GlobalBotConfigCache,
             PlayerRepository(),
             GainPointsUsecase(),

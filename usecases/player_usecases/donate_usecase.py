@@ -24,7 +24,7 @@ class DonateUsecase:
         player_repository: PlayerRepositoryProtocol,
     ) -> None:
         self._ctx = ctx
-        self._donator = ctx.player_entity
+        self._donator = ctx.entities.player_entity
         self._donation_amount = donation_amount
         self._recipient = recipient
         self._player_cache = player_cache

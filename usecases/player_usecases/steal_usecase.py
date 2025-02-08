@@ -26,7 +26,7 @@ class StealUsecase:
         player_repository: PlayerRepositoryProtocol,
     ) -> None:
         self._ctx = ctx
-        self._stealer = ctx.player_entity
+        self._stealer = ctx.entities.player_entity
         self._target = target
         self._player_cache = player_cache
         self._random = Random()

@@ -70,7 +70,7 @@ class FarmController(Cog):
     @before_invoke(_ensure_farm_user)
     @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
     async def rename_farm(self, ctx: EggsauceContext, new_name: str):
-        rename_farm_usecase = RenameFarmUsecase(ctx, ctx.farm_entity, self.farm_cache, new_name, self.farm_repository)
+        rename_farm_usecase = RenameFarmUsecase(ctx, self.farm_cache, new_name, self.farm_repository)
         await rename_farm_usecase.rename_farm()
 
     @hybrid_command(name="buyfarmer", aliases=["bf"], description="🐔 Buy a farmer for your farm!")

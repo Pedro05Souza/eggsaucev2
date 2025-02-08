@@ -16,7 +16,7 @@ class UpgradeBankUsecase:
         player_repository: PlayerRepositoryProtocol,
     ) -> None:
         self._ctx = ctx
-        self._player_entity = ctx.player_entity
+        self._player_entity = ctx.entities.player_entity
         self._player_cache = player_cache
         self._player_repository = player_repository
 

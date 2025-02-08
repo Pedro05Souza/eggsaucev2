@@ -18,7 +18,7 @@ class BotConfigController(Cog):
     @admin_only()
     async def set_prefix(self, ctx: EggsauceContext, prefix: str) -> None:
         set_prefix_usecase = SetPrefixUsecase(
-            ctx, ctx.bot_config_entity, self.bot_config_cache, self.bot_config_repository, prefix
+            ctx, self.bot_config_cache, self.bot_config_repository, prefix
         )
         await set_prefix_usecase.set_prefix()
 
@@ -26,7 +26,7 @@ class BotConfigController(Cog):
     @admin_only()
     async def set_channel(self, ctx: EggsauceContext) -> None:
         set_channel_usecase = SetChannelUsecase(
-            ctx, ctx.channel.id, ctx.bot_config_entity, self.bot_config_cache, self.bot_config_repository
+            ctx, ctx.channel.id, self.bot_config_cache, self.bot_config_repository
         )
         await set_channel_usecase.set_channel()
 
@@ -34,7 +34,7 @@ class BotConfigController(Cog):
     @admin_only()
     async def unset_channel(self, ctx: EggsauceContext) -> None:
         unset_channel_usecase = UnsetChannelUsecase(
-            ctx, ctx.channel.id, ctx.bot_config_entity, self.bot_config_cache, self.bot_config_repository
+            ctx, ctx.channel.id, self.bot_config_cache, self.bot_config_repository
         )
         await unset_channel_usecase.unset_channel()
 
