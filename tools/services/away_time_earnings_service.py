@@ -39,7 +39,7 @@ class AwayTimeEarningsService:
         if time_diffence.total_seconds() > 0:
             return
 
-        hours_passed = ceil(abs(time_diffence.total_seconds() / 3600))
+        hours_passed = ceil(divmod(abs(time_diffence.total_seconds()), 3600)[0])
 
         if hours_passed < 1:
             return
@@ -71,7 +71,7 @@ class AwayTimeEarningsService:
         if time_diffence.total_seconds() > 0:
             return
 
-        hours_passed = ceil(abs(time_diffence.total_seconds() / 3600))
+        hours_passed = ceil(divmod(abs(time_diffence.total_seconds()), 3600)[0])
 
         if hours_passed < 1:
             return
@@ -85,7 +85,7 @@ class AwayTimeEarningsService:
         farm_entity.next_chicken_roll_time = now + timedelta(seconds=SECONDDS_TO_CHICKEN_DROP)
 
         for chicken in farm_entity.chickens:
-            chicken.happiness -= randint(1, 3)
+            chicken.happiness = max(0, chicken.happiness - sum(randint(1, 3) for _ in range(hours_passed)))
 
         if player_entity.bank_capacity > player_entity.bank_balance + total_gained:
             player_entity.bank_balance += total_gained
