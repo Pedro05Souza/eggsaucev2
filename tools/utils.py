@@ -8,7 +8,7 @@ from .constants import LOGGING_CONFIG, get_titles_salaries, tips
 
 if TYPE_CHECKING:
     from services import AwayTimeEarningsService, EarningsType
-    from repositories import PlayerRepositoryProtocol
+    from repositories import PlayerRepositoryProtocol, FarmRepositoryProtocol
     from entities import PlayerEntity, FarmEntity
 
 __all__ = [
@@ -72,10 +72,12 @@ async def farm_entity_to_model(farm_entity: "FarmEntity") -> Farm:
 
 async def calculate_away_time_earnings(
     player_entity: "PlayerEntity",
+    farm_entity: Optional["FarmEntity"],
     player_repository: "PlayerRepositoryProtocol",
+    farm_repository: "FarmRepositoryProtocol",
     away_time_earnings_service: "AwayTimeEarningsService",
 ) -> Optional["EarningsType"]:
-    earnings_data = await away_time_earnings_service.calculate_away_time_earnings(player_entity)
+    earnings_data = await away_time_earnings_service.calculate_away_time_earnings(player_entity, farm_entity)
 
     if earnings_data is None:
         return
@@ -83,9 +85,10 @@ async def calculate_away_time_earnings(
     if earnings_data["salary"] > 0:
         await player_repository.update_player(player_entity)
 
-    return earnings_data
+    if earnings_data["farm"] > 0:
+        await farm_repository.update_farm(farm_entity)  # type: ignore
 
-    # TODO: Implement the rest of the logic to calculate the earnings, aka farm and cornfield
+    return earnings_data
 
 
 def format_earnings_type(earnings_type: "EarningsType") -> str:
@@ -116,6 +119,7 @@ def extract_discord_user(author: Member, mentioned_user: Optional[Member]) -> Me
     if mentioned_user:
         return mentioned_user
     return author
+
 
 def get_random_tip_message() -> str:
     return choice(tips)
