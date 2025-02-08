@@ -1,8 +1,9 @@
-from typing import Literal, Optional
+from typing import Optional
 from dataclasses import dataclass
 from datetime import datetime
 from entities.farm_entities.chicken_entity import ChickenEntity
 from .._entity_base import EntityBase
+from ..types import FarmerType
 
 __all__ = ["FarmEntity"]
 
@@ -23,7 +24,7 @@ class FarmEntity(EntityBase):
     player_id: str
     discord_user_id: int
     farm_title: str
-    farmer: Literal['Rich', 'Guardian', 'Executive', 'Warrior', 'Generous', 'Sustainable', None]
+    farmer: Optional[FarmerType]
     next_drop_time: Optional[datetime]
     remaining_rolls: int
     next_chicken_roll_time: Optional[datetime]
