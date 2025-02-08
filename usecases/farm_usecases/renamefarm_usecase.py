@@ -1,4 +1,3 @@
-from entities import FarmEntity
 from repositories import FarmRepositoryProtocol
 from tools import (
     FarmCacheService,

@@ -54,8 +54,7 @@ class EggsauceContext(Context):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._entities = _Entities()
-        
-        
+
     @property
     def entities(self) -> _Entities:
         return self._entities
