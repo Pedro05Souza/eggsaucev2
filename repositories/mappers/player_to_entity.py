@@ -5,7 +5,7 @@ from tools.constants import AMOUNT_PER_BANK_UPGRADE
 __all__ = ["player_model_to_entity"]
 
 def player_model_to_entity(player: Player) -> PlayerEntity:
-    bank_player: BankPlayer = player.bank_player
+    bank_player: BankPlayer = player.bank_player # type: ignore
     return PlayerEntity(
         id=str(player.id),
         discord_user_id=player.discord_user_id,

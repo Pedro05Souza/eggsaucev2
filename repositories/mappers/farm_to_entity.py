@@ -9,7 +9,7 @@ __all__ = ["farm_model_to_entity"]
 async def farm_model_to_entity(farm: Farm) -> FarmEntity:
 
     try:
-        chickens = [await chicken_model_to_entity(chicken) for chicken in farm.chickens]
+        chickens = [await chicken_model_to_entity(chicken) for chicken in farm.chickens] # type: ignore
 
     except NoValuesFetched:
         chickens = []

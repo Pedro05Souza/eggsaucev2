@@ -8,7 +8,7 @@ __all__ = ["bot_config_model_to_entity"]
 async def bot_config_model_to_entity(bot_config: BotConfig) -> BotConfigEntity:
 
     try:
-        allowed_channels = await bot_config.allowed_channels
+        allowed_channels = await bot_config.allowed_channels  # type: ignore
     except NoValuesFetched:
         allowed_channels = None
 
