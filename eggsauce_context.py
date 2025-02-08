@@ -8,10 +8,9 @@ from entities import FarmEntity, BotConfigEntity, PlayerEntity
 __all__ = ("EggsauceContext",)
 
 
-class EggsauceContext(Context):
+class _Entities:
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self) -> None:
         self._player_entity: Optional[PlayerEntity] = None
         self._farm_entity: Optional[FarmEntity] = None
         self._bot_config_entity: Optional[BotConfigEntity] = None
@@ -49,6 +48,18 @@ class EggsauceContext(Context):
     def bot_config_entity(self, bot_config_entity: BotConfigEntity) -> None:
         self._bot_config_entity = bot_config_entity
 
+
+class EggsauceContext(Context):
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._entities = _Entities()
+        
+        
+    @property
+    def entities(self) -> _Entities:
+        return self._entities
+
     async def send_bot_embed(
         self,
         embed_params: EmbedParams,
@@ -73,7 +84,7 @@ class EggsauceContext(Context):
             view (Optional[View], optional): The view that will be sent with the embed. Defaults to None.
 
         Raises:
-            ValueError: If ephemeral and is_dm are both True 
+            ValueError: If ephemeral and is_dm are both True
             or if ephemeral is True and the context is not an interaction.
         """
         embed = self.embed_builder(
