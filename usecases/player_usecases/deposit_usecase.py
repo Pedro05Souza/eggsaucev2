@@ -27,8 +27,10 @@ class DepositUsecase:
 
     @atomic()
     async def deposit(self) -> None:
+        if isinstance(self._amount, str):
+            self._amount = self._amount.lower()
 
-        if self._amount.lower() == "all":
+        if self._amount == "all":
             self._amount = self._player_entity.balance
 
         else:
