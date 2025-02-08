@@ -1,4 +1,3 @@
-from entities import BotConfigEntity
 from repositories import BotConfigRepositoryProtocol
 from tools import BotConfigCacheService
 from eggsauce_context import EggsauceContext
@@ -11,13 +10,12 @@ class SetPrefixUsecase:
     def __init__(
         self,
         ctx: EggsauceContext,
-        bot_config_entity: BotConfigEntity,
         bot_config_cache: BotConfigCacheService,
         bot_config_repository: BotConfigRepositoryProtocol,
         new_prefix: str,
     ) -> None:
         self._ctx = ctx
-        self._bot_config_entity = bot_config_entity
+        self._bot_config_entity = ctx.entities.bot_config_entity
         self._bot_config_cache = bot_config_cache
         self._new_prefix = new_prefix
         self._bot_config_repository = bot_config_repository

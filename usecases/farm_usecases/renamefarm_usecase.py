@@ -14,13 +14,12 @@ class RenameFarmUsecase:
     def __init__(
         self,
         ctx: EggsauceContext,
-        farm_entity: FarmEntity,
         farm_cache: FarmCacheService,
         new_name: str,
         farm_repository: FarmRepositoryProtocol,
     ) -> None:
         self._ctx = ctx
-        self._farm_entity = farm_entity
+        self._farm_entity = ctx.entities.farm_entity
         self._farm_cache = farm_cache
         self._new_name = new_name
         self._farm_repository = farm_repository

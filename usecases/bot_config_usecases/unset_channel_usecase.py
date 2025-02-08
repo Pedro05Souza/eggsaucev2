@@ -1,4 +1,3 @@
-from entities import BotConfigEntity
 from repositories import BotConfigRepositoryProtocol
 from tools import BotConfigCacheService
 from eggsauce_context import EggsauceContext
@@ -11,13 +10,12 @@ class UnsetChannelUsecase:
         self,
         ctx: EggsauceContext,
         channel_id: int,
-        bot_config_entity: BotConfigEntity,
         bot_config_cache_service: BotConfigCacheService,
         bot_config_repository: BotConfigRepositoryProtocol,
     ):
         self._ctx = ctx
         self._channel_id = channel_id
-        self._bot_config_entity = bot_config_entity
+        self._bot_config_entity = ctx.entities.bot_config_entity
         self._bot_config_cache_service = bot_config_cache_service
         self._bot_config_repository = bot_config_repository
 
