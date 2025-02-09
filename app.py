@@ -1,10 +1,11 @@
 from eggsauce import Eggsauce
-from tools import DatabaseStarterService, GlobalBotConfigCache
+from tools import DatabaseStarterService, GlobalBotConfigCache, GlobalPlayerCache
+from repositories import PlayerRepository
 
 
 def main():
     DatabaseStarterService()
-    bot = Eggsauce(GlobalBotConfigCache)
+    bot = Eggsauce(GlobalBotConfigCache, PlayerRepository(), GlobalPlayerCache)
     bot.run()
 
 

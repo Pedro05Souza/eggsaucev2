@@ -1,23 +1,32 @@
 from pathlib import Path
+from datetime import datetime, timedelta
 from discord import Intents, Message, Interaction
 from discord.ext.commands import Bot
 from tools import get_logger, BotConfigCacheService
-from tools.constants import get_env_var
+from tools.services import PlayerCacheService
+from tools.constants import get_env_var, SECONDS_TO_SALARY_DROP
+from repositories import PlayerRepositoryProtocol
 from eggsauce_context import EggsauceContext
 
 
 class Eggsauce(Bot):
 
-    def __init__(self, bot_config_cache: BotConfigCacheService) -> None:
+    def __init__(
+        self,
+        bot_config_cache: BotConfigCacheService,
+        player_repository: PlayerRepositoryProtocol,
+        player_cache: PlayerCacheService,
+    ) -> None:
         intents = self._setup_intents()
         self.bot_config_cache = bot_config_cache
         self.logger = get_logger(__name__)
         super().__init__(command_prefix=self._get_bot_prefix, intents=intents, case_insensitive=True)
+        self.player_repository = player_repository
+        self.player_cache = player_cache
 
     def _setup_intents(self) -> Intents:
         intents = Intents.default()
         intents.members = True
-        intents.voice_states = True
         intents.reactions = True
         intents.messages = True
         intents.guilds = True
@@ -64,5 +73,24 @@ class Eggsauce(Bot):
 
         return bot_config.prefix
 
-    async def get_context(self, message: Message | Interaction , /, *, cls=EggsauceContext):
+    async def process_commands(self, message: Message, /):
+        if message.author.bot:
+            return
+
+        ctx = await self.get_context(message, cls=EggsauceContext)
+
+        if ctx.command is None:
+            return
+
+        cached_player_entity = await self.player_cache.get_or_fetch_player_entity(ctx.author.id)
+
+        if not cached_player_entity:
+            now = datetime.now()
+            next_salary_time = now + timedelta(seconds=SECONDS_TO_SALARY_DROP)
+            player_entity = await self.player_repository.create_player(ctx.author.id, next_salary_time)
+            self.player_cache.add_item(player_entity.discord_user_id, player_entity)
+
+        await self.invoke(ctx)
+
+    async def get_context(self, message: Message | Interaction, /, *, cls=EggsauceContext):
         return await super().get_context(message, cls=EggsauceContext)
