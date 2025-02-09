@@ -54,10 +54,19 @@ class EggsauceContext(Context):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._entities = _Entities()
+        self._propagated_embed_description: Optional[str] = None
 
     @property
     def entities(self) -> _Entities:
         return self._entities
+
+    @property
+    def propagated_embed_description(self) -> Optional[str]:
+        return self._propagated_embed_description
+
+    @propagated_embed_description.setter
+    def propagated_embed_description(self, description: str) -> None:
+        self._propagated_embed_description = description
 
     async def send_bot_embed(
         self,
@@ -225,7 +234,10 @@ class EggsauceContext(Context):
             ephemeral (bool): Whether the message should be ephemeral or not.
         """
         embed = Embed(title=title, description=description)
-        confirmation_popup = _ConfirmationPopUp(embed, ephemeral)
+        confirmation_popup = _ConfirmationPopUp(
+            embed,
+            ephemeral,
+        )
         message = await self.send(embed=embed, view=confirmation_popup)
         await confirmation_popup.wait()
         return confirmation_popup.value, message
@@ -245,12 +257,12 @@ class _ConfirmationPopUp(View):
 
     @button(label="Cancel", style=ButtonStyle.red, custom_id="cancel")
     async def cancel(self, interaction: Interaction, _: Button[View]):
-        await interaction.response.send_message(embed=self.embed, ephemeral=self.ephemeral)
+        await interaction.response.defer()
         self.value = False
         self.stop()
 
     @button(label="Confirm", style=ButtonStyle.green, custom_id="confirm")
     async def confirm(self, interaction: Interaction, _: Button[View]):
-        await interaction.response.send_message(embed=self.embed, ephemeral=self.ephemeral)
+        await interaction.response.defer()
         self.value = True
         self.stop()
