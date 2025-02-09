@@ -1,4 +1,3 @@
-from .points_service import *
 from .cache import *
 from .database_starter_service import *
 from .away_time_earnings_service import *
