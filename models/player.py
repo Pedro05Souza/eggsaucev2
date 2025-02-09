@@ -9,8 +9,8 @@ class Player(Model):
     id = fields.UUIDField(pk=True)
     discord_user_id = fields.BigIntField()
     balance = fields.IntField(default=0)
-    last_bought_title = fields.CharEnumField(PlayerTitles, null=True)
-    next_salary_time = fields.DatetimeField(null=True)
+    last_bought_title = fields.CharEnumField(PlayerTitles, default=PlayerTitles.EGG_NOVICE)
+    next_salary_time = fields.DatetimeField()
 
     class Meta:
         table = "player"
