@@ -1,4 +1,3 @@
-from discord import Member
 from repositories import FarmRepositoryProtocol
 from tools.constants import REASON_INVALID_USER
 from tools import get_quality_text, FarmCacheService, get_random_tip_message
@@ -12,48 +11,41 @@ class FarmUseCase:
     def __init__(
         self,
         ctx: EggsauceContext,
-        discord_member: Member | None,
         farm_cache_service: FarmCacheService,
         farm_repository: FarmRepositoryProtocol,
     ) -> None:
         self._ctx = ctx
-        self._discord_member = discord_member
+        self._player_entity = ctx.entities.player_entity
+        self._farm_entity = ctx.entities.farm_entity
         self._farm_cache_service = farm_cache_service
         self._farm_repository = farm_repository
 
     async def farm(self) -> None:
+        discord_member = self._ctx.guild.get_member(self._player_entity.discord_user_id)  # type: ignore
 
-        avatar_to_send = None
+        if not discord_member:
+            return await self._ctx.send_failed_embed(REASON_INVALID_USER)
 
-        if self._discord_member:
-            farm_entity = await self._farm_cache_service.get_or_fetch_farm_entity(self._discord_member.id)
-            avatar_to_send = self._discord_member.display_avatar.url
-        else:
-            farm_entity = await self._farm_cache_service.get_or_fetch_farm_entity(self._ctx.author.id)
-            avatar_to_send = self._ctx.author.display_avatar.url
-
-        if not farm_entity:
-            if self._discord_member:
-                return await self._ctx.send_failed_embed(
-                    REASON_INVALID_USER,
-                )
-            farm_entity = await self._farm_repository.create_farm(self._ctx.author.id)
-            self._farm_cache_service.add_item(farm_entity.discord_user_id, farm_entity)
+        avatar_to_send = discord_member.display_avatar.url
 
         farm_title = (
-            f"🚜 {farm_entity.farm_title}\n🧑‍🌾 Farmer:"
-            f"{farm_entity.farmer + ' Farmer' if farm_entity.farmer else 'No farmer'}"
+            f"🚜 {self._farm_entity.farm_title}\n🧑‍🌾 Farmer:"
+            f"{self._farm_entity.farmer + ' Farmer' if self._farm_entity.farmer else 'No farmer'}"
         )
         farm_chickens = "\n\n".join(
             [
                 f"**{index}.**{chicken.emoji} - **{chicken.rarity} {chicken.name}**"
                 + f"\n✨ Happiness: **{chicken.happiness}%**"
                 + f"\n📈 Quality: **{get_quality_text(chicken.quality)}**"
-                for index, chicken in enumerate(farm_entity.chickens, start=1)
+                for index, chicken in enumerate(self._farm_entity.chickens, start=1)
             ]
-            if farm_entity.chickens
+            if self._farm_entity.chickens
             else ["No chickens in the farm yet!"]
         )
+
+        if self._ctx.propagated_embed_description:
+            farm_chickens += f"\n\n{self._ctx.propagated_embed_description}"
+
         await self._ctx.send_bot_embed(
             embed_params={
                 "title": farm_title,
