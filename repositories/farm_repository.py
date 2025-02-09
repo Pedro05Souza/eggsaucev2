@@ -1,4 +1,5 @@
 from typing import Optional
+from datetime import datetime
 from tortoise.query_utils import Prefetch
 from entities import FarmEntity, ChickenEntity
 from models import Farm, Player, Chicken
@@ -22,16 +23,16 @@ class FarmRepository:
 
         return await farm_model_to_entity(farm)
 
-    async def create_farm(self, discord_user_id: int) -> FarmEntity:
+    async def create_farm(self, discord_user_id: int, chicken_egg_drop_time: datetime) -> FarmEntity:
         player = await Player.get(discord_user_id=discord_user_id)
-        farm = await Farm.create(player=player)
+        farm = await Farm.create(player=player, next_egg_drop_time=chicken_egg_drop_time)
         return await farm_model_to_entity(farm)
 
     async def update_farm(self, farm_entity: FarmEntity) -> FarmEntity:
         await Farm.filter(id=farm_entity.id).update(
             farm_title=farm_entity.farm_title,
             farmer=farm_entity.farmer,
-            next_drop_time=farm_entity.next_drop_time,
+            next_egg_drop_time=farm_entity.next_egg_drop_time,
             remaining_rolls=farm_entity.remaining_rolls,
             next_chicken_roll_time=farm_entity.next_chicken_roll_time,
         )
