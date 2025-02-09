@@ -6,11 +6,10 @@ from discord.types.embed import EmbedType
 
 AMOUNT_PER_BANK_UPGRADE = 10000
 SECONDS_TO_SALARY_DROP = 3600
-SECONDDS_TO_CHICKEN_DROP = 3600
+SECONDS_TO_CHICKEN_DROP = 3600
 SECONDS_TO_FARM_ROLL = 3600
 MAX_PERCETANGE_TO_STEAL = 0.25
 STEAL_FAILURE_CHANCE = 0.1
-SECONDS_PER_POINT = 10
 MIN_AMOUNT_SPIN = 100
 MIN_AMOUNT_TO_STEAL = 100
 REGULAR_COMMAND_COOLDOWN = 5
@@ -22,11 +21,11 @@ MIN_FARM_NAME_CHARACTERS = 3
 
 
 def get_titles_prices() -> dict[str, int]:
-    return {"Egg Novice": 1500, "Egg Apprentice": 3000, "Egg Wizard": 5000, "Egg King": 10000}
+    return {"Egg Novice": 0, "Egg Apprentice": 10000, "Egg Wizard": 20000, "Egg King": 30000}
 
 
 def get_titles_salaries() -> dict[str, int]:
-    return {"Egg Novice": 25, "Egg Apprentice": 50, "Egg Wizard": 100, "Egg King": 150}
+    return {"Egg Novice": 200, "Egg Apprentice": 600, "Egg Wizard": 1200, "Egg King": 2400}
 
 
 def get_titles_emojis() -> dict[str, str]:

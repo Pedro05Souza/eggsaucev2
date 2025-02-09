@@ -7,7 +7,7 @@ from tools.constants import (
     SECONDS_TO_SALARY_DROP,
     SALARY_HOURS_THRESHOLD,
     CHICKEN_HOURS_THRESHOLD,
-    SECONDDS_TO_CHICKEN_DROP,
+    SECONDS_TO_CHICKEN_DROP,
 )
 from tools.utils import get_salary_from_title
 
@@ -28,18 +28,17 @@ __all__ = ["AwayTimeEarningsService", "EarningsType"]
 class AwayTimeEarningsService:
 
     async def _check_away_time_salary(self, player_entity: "PlayerEntity", earnings_data: EarningsType) -> None:
-        if not player_entity.last_bought_title or not player_entity.next_salary_time:
-            return
-
         now = datetime.now(timezone.utc)
         next_salary_time = player_entity.next_salary_time
 
         time_diffence = next_salary_time - now
 
+        total_seconds = time_diffence.total_seconds()
+
         if time_diffence.total_seconds() > 0:
             return
 
-        hours_passed = ceil(divmod(abs(time_diffence.total_seconds()), 3600)[0])
+        hours_passed = ceil(divmod(-total_seconds, 3600)[0])
 
         if hours_passed < 1:
             return
@@ -60,18 +59,23 @@ class AwayTimeEarningsService:
         if farm_entity is None:
             return
 
-        if not farm_entity.next_chicken_roll_time:
+        if len(farm_entity.chickens) == 0:
             return
 
         now = datetime.now(timezone.utc)
-        next_chicken_roll_time = farm_entity.next_chicken_roll_time
 
-        time_diffence = next_chicken_roll_time - now
-
-        if time_diffence.total_seconds() > 0:
+        if not farm_entity.next_egg_drop_time:
+            farm_entity.next_egg_drop_time = now + timedelta(seconds=SECONDS_TO_CHICKEN_DROP)
             return
 
-        hours_passed = ceil(divmod(abs(time_diffence.total_seconds()), 3600)[0])
+        time_diffence = farm_entity.next_egg_drop_time - now
+
+        total_seconds = time_diffence.total_seconds()
+
+        if total_seconds > 0:
+            return
+
+        hours_passed = ceil(divmod(-total_seconds, 3600)[0])
 
         if hours_passed < 1:
             return
@@ -82,7 +86,7 @@ class AwayTimeEarningsService:
 
         earnings_data["farm"] = total_gained
 
-        farm_entity.next_chicken_roll_time = now + timedelta(seconds=SECONDDS_TO_CHICKEN_DROP)
+        farm_entity.next_egg_drop_time = now + timedelta(seconds=SECONDS_TO_CHICKEN_DROP)
 
         for chicken in farm_entity.chickens:
             chicken.happiness = max(0, chicken.happiness - sum(randint(1, 3) for _ in range(hours_passed)))
@@ -98,6 +102,7 @@ class AwayTimeEarningsService:
         earnings_data: EarningsType = {"salary": 0, "farm": 0, "cornfield": 0}
         await self._check_away_time_salary(player_entity, earnings_data)
         await self._calculate_chicken_profit(player_entity, farm_entity, earnings_data)
+        print(earnings_data)
 
         # TODO: Cornfield logic
 

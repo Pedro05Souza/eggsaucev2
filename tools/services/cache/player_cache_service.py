@@ -56,6 +56,24 @@ class PlayerCacheService(TTLCacheService[int, "PlayerEntity"]):
             if not player_entity:
                 return None
 
+    async def get_player_entity(self, discord_user_id: int) -> "PlayerEntity":
+        """Gets a player entity from the cache.
+
+        Args:
+            discord_user_id (int): The Discord ID of the player.
+
+        Returns:
+            Optional[PlayerEntity]: The player entity
+        """
+        async with self._lock:
+            await self._save_expired_or_removed_items()
+            player_entity = self.get_item(discord_user_id)
+
+            if not player_entity:
+                raise ValueError(f"Player entity with Discord ID {discord_user_id} not found in the cache.")
+
+            return player_entity
+
     @atomic()
     async def _save_expired_or_removed_items(self):
         """Saves the expired or removed items to the database."""
