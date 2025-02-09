@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 from dataclasses import dataclass
 from .._entity_base import EntityBase
 
@@ -21,8 +20,8 @@ class PlayerEntity(EntityBase):
 
     discord_user_id: int
     balance: int
-    last_bought_title: Optional[str]
-    next_salary_time: Optional[datetime]
+    last_bought_title: str
+    next_salary_time: datetime
     bank_balance: int
     bank_capacity: int
     upgrade_level: int
