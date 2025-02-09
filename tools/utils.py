@@ -64,7 +64,7 @@ async def farm_entity_to_model(farm_entity: "FarmEntity") -> Farm:
         id=farm_entity.id,
         farm_title=farm_entity.farm_title,
         farmer=farm_entity.farmer,
-        next_drop_time=farm_entity.next_drop_time,
+        next_drop_time=farm_entity.next_egg_drop_time,
         remaining_rolls=farm_entity.remaining_rolls,
         next_chicken_roll_time=farm_entity.next_chicken_roll_time,
     )
