@@ -42,7 +42,11 @@ class UpgradeBankUsecase:
         balance_diff = get_balance_diff(self._player_entity, bank_upgrade_price)
 
         if balance_diff < 0:
-            return await self._ctx.send_failed_embed(REASON_INSUFFICIENT_BALANCE)
+            await message.edit(
+                content="",
+                embed=self._ctx.embed_builder(embed_params={"description": "❌" + REASON_INSUFFICIENT_BALANCE}),
+            )
+            return
 
         deduct_from_balance_and_bank(self._player_entity, bank_upgrade_price)
         self._player_entity.upgrade_level += 1
