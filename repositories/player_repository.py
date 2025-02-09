@@ -1,4 +1,5 @@
 from typing import Optional
+from datetime import datetime
 from entities import PlayerEntity
 from models import Player, BankPlayer
 from .mappers import player_model_to_entity
@@ -16,8 +17,8 @@ class PlayerRepository:
 
         return player_model_to_entity(database_player)
 
-    async def create_player(self, discord_user_id: int) -> PlayerEntity:
-        player = await Player.create(discord_user_id=discord_user_id)
+    async def create_player(self, discord_user_id: int, next_salary_time: datetime) -> PlayerEntity:
+        player = await Player.create(discord_user_id=discord_user_id, next_salary_time=next_salary_time)
         await self._create_bank_player(player)
         player = await Player.get(id=player.id).select_related("bank_player")
 
