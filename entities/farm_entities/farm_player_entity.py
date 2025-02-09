@@ -15,7 +15,7 @@ class FarmEntity(EntityBase):
         "discord_user_id",
         "farm_title",
         "farmer",
-        "next_drop_time",
+        "next_egg_drop_time",
         "remaining_rolls",
         "next_chicken_roll_time",
         "chickens",
@@ -25,7 +25,7 @@ class FarmEntity(EntityBase):
     discord_user_id: int
     farm_title: str
     farmer: Optional[FarmerType]
-    next_drop_time: Optional[datetime]
+    next_egg_drop_time: datetime
     remaining_rolls: int
     next_chicken_roll_time: Optional[datetime]
     chickens: list[ChickenEntity]
