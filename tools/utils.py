@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, Optional
 from random import choice
 from logging import Logger, config, getLogger
 from tortoise.transactions import atomic
-from discord import Member
 from tools._reverse_mapping import chicken_entity_to_model
 from .constants import LOGGING_CONFIG, get_titles_salaries, tips
 
@@ -19,7 +18,6 @@ __all__ = [
     "get_salary_from_title",
     "calculate_away_time_earnings",
     "format_earnings_type",
-    "extract_discord_user",
     "get_random_tip_message",
 ]
 
@@ -84,22 +82,6 @@ def format_earnings_type(earnings_type: "EarningsType") -> str:
         base_description += f"\n🌽 **{earnings_type['cornfield']}** eggbux from your cornfield"
 
     return base_description
-
-
-def extract_discord_user(author: Member, mentioned_user: Optional[Member]) -> Member:
-    """Extracts the discord user from the command.
-
-    Args:
-        author (Member): The author of the command.
-        possible_mentioned_user (Member): The possible mentioned user.
-
-    Returns:
-        Member: The discord user.
-    """
-    if mentioned_user:
-        return mentioned_user
-    return author
-
 
 def get_random_tip_message() -> str:
     return choice(tips)
