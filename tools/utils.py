@@ -1,8 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
-from tortoise.transactions import atomic
 from random import choice
 from logging import Logger, config, getLogger
+from tortoise.transactions import atomic
 from discord import Member
 from tools._reverse_mapping import chicken_entity_to_model
 from .constants import LOGGING_CONFIG, get_titles_salaries, tips
