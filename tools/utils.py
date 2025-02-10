@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
+from tortoise.transactions import atomic
 from random import choice
 from logging import Logger, config, getLogger
 from discord import Member
@@ -46,7 +47,7 @@ def get_salary_from_title(title: str) -> int:
     titles_prices = get_titles_salaries()
     return titles_prices.get(title, 0)
 
-
+@atomic()
 async def calculate_away_time_earnings(
     player_entity: "PlayerEntity",
     farm_entity: Optional["FarmEntity"],
