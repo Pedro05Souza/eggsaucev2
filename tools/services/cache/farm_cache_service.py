@@ -3,7 +3,7 @@ from typing import Optional, TYPE_CHECKING
 from asyncio import Lock
 from tortoise.transactions import atomic
 from repositories import FarmRepositoryProtocol
-from tools.utils import farm_entity_to_model
+from tools._reverse_mapping import farm_entity_to_model
 from .ttl_cache_service import TTLCacheService
 
 if TYPE_CHECKING:

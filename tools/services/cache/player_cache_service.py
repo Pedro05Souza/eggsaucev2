@@ -3,7 +3,7 @@ from typing import Optional, TYPE_CHECKING
 from asyncio import Lock
 from tortoise.transactions import atomic
 from repositories import PlayerRepositoryProtocol
-from tools.utils import player_entity_to_model
+from tools._reverse_mapping import player_entity_to_model
 from .ttl_cache_service import TTLCacheService
 
 if TYPE_CHECKING:
@@ -70,7 +70,7 @@ class PlayerCacheService(TTLCacheService[int, "PlayerEntity"]):
             player_entity = self.get_item(discord_user_id)
 
             if not player_entity:
-                raise ValueError(f"Player entity with Discord ID {discord_user_id} not found in the cache.")
+                raise ValueError(f"Player entity was not found for Discord ID: {discord_user_id}.")
 
             return player_entity
 
