@@ -58,3 +58,9 @@ class FarmRepository:
                 "farm_id": farm_id,
             },
         )
+
+    async def bulk_update_farm_chickens(self, chickens: list[Chicken]) -> None:
+        await Chicken.bulk_update(
+            chickens,
+            fields=["name", "rarity", "eggs_generated", "quality", "location_status", "happiness", "farm_id"],
+        )
