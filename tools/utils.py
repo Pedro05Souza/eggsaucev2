@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Optional
 from random import choice
 from logging import Logger, config, getLogger
 from discord import Member
-from models import Player, Farm
+from tools._reverse_mapping import chicken_entity_to_model
 from .constants import LOGGING_CONFIG, get_titles_salaries, tips
 
 if TYPE_CHECKING:
@@ -16,10 +16,8 @@ __all__ = [
     "get_balance_diff",
     "deduct_from_balance_and_bank",
     "get_salary_from_title",
-    "player_entity_to_model",
     "calculate_away_time_earnings",
     "format_earnings_type",
-    "farm_entity_to_model",
     "extract_discord_user",
     "get_random_tip_message",
 ]
@@ -49,27 +47,6 @@ def get_salary_from_title(title: str) -> int:
     return titles_prices.get(title, 0)
 
 
-async def player_entity_to_model(player_entity: "PlayerEntity") -> Player:
-    return Player(
-        id=player_entity.id,
-        discord_user_id=player_entity.discord_user_id,
-        balance=player_entity.balance,
-        last_bought_title=player_entity.last_bought_title,
-        next_salary_time=player_entity.next_salary_time,
-    )
-
-
-async def farm_entity_to_model(farm_entity: "FarmEntity") -> Farm:
-    return Farm(
-        id=farm_entity.id,
-        farm_title=farm_entity.farm_title,
-        farmer=farm_entity.farmer,
-        next_drop_time=farm_entity.next_egg_drop_time,
-        remaining_rolls=farm_entity.remaining_rolls,
-        next_chicken_roll_time=farm_entity.next_chicken_roll_time,
-    )
-
-
 async def calculate_away_time_earnings(
     player_entity: "PlayerEntity",
     farm_entity: Optional["FarmEntity"],
@@ -85,8 +62,10 @@ async def calculate_away_time_earnings(
     if earnings_data["salary"] > 0:
         await player_repository.update_player(player_entity)
 
-    if earnings_data["farm"] > 0:
-        await farm_repository.update_farm(farm_entity)  # type: ignore
+    if earnings_data["farm"] > 0 and farm_entity:
+        farm_id = farm_entity.id
+        chickens = [await chicken_entity_to_model(farm_id, chicken) for chicken in farm_entity.chickens]
+        await farm_repository.bulk_update_farm_chickens(chickens)
 
     return earnings_data
 
