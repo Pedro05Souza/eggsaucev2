@@ -45,6 +45,7 @@ def get_salary_from_title(title: str) -> int:
     titles_prices = get_titles_salaries()
     return titles_prices.get(title, 0)
 
+
 @atomic()
 async def calculate_away_time_earnings(
     player_entity: "PlayerEntity",
@@ -82,6 +83,7 @@ def format_earnings_type(earnings_type: "EarningsType") -> str:
         base_description += f"\n🌽 **{earnings_type['cornfield']}** eggbux from your cornfield"
 
     return base_description
+
 
 def get_random_tip_message() -> str:
     return choice(tips)
