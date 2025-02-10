@@ -8,7 +8,6 @@ __all__ = ["ChickenEntity"]
 @dataclass
 class ChickenEntity(EntityBase):
     __slots__ = [
-        "eggs_generated",
         "quality",
         "rarity",
         "price",
@@ -21,7 +20,6 @@ class ChickenEntity(EntityBase):
         "food_consumption",
     ]
 
-    eggs_generated: int
     quality: float
     rarity: str
     price: int

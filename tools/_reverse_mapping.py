@@ -35,7 +35,6 @@ async def chicken_entity_to_model(farm_id: str, chicken_entity: "ChickenEntity")
         id=chicken_entity.id,
         name=chicken_entity.name,
         rarity=chicken_entity.rarity.lower(),
-        eggs_generated=chicken_entity.eggs_generated,
         quality=chicken_entity.quality,
         location_status=chicken_entity.location_status,
         happiness=chicken_entity.happiness,

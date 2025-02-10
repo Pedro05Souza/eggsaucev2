@@ -8,7 +8,6 @@ __all__ = ["Chicken"]
 class Chicken(Model):
     id = fields.UUIDField(pk=True)
     name = fields.CharField(max_length=25)
-    eggs_generated = fields.IntField()
     quality = fields.FloatField()
     rarity = fields.CharEnumField(ChickenRarities)
     location_status = fields.CharEnumField(ChickenLocationStatus)

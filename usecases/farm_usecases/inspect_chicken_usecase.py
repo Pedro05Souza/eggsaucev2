@@ -25,7 +25,6 @@ class InspectChickenUseCase:
             embed_params={
                 "title": f"{chicken.emoji} **{chicken.rarity} {chicken.name}**",
                 "description": f"**🎉 Happiness:** {chicken.happiness}%**"
-                + f"\n**🥚 **Eggs Generated:** {chicken.eggs_generated}"
                 + f"\n**✨ Quality:** {int(chicken.quality * 100)}%"
                 + f"\n**💰 Price:** {chicken.price}"
                 + f"\n**🥚 Egg Production:** {egg_production_with_happiness}/{chicken.actual_egg_production}"

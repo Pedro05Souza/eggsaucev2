@@ -50,7 +50,6 @@ class FarmRepository:
             defaults={
                 "name": chicken.name,
                 "rarity": chicken.rarity.lower(),
-                "eggs_generated": chicken.eggs_generated,
                 "quality": chicken.quality,
                 "price": chicken.price,
                 "location_status": chicken.location_status,
@@ -62,5 +61,5 @@ class FarmRepository:
     async def bulk_update_farm_chickens(self, chickens: list[Chicken]) -> None:
         await Chicken.bulk_update(
             chickens,
-            fields=["name", "rarity", "eggs_generated", "quality", "location_status", "happiness", "farm_id"],
+            fields=["name", "rarity", "quality", "location_status", "happiness", "farm_id"],
         )
