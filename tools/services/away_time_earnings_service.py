@@ -2,14 +2,19 @@ from __future__ import annotations
 from typing import TypedDict, Optional, TYPE_CHECKING
 from datetime import datetime, timedelta, timezone
 from random import randint
-from math import ceil
 from tools.constants import (
     SECONDS_TO_SALARY_DROP,
     SALARY_HOURS_THRESHOLD,
     CHICKEN_HOURS_THRESHOLD,
     SECONDS_TO_CHICKEN_DROP,
+    CHICKEN_RARITIES,
+    NON_DEVOLVABLE_RARITIES,
+    BASE_CHICKEN_PRICE,
+    ChickenPricesMultiplier,
+    ChickenRaritiesEmojis,
 )
 from tools.utils import get_salary_from_title
+from tools.chicken_utils import calculate_base_egg_production
 
 
 class EarningsType(TypedDict):
@@ -19,7 +24,7 @@ class EarningsType(TypedDict):
 
 
 if TYPE_CHECKING:
-    from entities import PlayerEntity, FarmEntity
+    from entities import PlayerEntity, FarmEntity, ChickenEntity
 
 
 __all__ = ["AwayTimeEarningsService", "EarningsType"]
@@ -38,7 +43,7 @@ class AwayTimeEarningsService:
         if time_diffence.total_seconds() > 0:
             return
 
-        hours_passed = ceil(divmod(-total_seconds, 3600)[0])
+        hours_passed = int(divmod(-total_seconds, 3600)[0])
 
         if hours_passed < 1:
             return
@@ -75,10 +80,12 @@ class AwayTimeEarningsService:
         if total_seconds > 0:
             return
 
-        hours_passed = ceil(divmod(-total_seconds, 3600)[0])
+        hours_passed = int(divmod(-total_seconds, 3600)[0])
 
         if hours_passed < 1:
             return
+
+        hours_passed = 24
 
         hours_passed = min(hours_passed, CHICKEN_HOURS_THRESHOLD)
 
@@ -91,10 +98,33 @@ class AwayTimeEarningsService:
         for chicken in farm_entity.chickens:
             chicken.happiness = max(0, chicken.happiness - sum(randint(1, 3) for _ in range(hours_passed)))
 
+            if chicken.happiness == 0:
+                await self._maybe_devolve_chicken(chicken)
+
         if player_entity.bank_capacity > player_entity.bank_balance + total_gained:
             player_entity.bank_balance += total_gained
         else:
             player_entity.balance += total_gained
+
+    async def _maybe_devolve_chicken(self, chicken: "ChickenEntity") -> None:
+        if chicken.rarity in NON_DEVOLVABLE_RARITIES:
+            return
+
+        chance_to_devolve = randint(0, 2)
+
+        if chance_to_devolve != 0:
+            return
+
+        current_chicken_rarity_index = CHICKEN_RARITIES.index(chicken.rarity)
+
+        previous_rarity = CHICKEN_RARITIES[current_chicken_rarity_index - 1]
+
+        chicken.rarity = previous_rarity
+        chicken.happiness = 100
+        chicken.total_egg_production = await calculate_base_egg_production(current_chicken_rarity_index - 1)
+        chicken.actual_egg_production = int(chicken.total_egg_production * chicken.quality)
+        chicken.price = BASE_CHICKEN_PRICE * ChickenPricesMultiplier[previous_rarity].value
+        chicken.emoji = ChickenRaritiesEmojis[previous_rarity].value
 
     async def calculate_away_time_earnings(
         self, player_entity: "PlayerEntity", farm_entity: Optional["FarmEntity"]
@@ -102,7 +132,6 @@ class AwayTimeEarningsService:
         earnings_data: EarningsType = {"salary": 0, "farm": 0, "cornfield": 0}
         await self._check_away_time_salary(player_entity, earnings_data)
         await self._calculate_chicken_profit(player_entity, farm_entity, earnings_data)
-        print(earnings_data)
 
         # TODO: Cornfield logic
 
