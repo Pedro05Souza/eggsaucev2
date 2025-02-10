@@ -71,7 +71,6 @@ async def generated_chicken_to_chicken_entity(
 
     return ChickenEntity(
         id=str(uuid4()),
-        eggs_generated=0,
         name=generated_chicken.name,
         quality=quality,
         rarity=generated_chicken.rarity,
