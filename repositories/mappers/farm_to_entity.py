@@ -10,6 +10,7 @@ async def farm_model_to_entity(farm: Farm) -> FarmEntity:
 
     try:
         chickens = [await chicken_model_to_entity(chicken) for chicken in farm.chickens] # type: ignore
+        chickens.sort(key=lambda chicken: chicken.rarity)
 
     except NoValuesFetched:
         chickens = []
