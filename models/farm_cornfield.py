@@ -11,4 +11,4 @@ class FarmCornfield(Model):
     current_corn = fields.IntField()
     corn_limit = fields.IntField()
     plot = fields.IntField()
-    last_corn_drop = fields.DatetimeField(null=True)
+    next_corn_drop = fields.DatetimeField(null=True)
