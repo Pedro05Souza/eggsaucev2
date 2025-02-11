@@ -2,14 +2,14 @@ from typing import Optional
 from dataclasses import dataclass
 from datetime import datetime
 from entities.farm_entities.chicken_entity import ChickenEntity
-from .._entity_base import EntityBase
+from .._entity_base import BaseEntity
 from ..types import FarmerType
 
 __all__ = ["FarmEntity"]
 
 
 @dataclass
-class FarmEntity(EntityBase):
+class FarmEntity(BaseEntity):
     __slots__ = [
         "player_id",
         "discord_user_id",

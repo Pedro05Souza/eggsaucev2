@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from typing import Literal
-from .._entity_base import EntityBase
+from .._entity_base import BaseEntity
 
 __all__ = ["ChickenEntity"]
 
 
 @dataclass
-class ChickenEntity(EntityBase):
+class ChickenEntity(BaseEntity):
     __slots__ = [
         "quality",
         "rarity",

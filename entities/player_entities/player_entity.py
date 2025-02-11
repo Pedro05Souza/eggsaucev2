@@ -1,12 +1,12 @@
 from datetime import datetime
 from dataclasses import dataclass
-from .._entity_base import EntityBase
+from .._entity_base import BaseEntity
 
 __all__ = ["PlayerEntity"]
 
 
 @dataclass
-class PlayerEntity(EntityBase):
+class PlayerEntity(BaseEntity):
 
     __slots__ = [
         "discord_user_id",

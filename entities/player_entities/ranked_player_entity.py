@@ -1,11 +1,11 @@
 from dataclasses import dataclass
-from .._entity_base import EntityBase
+from .._entity_base import BaseEntity
 
 __all__ = ["RankedPlayerEntity"]
 
 
 @dataclass
-class RankedPlayerEntity(EntityBase):
+class RankedPlayerEntity(BaseEntity):
 
     __slots__ = ["discord_user_id", "current_mmr", "highest_mmr", "wins", "losses"]
 

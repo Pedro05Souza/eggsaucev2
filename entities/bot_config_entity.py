@@ -1,12 +1,12 @@
 from typing import Set
 from dataclasses import dataclass
-from ._entity_base import EntityBase
+from ._entity_base import BaseEntity
 
 __all__ = ["BotConfigEntity"]
 
 
 @dataclass
-class BotConfigEntity(EntityBase):
+class BotConfigEntity(BaseEntity):
 
     __slots__ = [
         "guild_id",

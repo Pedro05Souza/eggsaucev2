@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from datetime import datetime
-from .._entity_base import EntityBase
+from .._entity_base import BaseEntity
 
 __all__ = ["FarmCornfieldEntity"]
 
 
 @dataclass
-class FarmCornfieldEntity(EntityBase):
+class FarmCornfieldEntity(BaseEntity):
     __slots__ = [
         "farm_id",
         "cornfield_name",

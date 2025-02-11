@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 from abc import ABC
 
-__all__ = ["EntityBase"]
+__all__ = ["BaseEntity"]
 
 
 @dataclass
-class EntityBase(ABC):
+class BaseEntity(ABC):
     id: str
 
     __slots__ = ["id"]
