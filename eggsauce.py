@@ -66,7 +66,7 @@ class Eggsauce(Bot):
         if not message.guild:
             return "!"
 
-        bot_config = await self.bot_config_cache.get_or_fetch_bot_config_entity(message.guild.id)
+        bot_config = await self.bot_config_cache.get_or_fetch(message.guild.id)
 
         if not bot_config:
             bot_config = await self.bot_config_cache.create_bot_config(message.guild.id)
@@ -82,7 +82,7 @@ class Eggsauce(Bot):
         if ctx.command is None:
             return
 
-        cached_player_entity = await self.player_cache.get_or_fetch_player_entity(ctx.author.id)
+        cached_player_entity = await self.player_cache.get_or_fetch(ctx.author.id)
 
         if not cached_player_entity:
             now = datetime.now()

@@ -40,7 +40,7 @@ async def is_using_valid_channel(ctx: EggsauceContext, bot_config_cache: "BotCon
     if ctx.guild is None:
         return True
 
-    bot_config_entity = await bot_config_cache.get_or_fetch_bot_config_entity(ctx.guild.id)
+    bot_config_entity = await bot_config_cache.get_or_fetch(ctx.guild.id)
 
     if bot_config_entity is None:
         return False
@@ -77,7 +77,7 @@ async def ensure_farm(
         ctx (EggsauceContext): The context object.
         farm_cache (FarmCacheService): The cache service that will be used to fetch the farm entity.
     """
-    farm_entity = await farm_cache.get_or_fetch_farm_entity(ctx.author.id)
+    farm_entity = await farm_cache.get_or_fetch(ctx.author.id)
 
     if farm_entity is None:
         farm_entity = await farm_repository.create_farm(ctx.author.id, _get_chicken_egg_drop_time())
@@ -104,7 +104,7 @@ async def ensure_guild_config(
     if ctx.guild is None:
         return
 
-    bot_config_entity = await bot_config_cache.get_or_fetch_bot_config_entity(ctx.guild.id)
+    bot_config_entity = await bot_config_cache.get_or_fetch(ctx.guild.id)
 
     if bot_config_entity is None:
         bot_config_entity = await bot_config_repository.create_guild_config(ctx.guild.id)
@@ -157,7 +157,7 @@ async def mark_as_updatable(
     if player_entity is None:
         return
 
-    farm_entity = await farm_cache.get_or_fetch_farm_entity(discord_member_to_update.id)
+    farm_entity = await farm_cache.get_or_fetch(discord_member_to_update.id)
 
     ctx.entities.player_entity = player_entity
 

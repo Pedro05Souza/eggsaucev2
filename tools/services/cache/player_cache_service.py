@@ -1,10 +1,10 @@
 from __future__ import annotations
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 from asyncio import Lock
 from tortoise.transactions import atomic
 from repositories import PlayerRepositoryProtocol
 from tools._reverse_mapping import player_entity_to_model
-from .ttl_cache_service import TTLCacheService
+from ._entity_cache import EntityCacheService
 
 if TYPE_CHECKING:
     from entities import PlayerEntity
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 __all__ = ["PlayerCacheService"]
 
 
-class PlayerCacheService(TTLCacheService[int, "PlayerEntity"]):
+class PlayerCacheService(EntityCacheService["PlayerEntity"]):
 
     def __init__(
         self,
@@ -25,32 +25,22 @@ class PlayerCacheService(TTLCacheService[int, "PlayerEntity"]):
         self._lock = Lock()
         self._player_repository = player_repository
 
-    async def get_or_fetch_player_entity(
+    async def get_or_fetch(
         self,
-        discord_user_id: int,
-    ) -> Optional["PlayerEntity"]:
-        """Gets or fetches a player entity to from cache.
-        If the entity is not in the cache, it will be fetched from the database.
-
-        Args:
-            discord_user_id_or_entity (int): The Discord ID of the player if not found,
-            it will be fetched from the database.
-
-        Returns:
-            Optional[PlayerEntity]: The player entity
-        """
+        key: int,
+    ):
         async with self._lock:
             await self._save_expired_or_removed_items()
 
-            player_entity = self.get_item(discord_user_id)
+            player_entity = self.get_item(key)
 
             if player_entity:
                 return player_entity
 
-            player_entity = await self.player_repository.get_player_by_discord_id(discord_user_id)
+            player_entity = await self.player_repository.get_player_by_discord_id(key)
 
             if player_entity:
-                self.add_item(discord_user_id, player_entity)
+                self.add_item(key, player_entity)
                 return player_entity
 
             if not player_entity:

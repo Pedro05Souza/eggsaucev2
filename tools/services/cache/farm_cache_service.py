@@ -1,10 +1,10 @@
 from __future__ import annotations
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 from asyncio import Lock
 from tortoise.transactions import atomic
 from repositories import FarmRepositoryProtocol
 from tools._reverse_mapping import farm_entity_to_model
-from .ttl_cache_service import TTLCacheService
+from ._entity_cache import EntityCacheService
 
 if TYPE_CHECKING:
     from entities import FarmEntity
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 __all__ = ["FarmCacheService"]
 
 
-class FarmCacheService(TTLCacheService[int, "FarmEntity"]):
+class FarmCacheService(EntityCacheService["FarmEntity"]):
 
     def __init__(
         self,
@@ -25,29 +25,19 @@ class FarmCacheService(TTLCacheService[int, "FarmEntity"]):
         self._lock = Lock()
         self.farm_repository = farm_repository
 
-    async def get_or_fetch_farm_entity(self, discord_user_id: int) -> Optional["FarmEntity"]:
-        """Gets or fetches a farm entity to from cache.
-        If the entity is not in the cache, it will be fetched from the database.
-
-        Args:
-            discord_user_id(int): The Discord ID of the player if not found,
-            it will be fetched from the database.
-
-        Returns:
-            Optional[FarmEntity]: The farm entity
-        """
+    async def get_or_fetch(self, key: int):
         async with self._lock:
             await self._save_expired_or_removed_items()
 
-            farm_entity = self.get_item(discord_user_id)
+            farm_entity = self.get_item(key)
 
             if farm_entity is None:
-                farm_entity = await self.farm_repository.get_farm_by_discord_user_id(discord_user_id)
+                farm_entity = await self.farm_repository.get_farm_by_discord_user_id(key)
 
                 if not farm_entity:
                     return None
 
-                self.add_item(discord_user_id, farm_entity)
+                self.add_item(key, farm_entity)
             return farm_entity
 
     @atomic()

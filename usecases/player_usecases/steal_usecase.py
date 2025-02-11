@@ -37,7 +37,7 @@ class StealUsecase:
         if self._target.id == self._stealer.discord_user_id:
             return await self._ctx.send_failed_embed(REASON_CANT_ACTION_SELF)
 
-        target_entity = await self._player_cache.get_or_fetch_player_entity(self._target.id)
+        target_entity = await self._player_cache.get_or_fetch(self._target.id)
 
         if not target_entity:
             return await self._ctx.send_failed_embed(REASON_INVALID_USER)

@@ -148,7 +148,7 @@ class ChickenView(View):
             await self._ctx.handle_failed_interaction(interaction, REASON_FARM_IS_FULL)
             return
 
-        player_entity = await self._player_cache_service.get_or_fetch_player_entity(interaction.user.id)
+        player_entity = await self._player_cache_service.get_or_fetch(interaction.user.id)
 
         if not player_entity:
             return
