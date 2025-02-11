@@ -58,6 +58,9 @@ class AwayTimeEarningsService:
         player_entity.balance += total_gained_salary
         earnings_data["salary"] = total_gained_salary
 
+    def _reset_next_egg_drop_time(self, now: datetime, farm_entity: "FarmEntity") -> None:
+        farm_entity.next_egg_drop_time = now + timedelta(seconds=SECONDS_TO_CHICKEN_DROP)
+
     async def _calculate_chicken_profit(
         self, player_entity: "PlayerEntity", farm_entity: Optional["FarmEntity"], earnings_data: EarningsType
     ) -> None:
@@ -65,12 +68,13 @@ class AwayTimeEarningsService:
             return
 
         if len(farm_entity.chickens) == 0:
+            self._reset_next_egg_drop_time(datetime.now(timezone.utc), farm_entity)
             return
 
         now = datetime.now(timezone.utc)
 
         if not farm_entity.next_egg_drop_time:
-            farm_entity.next_egg_drop_time = now + timedelta(seconds=SECONDS_TO_CHICKEN_DROP)
+            self._reset_next_egg_drop_time(now, farm_entity)
             return
 
         time_diffence = farm_entity.next_egg_drop_time - now
