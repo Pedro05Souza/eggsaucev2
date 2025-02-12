@@ -24,12 +24,12 @@ class InspectChickenUseCase:
         await self._ctx.send_bot_embed(
             embed_params={
                 "title": f"{chicken.emoji} **{chicken.rarity} {chicken.name}**",
-                "description": f"**🎉 Happiness:** {chicken.happiness}%**"
+                "description": f"**🎉 Happiness:** {chicken.happiness}%"
                 + f"\n**✨ Quality:** {int(chicken.quality * 100)}%"
                 + f"\n**💰 Price:** {chicken.price}"
                 + f"\n**🥚 Egg Production:** {egg_production_with_happiness}/{chicken.actual_egg_production}"
                 + f"\n🏆 **Max for {chicken.rarity.capitalize()}:** {chicken.total_egg_production}"
                 + f"\n**🌽 Food Consumption:** {chicken.food_consumption}"
-                + f"\n **📉 Egg loss (Happiness):** {happiness_penalty}",
+                + f"\n 📉 **Egg loss (Happiness):** {happiness_penalty}",
             },
         )
