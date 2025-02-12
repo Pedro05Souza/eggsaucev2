@@ -1,9 +1,12 @@
-from typing import Optional
-from discord import Forbidden, Interaction, Embed, ButtonStyle
+from __future__ import annotations
+from typing import Optional, TYPE_CHECKING
+from discord import Forbidden, Interaction, Embed, ButtonStyle, Member
 from discord.ui import View, button, Button
 from discord.ext.commands import Context
 from tools.constants import EmbedParams, REASON_DM_FAILURE
-from entities import FarmEntity, BotConfigEntity, PlayerEntity
+
+if TYPE_CHECKING:
+    from entities import FarmEntity, BotConfigEntity, PlayerEntity, CornfieldEntity
 
 __all__ = ("EggsauceContext",)
 
@@ -11,42 +14,54 @@ __all__ = ("EggsauceContext",)
 class _Entities:
 
     def __init__(self) -> None:
-        self._player_entity: Optional[PlayerEntity] = None
-        self._farm_entity: Optional[FarmEntity] = None
-        self._bot_config_entity: Optional[BotConfigEntity] = None
+        self._player_entity: Optional["PlayerEntity"] = None
+        self._farm_entity: Optional["FarmEntity"] = None
+        self._bot_config_entity: Optional["BotConfigEntity"] = None
+        self._cornfield_entity: Optional["CornfieldEntity"] = None
 
     @property
-    def player_entity(self) -> PlayerEntity:
+    def player_entity(self) -> "PlayerEntity":
         if not self._player_entity:
             raise ValueError("Player entity is not set.")
 
         return self._player_entity
 
     @player_entity.setter
-    def player_entity(self, player_entity: PlayerEntity) -> None:
+    def player_entity(self, player_entity: "PlayerEntity") -> None:
         self._player_entity = player_entity
 
     @property
-    def farm_entity(self) -> FarmEntity:
+    def farm_entity(self) -> "FarmEntity":
         if not self._farm_entity:
             raise ValueError("Farm entity is not set.")
 
         return self._farm_entity
 
     @farm_entity.setter
-    def farm_entity(self, farm_entity: FarmEntity) -> None:
+    def farm_entity(self, farm_entity: "FarmEntity") -> None:
         self._farm_entity = farm_entity
 
     @property
-    def bot_config_entity(self) -> BotConfigEntity:
+    def bot_config_entity(self) -> "BotConfigEntity":
         if not self._bot_config_entity:
             raise ValueError("Bot config entity is not set.")
 
         return self._bot_config_entity
 
     @bot_config_entity.setter
-    def bot_config_entity(self, bot_config_entity: BotConfigEntity) -> None:
+    def bot_config_entity(self, bot_config_entity: "BotConfigEntity") -> None:
         self._bot_config_entity = bot_config_entity
+
+    @property
+    def cornfield_entity(self) -> "CornfieldEntity":
+        if not self._cornfield_entity:
+            raise ValueError("Cornfield entity is not set.")
+
+        return self._cornfield_entity
+
+    @cornfield_entity.setter
+    def cornfield_entity(self, cornfield_entity: "CornfieldEntity") -> None:
+        self._cornfield_entity = cornfield_entity
 
 
 class EggsauceContext(Context):
@@ -55,6 +70,7 @@ class EggsauceContext(Context):
         super().__init__(*args, **kwargs)
         self._entities = _Entities()
         self._propagated_embed_description: Optional[str] = None
+        self._target_member: Optional[Member] = None
 
     @property
     def entities(self) -> _Entities:
@@ -67,6 +83,13 @@ class EggsauceContext(Context):
     @propagated_embed_description.setter
     def propagated_embed_description(self, description: str) -> None:
         self._propagated_embed_description = description
+
+    @property
+    def target_member(self) -> Member:
+        if not self._target_member:
+            self._target_member = self._get_target_member()
+
+        return self._target_member
 
     async def send_bot_embed(
         self,
@@ -241,6 +264,25 @@ class EggsauceContext(Context):
         message = await self.send(embed=embed, view=confirmation_popup)
         await confirmation_popup.wait()
         return confirmation_popup.value, message
+
+    def _get_target_member(self) -> Member:
+        """Gets the target member of the command. This means if a command has an optional member argument,
+        the target member will be the one mentioned in the command. If no member is mentioned, the target member
+        will be the author of the command.
+
+        Returns:
+            Member: The target member of the command.
+        """
+        if self.kwargs.get("member"):
+            return self.kwargs["member"]
+
+        if self.interaction is None and len(self.args) >= 2:
+            possible_member_to_update: Optional[Member] = self.args[2]
+
+            if possible_member_to_update:
+                return possible_member_to_update
+
+        return self.author  # type: ignore
 
 
 class _ConfirmationPopUp(View):
