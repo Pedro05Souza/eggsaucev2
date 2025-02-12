@@ -7,7 +7,7 @@ __all__ = ["Player"]
 
 class Player(Model):
     id = fields.UUIDField(pk=True)
-    discord_user_id = fields.BigIntField()
+    discord_user_id = fields.BigIntField(unique=True)
     balance = fields.IntField(default=0)
     last_bought_title = fields.CharEnumField(PlayerTitles, default=PlayerTitles.EGG_NOVICE)
     next_salary_time = fields.DatetimeField()

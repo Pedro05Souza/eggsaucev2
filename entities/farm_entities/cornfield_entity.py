@@ -2,23 +2,23 @@ from dataclasses import dataclass
 from datetime import datetime
 from .._entity_base import BaseEntity
 
-__all__ = ["FarmCornfieldEntity"]
+__all__ = ["CornfieldEntity"]
 
 
 @dataclass
-class FarmCornfieldEntity(BaseEntity):
+class CornfieldEntity(BaseEntity):
     __slots__ = [
         "farm_id",
-        "cornfield_name",
+        "cornfield_title",
         "current_corn",
         "corn_limit",
-        "plot",
-        "last_corn_drop",
+        "plots",
+        "next_corn_drop",
     ]
 
     farm_id: str
-    cornfield_name: str
+    cornfield_title: str
     current_corn: int
     corn_limit: int
-    plot: int
-    last_corn_drop: datetime
+    plots: int
+    next_corn_drop: datetime
