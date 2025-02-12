@@ -29,7 +29,7 @@ class FarmCacheService(EntityCacheService["FarmEntity"]):
         async with self._lock:
             await self._save_expired_or_removed_items()
 
-            farm_entity = self.get_item(key)
+            farm_entity = self.get(key)
 
             if farm_entity is None:
                 farm_entity = await self.farm_repository.get_farm_by_discord_user_id(key)
@@ -37,7 +37,7 @@ class FarmCacheService(EntityCacheService["FarmEntity"]):
                 if not farm_entity:
                     return None
 
-                self.add_item(key, farm_entity)
+                self.add(key, farm_entity)
             return farm_entity
 
     @atomic()

@@ -32,7 +32,7 @@ class PlayerCacheService(EntityCacheService["PlayerEntity"]):
         async with self._lock:
             await self._save_expired_or_removed_items()
 
-            player_entity = self.get_item(key)
+            player_entity = self.get(key)
 
             if player_entity:
                 return player_entity
@@ -40,29 +40,11 @@ class PlayerCacheService(EntityCacheService["PlayerEntity"]):
             player_entity = await self.player_repository.get_player_by_discord_id(key)
 
             if player_entity:
-                self.add_item(key, player_entity)
+                self.add(key, player_entity)
                 return player_entity
 
             if not player_entity:
                 return None
-
-    async def get_player_entity(self, discord_user_id: int) -> "PlayerEntity":
-        """Gets a player entity from the cache.
-
-        Args:
-            discord_user_id (int): The Discord ID of the player.
-
-        Returns:
-            Optional[PlayerEntity]: The player entity
-        """
-        async with self._lock:
-            await self._save_expired_or_removed_items()
-            player_entity = self.get_item(discord_user_id)
-
-            if not player_entity:
-                raise ValueError(f"Player entity was not found for Discord ID: {discord_user_id}.")
-
-            return player_entity
 
     @atomic()
     async def _save_expired_or_removed_items(self):
