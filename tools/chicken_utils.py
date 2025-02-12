@@ -6,6 +6,7 @@ from .constants import (
     chicken_quality_rates,
     DELTA_EGG_VALUE,
     DELTA_FOOD_CONSUMPTION,
+    DELTA_PLOT_PRODUCTION,
     GeneratedChicken,
     CHICKEN_RARITIES,
 )
@@ -15,6 +16,7 @@ __all__ = [
     "calculate_base_egg_production",
     "calculate_food_consuption",
     "generated_chicken_to_chicken_entity",
+    "calculate_plot_production",
 ]
 
 
@@ -40,11 +42,15 @@ async def calculate_food_consuption(chicken_quality_index: int) -> int:
     return DELTA_FOOD_CONSUMPTION * chicken_quality_index
 
 
-def generate_chicken_quality(chicken_rarity: str) -> float:
+def _generate_chicken_quality(chicken_rarity: str) -> float:
     if chicken_rarity == "ETHEREAL":
         return 1
 
     return round(uniform(0.2, 1), 2)
+
+
+def calculate_plot_production(number_of_plots: int) -> int:
+    return DELTA_PLOT_PRODUCTION * number_of_plots
 
 
 async def generated_chicken_to_chicken_entity(
@@ -64,7 +70,7 @@ async def generated_chicken_to_chicken_entity(
     Returns:
         ChickenEntity: The new chicken entity.
     """
-    quality = generate_chicken_quality(generated_chicken.rarity)
+    quality = _generate_chicken_quality(generated_chicken.rarity)
 
     chicken_index = CHICKEN_RARITIES.index(generated_chicken.rarity)
     total_egg_production = await calculate_base_egg_production(chicken_index)
