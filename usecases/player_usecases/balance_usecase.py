@@ -19,11 +19,19 @@ class BalanceUsecase:
         player_repository: PlayerRepositoryProtocol,
     ) -> None:
         self._ctx = ctx
-        self._player_entity = ctx.entities.player_entity
+
+        try:
+            self._player_entity = ctx.entities.player_entity
+        except ValueError:
+            self._player_entity = None
+
         self._player_cache = player_cache
         self._player_repository = player_repository
 
     async def balance(self) -> None:
+        if not self._player_entity:
+            return await self._ctx.send_failed_embed(REASON_INVALID_USER)
+
         discord_member = self._ctx.guild.get_member(self._player_entity.discord_user_id)  # type: ignore
 
         if not discord_member:
@@ -45,7 +53,7 @@ class BalanceUsecase:
             description += f"\n\n{self._ctx.propagated_embed_description}"
 
         return await self._ctx.send_bot_embed(
-            embed_params={"title": f"💼 {self._ctx.author.display_name}'s balance", "description": description},
+            embed_params={"title": f"💼 {discord_member.display_name}'s balance", "description": description},
             thumbnail_url=avatar_to_send,
             footer_text=get_random_tip_message(),
         )
