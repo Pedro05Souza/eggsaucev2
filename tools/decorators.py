@@ -1,15 +1,17 @@
 from __future__ import annotations
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
+from tortoise.transactions import atomic
 from discord.ext.commands import check
 from discord.app_commands import Choice
-from discord import User, Interaction, Member
-from tools.utils import calculate_away_time_earnings, format_earnings_type
-from tools.constants import get_env_var, SECONDS_TO_CHICKEN_DROP
+from discord import User, Interaction
+from tools.constants import get_env_var, SECONDS_TO_CHICKEN_DROP, SECONDS_TO_SALARY_DROP
 from eggsauce_context import EggsauceContext
+from .services import AwayTimeEarningsService
 
 if TYPE_CHECKING:
-    from services import PlayerCacheService, BotConfigCacheService, FarmCacheService, AwayTimeEarningsService
+    from entities import FarmEntity, PlayerEntity
+    from .services import PlayerCacheService, BotConfigCacheService, FarmCacheService
     from repositories import BotConfigRepositoryProtocol, PlayerRepositoryProtocol, FarmRepositoryProtocol
 
 __all__ = [
@@ -18,9 +20,12 @@ __all__ = [
     "admin_only",
     "ensure_guild_config",
     "ensure_player",
+    "ensure_player_and_attach",
     "ensure_farm",
+    "ensure_farm_and_attach",
     "is_using_valid_channel",
-    "mark_as_updatable",
+    "mark_as_updatable_salary",
+    "mark_as_updatable_farm",
 ]
 
 
@@ -55,34 +60,72 @@ async def is_using_valid_channel(ctx: EggsauceContext, bot_config_cache: "BotCon
     return False
 
 
+def _get_salary_next_drop_time() -> datetime:
+    now = datetime.now()
+    return now + timedelta(seconds=SECONDS_TO_SALARY_DROP)
+
+
 async def ensure_player(
-    ctx: EggsauceContext, player_cache: "PlayerCacheService", player_repository: "PlayerRepositoryProtocol"
-) -> None:
+    ctx: EggsauceContext,
+    player_cache: "PlayerCacheService",
+    player_repository: "PlayerRepositoryProtocol",
+) -> "PlayerEntity":
     """Fetches or creates the player entity from the cache or database and attaches it to the EggsauceContext.
 
     Args:
         ctx (EggsauceContext): The context object.
         player_cache (PlayerCacheService): The cache service that will be used to fetch the player entity.
+        player_repository (PlayerRepositoryProtocol): The repository that will be used to fetch the player entity.
     """
-    player_entity = await player_cache.get_player_entity(ctx.author.id)
+    cached_player = player_cache.get(ctx.author.id)
+
+    if cached_player is not None:
+        return cached_player
+
+    player_entity = await player_repository.get_or_create(ctx.author.id, _get_salary_next_drop_time())
+    player_cache.add(ctx.author.id, player_entity)
+
+    return player_entity
+
+
+async def ensure_player_and_attach(
+    ctx: EggsauceContext,
+    player_cache: "PlayerCacheService",
+    player_repository: "PlayerRepositoryProtocol",
+) -> None:
+    if ctx.target_member.id != ctx.author.id:
+        return
+
+    player_entity = await ensure_player(ctx, player_cache, player_repository)
     ctx.entities.player_entity = player_entity
 
 
 async def ensure_farm(
     ctx: EggsauceContext, farm_cache: "FarmCacheService", farm_repository: "FarmRepositoryProtocol"
-) -> None:
+) -> "FarmEntity":
     """Fetches or creates the farm entity from the cache or database and attaches it to the EggsauceContext.
 
     Args:
         ctx (EggsauceContext): The context object.
         farm_cache (FarmCacheService): The cache service that will be used to fetch the farm entity.
+        player_repository (FarmRepositoryProtocol): The repository that will be used to fetch the farm entity.
     """
     farm_entity = await farm_cache.get_or_fetch(ctx.author.id)
 
     if farm_entity is None:
         farm_entity = await farm_repository.create_farm(ctx.author.id, _get_chicken_egg_drop_time())
-        farm_cache.add_item(ctx.author.id, farm_entity)
+        farm_cache.add(ctx.author.id, farm_entity)
 
+    return farm_entity
+
+
+async def ensure_farm_and_attach(
+    ctx: EggsauceContext, farm_cache: "FarmCacheService", farm_repository: "FarmRepositoryProtocol"
+) -> None:
+    if ctx.target_member.id != ctx.author.id:
+        return
+
+    farm_entity = await ensure_farm(ctx, farm_cache, farm_repository)
     ctx.entities.farm_entity = farm_entity
 
 
@@ -108,7 +151,7 @@ async def ensure_guild_config(
 
     if bot_config_entity is None:
         bot_config_entity = await bot_config_repository.create_guild_config(ctx.guild.id)
-        bot_config_cache.add_item(ctx.guild.id, bot_config_entity)
+        bot_config_cache.add(ctx.guild.id, bot_config_entity)
 
     ctx.entities.bot_config_entity = bot_config_entity
 
@@ -131,47 +174,59 @@ def admin_only():
     return check(predicate)
 
 
-async def mark_as_updatable(
+async def mark_as_updatable_salary(
+    ctx: EggsauceContext,
+    player_cache: "PlayerCacheService",
+    player_repository: "PlayerRepositoryProtocol",
+) -> None:
+    player_entity = await player_cache.get_or_fetch(ctx.target_member.id)
+
+    if player_entity is None:
+        return
+
+    if player_entity.discord_user_id != ctx.author.id:
+        ctx.entities.player_entity = player_entity
+
+    salary_gained = await AwayTimeEarningsService.check_away_time_salary(player_entity)
+
+    if salary_gained is None:
+        return
+
+    async with player_cache.remove_if_exception(player_entity.discord_user_id):
+        await player_repository.update_player(player_entity)
+
+    ctx.propagated_embed_description = f"\n💰 **{salary_gained}** eggbux from your salary"
+
+
+@atomic()
+async def mark_as_updatable_farm(
     ctx: EggsauceContext,
     player_cache: "PlayerCacheService",
     player_repository: "PlayerRepositoryProtocol",
     farm_cache: "FarmCacheService",
     farm_repository: "FarmRepositoryProtocol",
-    away_time_earnings_service: "AwayTimeEarningsService",
 ) -> None:
-    discord_member_to_update = ctx.author  # type: ignore
+    player_entity = player_cache.get(ctx.target_member.id)
+    farm_entity = farm_cache.get(ctx.target_member.id)
 
-    if ctx.interaction is None:
-        possible_member_to_update: Optional[Member] = ctx.args[2]
-
-        if possible_member_to_update:
-            discord_member_to_update = possible_member_to_update
-
-    has_member_mentioned = ctx.kwargs.get("member", None)
-
-    if has_member_mentioned:
-        discord_member_to_update: Member = ctx.kwargs.get("member")  # type: ignore
-
-    player_entity = await player_cache.get_player_entity(discord_member_to_update.id)
-
-    if player_entity is None:
+    if player_entity is None or farm_entity is None:
         return
-
-    farm_entity = await farm_cache.get_or_fetch(discord_member_to_update.id)
 
     ctx.entities.player_entity = player_entity
+    ctx.entities.farm_entity = farm_entity
 
-    if farm_entity is not None:
-        ctx.entities.farm_entity = farm_entity
+    money_gained = await AwayTimeEarningsService.calculate_chicken_profit(player_entity, farm_entity)
 
-    earnings = await calculate_away_time_earnings(
-        player_entity, farm_entity, player_repository, farm_repository, away_time_earnings_service
-    )
-
-    if earnings is None:
+    if money_gained is None:
         return
 
-    ctx.propagated_embed_description = format_earnings_type(earnings)
+    async with player_cache.remove_if_exception(player_entity.discord_user_id):
+        await player_repository.update_player(player_entity)
+
+    async with farm_cache.remove_if_exception(farm_entity.discord_user_id):
+        await farm_repository.update_farm(farm_entity)
+
+    ctx.propagated_embed_description = f"\n💰 **{money_gained}** eggbux from your farm"
 
 
 async def spin_command_autocomplete(_: Interaction, current_choice: str) -> list[Choice[str]]:
