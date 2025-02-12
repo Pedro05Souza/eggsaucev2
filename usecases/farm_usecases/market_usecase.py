@@ -178,10 +178,11 @@ class ChickenView(View):
         )
 
         async with self._farm_cache_service.remove_if_exception(self._farm_entity.discord_user_id):
-            async with self._player_cache_service.remove_if_exception(interaction.user.id, propagate_exception=True):
-                await self._player_repository.update_player(player_entity)
-                self._farm_entity.chickens.sort(key=lambda chicken: chicken.rarity)
-                await self._farm_repository.upsert_farm_chicken(self._farm_entity.id, chicken_entity)
+            self._farm_entity.chickens.sort(key=lambda chicken: chicken.rarity)
+            await self._farm_repository.upsert_farm_chicken(self._farm_entity.id, chicken_entity)
+
+        async with self._player_cache_service.remove_if_exception(player_entity.discord_user_id):
+            await self._player_repository.update_player(player_entity)
 
         await interaction.message.edit(view=self, embed=embed)  # type: ignore
         await self._ctx.handle_interaction_response(
