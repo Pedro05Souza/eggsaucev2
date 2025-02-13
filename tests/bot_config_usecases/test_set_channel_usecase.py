@@ -34,7 +34,7 @@ class TestSetChannelUsecase:
         self, ctx, bot_config_entity, bot_config_cache_service, bot_config_repository
     ) -> None:
         ctx.entities.bot_config_entity = bot_config_entity
-        bot_config_cache_service.add_item(bot_config_entity.guild_id, bot_config_entity)
+        bot_config_cache_service.add(bot_config_entity.guild_id, bot_config_entity)
         bot_config_repository.create_allowed_channel.side_effect = Exception()
 
         set_channel_usecase = SetChannelUsecase(ctx, 123, bot_config_cache_service, bot_config_repository)
@@ -42,4 +42,4 @@ class TestSetChannelUsecase:
         with pytest.raises(Exception):
             await set_channel_usecase.set_channel()
             bot_config_cache_service.remove_if_exception.assert_called_once_with(bot_config_entity.guild_id)
-            assert bot_config_cache_service.get_item(bot_config_entity.guild_id) is None
+            assert bot_config_cache_service.get(bot_config_entity.guild_id) is None
