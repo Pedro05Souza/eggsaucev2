@@ -32,11 +32,6 @@ class BalanceUsecase:
         if not self._player_entity:
             return await self._ctx.send_failed_embed(REASON_INVALID_USER)
 
-        discord_member = self._ctx.guild.get_member(self._player_entity.discord_user_id)  # type: ignore
-
-        if not discord_member:
-            return await self._ctx.send_failed_embed(REASON_INVALID_USER)
-
         description = (
             f"💸 Wallet: **{self._player_entity.balance}**"
             + f"\n🏦 Bank: **{self._player_entity.bank_balance}/{self._player_entity.bank_capacity}**"
@@ -51,7 +46,7 @@ class BalanceUsecase:
             description += f"\n\n{self._ctx.propagated_embed_description}"
 
         return await self._ctx.send_bot_embed(
-            embed_params={"title": f"💼 {discord_member.display_name}'s balance", "description": description},
+            embed_params={"title": f"💼 {self._ctx.target_member.display_name}'s balance", "description": description},
             thumbnail_url=self._ctx.target_member.display_avatar.url,
             footer_text=get_random_tip_message(),
         )
