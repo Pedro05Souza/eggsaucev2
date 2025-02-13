@@ -30,7 +30,7 @@ class CornfieldRepository:
         await Cornfield.filter(id=farm_cornfield_entity.id).update(
             cornfield_name=farm_cornfield_entity.cornfield_title,
             current_corn=farm_cornfield_entity.current_corn,
-            corn_limit=farm_cornfield_entity.corn_limit,
+            corn_limit_upgrades=farm_cornfield_entity.corn_limit_upgrades,
             plot=farm_cornfield_entity.plots,
             next_corn_drop=farm_cornfield_entity.next_corn_drop,
         )
