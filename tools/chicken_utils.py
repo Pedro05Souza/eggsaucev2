@@ -53,8 +53,9 @@ def _generate_chicken_quality(chicken_rarity: str) -> float:
 def calculate_plot_production(number_of_plots: int) -> int:
     return DELTA_PLOT_PRODUCTION * number_of_plots
 
+
 def calculate_corn_limit(corn_limit_upgrades: int) -> int:
-    return DELTA_CORN_LIMIT * (corn_limit_upgrades ** 2)
+    return DELTA_CORN_LIMIT * (corn_limit_upgrades**2)
 
 
 async def generated_chicken_to_chicken_entity(
