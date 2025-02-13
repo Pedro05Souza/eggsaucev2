@@ -2,7 +2,13 @@ from typing import Optional
 from discord import Member
 from discord.ext.commands import Cog, Bot, hybrid_command, before_invoke, cooldown, BucketType
 from usecases import MarketUsecase, FarmUseCase, RenameFarmUsecase, BuyFarmerUseCase, InspectChickenUseCase
-from repositories import FarmRepository, FarmRepositoryProtocol, PlayerRepositoryProtocol, PlayerRepository
+from repositories import (
+    FarmRepository,
+    FarmRepositoryProtocol,
+    PlayerRepositoryProtocol,
+    PlayerRepository,
+    CornfieldRepository,
+)
 from tools import (
     ChickenGeneratorService,
     GlobalPlayerCache,
@@ -33,6 +39,7 @@ class FarmController(Cog):
         bot_config_cache: BotConfigCacheService,
         farm_repository: FarmRepositoryProtocol,
         player_repository: PlayerRepositoryProtocol,
+        cornfield_repository: CornfieldRepository,
     ) -> None:
         self.bot = bot
         self.chicken_generator_service = chicken_generator_service
@@ -41,10 +48,11 @@ class FarmController(Cog):
         self.bot_config_cache = bot_config_cache
         self.farm_repository = farm_repository
         self.player_repository = player_repository
+        self.cornfield_repository = cornfield_repository
 
-    async def mark_as_updatable_farm_decorator(self, ctx: EggsauceContext):
+    async def _mark_as_updatable_farm_decorator(self, ctx: EggsauceContext):
         await ensure_player(ctx, self.player_cache, self.player_repository)
-        await ensure_farm(ctx, self.farm_cache, self.farm_repository)
+        await ensure_farm(ctx, self.farm_cache, self.farm_repository, self.cornfield_repository)
         await mark_as_updatable_farm(
             ctx, self.player_cache, self.player_repository, self.farm_cache, self.farm_repository
         )
@@ -64,7 +72,7 @@ class FarmController(Cog):
 
     @hybrid_command(name="farm", aliases=["f"], description="🐔 View your farm!")
     @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
-    @before_invoke(mark_as_updatable_farm_decorator)
+    @before_invoke(_mark_as_updatable_farm_decorator)
     async def farm(self, ctx: EggsauceContext, member: Optional[Member] = None) -> None:
         farm_usecase = FarmUseCase(ctx, self.farm_cache, self.farm_repository)
         await farm_usecase.farm()
@@ -100,7 +108,7 @@ class FarmController(Cog):
 
     async def cog_before_invoke(self, ctx: EggsauceContext) -> None:  # type: ignore
         await ensure_player_and_attach(ctx, self.player_cache, self.player_repository)
-        await ensure_farm_and_attach(ctx, self.farm_cache, self.farm_repository)
+        await ensure_farm_and_attach(ctx, self.farm_cache, self.farm_repository, self.cornfield_repository)
 
 
 async def setup(bot: Bot) -> None:
@@ -113,5 +121,6 @@ async def setup(bot: Bot) -> None:
             GlobalBotConfigCache,
             FarmRepository(),
             PlayerRepository(),
+            CornfieldRepository(),
         )
     )
