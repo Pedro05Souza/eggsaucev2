@@ -6,6 +6,7 @@ from tools.constants import (
     SECONDS_TO_SALARY_DROP,
     SALARY_HOURS_THRESHOLD,
     CHICKEN_HOURS_THRESHOLD,
+    CORN_HOURS_THRESHOLD,
     SECONDS_TO_CHICKEN_DROP,
     CHICKEN_RARITIES,
     NON_DEVOLVABLE_RARITIES,
@@ -14,7 +15,7 @@ from tools.constants import (
     ChickenRaritiesEmojis,
 )
 from tools.utils import get_salary_from_title
-from tools.chicken_utils import calculate_base_egg_production
+from tools.chicken_utils import calculate_base_egg_production, calculate_plot_production
 
 
 if TYPE_CHECKING:
@@ -32,9 +33,6 @@ class AwayTimeEarningsService:
         next_salary_time = player_entity.next_salary_time
 
         time_diffence = next_salary_time - now
-
-        if time_diffence.total_seconds() > 0:
-            return
 
         hours_passed = await AwayTimeEarningsService._calculate_hours_passed(time_diffence)
 
@@ -70,6 +68,8 @@ class AwayTimeEarningsService:
         if hours_passed < 1:
             return
 
+        hours_passed = min(hours_passed, CHICKEN_HOURS_THRESHOLD)
+
         total_gained = sum(chicken.actual_egg_production for chicken in farm_entity.chickens) * hours_passed
 
         farm_entity.next_egg_drop_time = now + timedelta(seconds=SECONDS_TO_CHICKEN_DROP)
@@ -90,34 +90,31 @@ class AwayTimeEarningsService:
     @staticmethod
     async def calculate_corn_production(cornfield_entity: "CornfieldEntity") -> Optional[int]:
         now = datetime.now(timezone.utc)
-        next_corn_drop = cornfield_entity.next_corn_drop
-
-        time_diffence = next_corn_drop - now
-
-        if time_diffence.total_seconds() > 0:
-            return
+        time_diffence = cornfield_entity.next_corn_drop - now
 
         hours_passed = await AwayTimeEarningsService._calculate_hours_passed(time_diffence)
 
         if hours_passed < 1:
             return
 
-        corn_to_add = cornfield_entity.plots * hours_passed
+        hours_passed = min(hours_passed, CORN_HOURS_THRESHOLD)
+
+        corn_to_add = calculate_plot_production(cornfield_entity.plots) * hours_passed
 
         reached_limit = cornfield_entity.current_corn + corn_to_add
 
-        if cornfield_entity.corn_limit_upgrades < reached_limit:
+        if cornfield_entity.actual_corn_limit < reached_limit:
 
-            if cornfield_entity.corn_limit_upgrades == cornfield_entity.current_corn:
+            if cornfield_entity.actual_corn_limit == cornfield_entity.current_corn:
                 return
 
-            corn_to_add = cornfield_entity.corn_limit_upgrades - cornfield_entity.current_corn
+            corn_to_add = cornfield_entity.actual_corn_limit - cornfield_entity.current_corn
 
-            cornfield_entity.current_corn = cornfield_entity.corn_limit_upgrades
+        cornfield_entity.current_corn += corn_to_add
 
         cornfield_entity.next_corn_drop = now + timedelta(seconds=SECONDS_TO_SALARY_DROP)
 
-        return cornfield_entity.current_corn
+        return corn_to_add
 
     @staticmethod
     async def _maybe_devolve_chicken(chicken: "ChickenEntity") -> None:
@@ -143,5 +140,8 @@ class AwayTimeEarningsService:
     @staticmethod
     async def _calculate_hours_passed(time_diffence: timedelta) -> int:
         total_seconds = time_diffence.total_seconds()
-        hours_passed = int(divmod(-total_seconds, 3600)[0])
-        return min(hours_passed, CHICKEN_HOURS_THRESHOLD)
+
+        if total_seconds > 0:
+            return 0
+
+        return int(divmod(-total_seconds, 3600)[0]) + 1
