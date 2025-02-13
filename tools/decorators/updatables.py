@@ -27,8 +27,7 @@ async def mark_as_updatable_salary(
     if player_entity is None:
         return
 
-    if player_entity.discord_user_id != ctx.author.id:
-        ctx.entities.player_entity = player_entity
+    ctx.entities.player_entity = player_entity
 
     salary_gained = await AwayTimeEarningsService.check_away_time_salary(player_entity)
 
@@ -49,13 +48,12 @@ async def mark_as_updatable_farm(
     farm_cache: "FarmCacheService",
     farm_repository: "FarmRepositoryProtocol",
 ) -> None:
-    player_entity = player_cache.get(ctx.target_member.id)
-    farm_entity = farm_cache.get(ctx.target_member.id)
+    player_entity = await player_cache.get_or_fetch(ctx.target_member.id)
+    farm_entity = await farm_cache.get_or_fetch(ctx.target_member.id)
 
     if player_entity is None or farm_entity is None:
         return
 
-    ctx.entities.player_entity = player_entity
     ctx.entities.farm_entity = farm_entity
 
     money_gained = await AwayTimeEarningsService.calculate_chicken_profit(player_entity, farm_entity)
