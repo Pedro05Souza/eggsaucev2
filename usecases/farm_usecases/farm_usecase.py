@@ -15,18 +15,20 @@ class FarmUseCase:
         farm_repository: FarmRepositoryProtocol,
     ) -> None:
         self._ctx = ctx
-        self._player_entity = ctx.entities.player_entity
-        self._farm_entity = ctx.entities.farm_entity
+
+        try:
+            self._farm_entity = ctx.entities.farm_entity
+        except ValueError:
+            self._farm_entity = None
+
         self._farm_cache_service = farm_cache_service
         self._farm_repository = farm_repository
 
     async def farm(self) -> None:
-        discord_member = self._ctx.guild.get_member(self._player_entity.discord_user_id)  # type: ignore
 
-        if not discord_member:
-            return await self._ctx.send_failed_embed(REASON_INVALID_USER)
-
-        avatar_to_send = discord_member.display_avatar.url
+        if not self._farm_entity:
+            await self._ctx.send_failed_embed(REASON_INVALID_USER)
+            return
 
         farm_title = (
             f"🚜 {self._farm_entity.farm_title}\n🧑‍🌾 Farmer:"
@@ -51,6 +53,6 @@ class FarmUseCase:
                 "title": farm_title,
                 "description": farm_chickens,
             },
-            thumbnail_url=avatar_to_send,
+            thumbnail_url=self._ctx.target_member.display_avatar.url,
             footer_text=get_random_tip_message(),
         )
