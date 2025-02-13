@@ -28,10 +28,10 @@ class CornfieldRepository:
 
     async def update_cornfield(self, farm_cornfield_entity: "CornfieldEntity") -> "CornfieldEntity":
         await Cornfield.filter(id=farm_cornfield_entity.id).update(
-            cornfield_name=farm_cornfield_entity.cornfield_title,
+            cornfield_title=farm_cornfield_entity.cornfield_title,
             current_corn=farm_cornfield_entity.current_corn,
             corn_limit_upgrades=farm_cornfield_entity.corn_limit_upgrades,
-            plot=farm_cornfield_entity.plots,
+            plots=farm_cornfield_entity.plots,
             next_corn_drop=farm_cornfield_entity.next_corn_drop,
         )
 
