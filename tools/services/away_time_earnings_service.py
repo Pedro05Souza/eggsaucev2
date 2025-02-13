@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TypedDict, Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 from datetime import datetime, timedelta, timezone
 from random import randint
 from tools.constants import (
@@ -17,33 +17,26 @@ from tools.utils import get_salary_from_title
 from tools.chicken_utils import calculate_base_egg_production
 
 
-class EarningsType(TypedDict):
-    salary: int
-    farm: int
-    cornfield: int
-
-
 if TYPE_CHECKING:
-    from entities import PlayerEntity, FarmEntity, ChickenEntity
+    from entities import PlayerEntity, FarmEntity, ChickenEntity, CornfieldEntity
 
 
-__all__ = ["AwayTimeEarningsService", "EarningsType"]
+__all__ = ["AwayTimeEarningsService"]
 
 
 class AwayTimeEarningsService:
 
-    async def _check_away_time_salary(self, player_entity: "PlayerEntity", earnings_data: EarningsType) -> None:
+    @staticmethod
+    async def check_away_time_salary(player_entity: "PlayerEntity") -> Optional[int]:
         now = datetime.now(timezone.utc)
         next_salary_time = player_entity.next_salary_time
 
         time_diffence = next_salary_time - now
 
-        total_seconds = time_diffence.total_seconds()
-
         if time_diffence.total_seconds() > 0:
             return
 
-        hours_passed = int(divmod(-total_seconds, 3600)[0])
+        hours_passed = await AwayTimeEarningsService._calculate_hours_passed(time_diffence)
 
         if hours_passed < 1:
             return
@@ -56,46 +49,28 @@ class AwayTimeEarningsService:
 
         player_entity.next_salary_time = now + timedelta(seconds=SECONDS_TO_SALARY_DROP)
         player_entity.balance += total_gained_salary
-        earnings_data["salary"] = total_gained_salary
+        return total_gained_salary
 
-    def _reset_next_egg_drop_time(self, now: datetime, farm_entity: "FarmEntity") -> None:
+    @staticmethod
+    def _reset_next_egg_drop_time(now: datetime, farm_entity: "FarmEntity") -> None:
         farm_entity.next_egg_drop_time = now + timedelta(seconds=SECONDS_TO_CHICKEN_DROP)
 
-    async def _calculate_chicken_profit(
-        self, player_entity: "PlayerEntity", farm_entity: Optional["FarmEntity"], earnings_data: EarningsType
-    ) -> None:
-        if farm_entity is None:
-            return
-
-        if len(farm_entity.chickens) == 0:
-            self._reset_next_egg_drop_time(datetime.now(timezone.utc), farm_entity)
-            return
-
+    @staticmethod
+    async def calculate_chicken_profit(player_entity: "PlayerEntity", farm_entity: "FarmEntity") -> Optional[int]:
         now = datetime.now(timezone.utc)
 
-        if not farm_entity.next_egg_drop_time:
-            self._reset_next_egg_drop_time(now, farm_entity)
+        if len(farm_entity.chickens) == 0 or not farm_entity.next_egg_drop_time:
+            AwayTimeEarningsService._reset_next_egg_drop_time(now, farm_entity)
             return
 
         time_diffence = farm_entity.next_egg_drop_time - now
 
-        total_seconds = time_diffence.total_seconds()
-
-        if total_seconds > 0:
-            return
-
-        hours_passed = int(divmod(-total_seconds, 3600)[0])
+        hours_passed = await AwayTimeEarningsService._calculate_hours_passed(time_diffence)
 
         if hours_passed < 1:
             return
 
-        hours_passed = 24
-
-        hours_passed = min(hours_passed, CHICKEN_HOURS_THRESHOLD)
-
         total_gained = sum(chicken.actual_egg_production for chicken in farm_entity.chickens) * hours_passed
-
-        earnings_data["farm"] = total_gained
 
         farm_entity.next_egg_drop_time = now + timedelta(seconds=SECONDS_TO_CHICKEN_DROP)
 
@@ -103,14 +78,49 @@ class AwayTimeEarningsService:
             chicken.happiness = max(0, chicken.happiness - sum(randint(1, 3) for _ in range(hours_passed)))
 
             if chicken.happiness == 0:
-                await self._maybe_devolve_chicken(chicken)
+                await AwayTimeEarningsService._maybe_devolve_chicken(chicken)
 
         if player_entity.bank_capacity > player_entity.bank_balance + total_gained:
             player_entity.bank_balance += total_gained
         else:
             player_entity.balance += total_gained
 
-    async def _maybe_devolve_chicken(self, chicken: "ChickenEntity") -> None:
+        return total_gained
+
+    @staticmethod
+    async def calculate_corn_production(cornfield_entity: "CornfieldEntity") -> Optional[int]:
+        now = datetime.now(timezone.utc)
+        next_corn_drop = cornfield_entity.next_corn_drop
+
+        time_diffence = next_corn_drop - now
+
+        if time_diffence.total_seconds() > 0:
+            return
+
+        hours_passed = await AwayTimeEarningsService._calculate_hours_passed(time_diffence)
+
+        if hours_passed < 1:
+            return
+
+        corn_to_add = cornfield_entity.plots * hours_passed
+
+        reached_limit = cornfield_entity.current_corn + corn_to_add
+
+        if cornfield_entity.corn_limit_upgrades < reached_limit:
+
+            if cornfield_entity.corn_limit_upgrades == cornfield_entity.current_corn:
+                return
+
+            corn_to_add = cornfield_entity.corn_limit_upgrades - cornfield_entity.current_corn
+
+            cornfield_entity.current_corn = cornfield_entity.corn_limit_upgrades
+
+        cornfield_entity.next_corn_drop = now + timedelta(seconds=SECONDS_TO_SALARY_DROP)
+
+        return cornfield_entity.current_corn
+
+    @staticmethod
+    async def _maybe_devolve_chicken(chicken: "ChickenEntity") -> None:
         if chicken.rarity in NON_DEVOLVABLE_RARITIES:
             return
 
@@ -130,18 +140,8 @@ class AwayTimeEarningsService:
         chicken.price = BASE_CHICKEN_PRICE * ChickenPricesMultiplier[previous_rarity].value
         chicken.emoji = ChickenRaritiesEmojis[previous_rarity].value
 
-    async def calculate_away_time_earnings(
-        self, player_entity: "PlayerEntity", farm_entity: Optional["FarmEntity"]
-    ) -> Optional[EarningsType]:
-        earnings_data: EarningsType = {"salary": 0, "farm": 0, "cornfield": 0}
-        await self._check_away_time_salary(player_entity, earnings_data)
-        await self._calculate_chicken_profit(player_entity, farm_entity, earnings_data)
-
-        # TODO: Cornfield logic
-
-        is_earning_data_empty = all(value == 0 for value in earnings_data.values())
-
-        if is_earning_data_empty:
-            return None
-
-        return earnings_data
+    @staticmethod
+    async def _calculate_hours_passed(time_diffence: timedelta) -> int:
+        total_seconds = time_diffence.total_seconds()
+        hours_passed = int(divmod(-total_seconds, 3600)[0])
+        return min(hours_passed, CHICKEN_HOURS_THRESHOLD)
