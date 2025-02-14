@@ -8,7 +8,6 @@ from tools import (
     GlobalPlayerCache,
     GlobalBotConfigCache,
     spin_command_autocomplete,
-    ensure_player,
     ensure_player_and_attach,
     is_using_valid_channel,
     mark_as_updatable_salary,
@@ -43,7 +42,7 @@ class PlayerController(Cog):
         self.player_repository = player_repository
 
     async def mark_as_updatable_salary_decorator(self, ctx: EggsauceContext):
-        await ensure_player(ctx, self.player_cache, self.player_repository)
+        await self.cog_before_invoke(ctx)
         await mark_as_updatable_salary(ctx, self.player_cache, self.player_repository)
 
     @hybrid_command(

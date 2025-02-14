@@ -4,14 +4,23 @@ from discord import Member
 from discord.ext.commands import Cog, Bot, hybrid_command, before_invoke
 from tools import (
     ensure_farm,
+    ensure_player,
     ensure_cornfield_and_attach,
     GlobalFarmCache,
+    GlobalPlayerCache,
     FarmCacheService,
-    ensure_cornfield,
+    PlayerCacheService,
     mark_as_updatable_corn,
 )
 from usecases import CornFieldUsecase
-from repositories import FarmRepositoryProtocol, CornfieldRepositoryProtocol, FarmRepository, CornfieldRepository
+from repositories import (
+    FarmRepositoryProtocol,
+    CornfieldRepositoryProtocol,
+    FarmRepository,
+    CornfieldRepository,
+    PlayerRepositoryProtocol,
+    PlayerRepository,
+)
 
 if TYPE_CHECKING:
     from eggsauce_context import EggsauceContext
@@ -25,15 +34,18 @@ class CornfieldController(Cog):
         farm_cache_service: FarmCacheService,
         farm_repository: FarmRepositoryProtocol,
         cornfield_repository: CornfieldRepositoryProtocol,
+        player_repository: PlayerRepositoryProtocol,
+        player_cache_service: PlayerCacheService,
     ) -> None:
         self.bot = bot
         self.farm_cache_service = farm_cache_service
         self.farm_repository = farm_repository
         self.cornfield_repository = cornfield_repository
+        self.player_repository = player_repository
+        self.player_cache_service = player_cache_service
 
     async def _mark_as_updatable_cornfield_decorator(self, ctx: "EggsauceContext") -> None:
-        await ensure_farm(ctx, self.farm_cache_service, self.farm_repository, self.cornfield_repository)
-        await ensure_cornfield(ctx, self.cornfield_repository)
+        await self.cog_before_invoke(ctx)
         await mark_as_updatable_corn(ctx, self.cornfield_repository)
 
     @hybrid_command(name="cornfield", aliases=["corn"], description="🌽 Visit the cornfield to earn some eggbux!")
@@ -43,9 +55,14 @@ class CornfieldController(Cog):
         await cornfield_usecase.cornfield()
 
     async def cog_before_invoke(self, ctx: "EggsauceContext") -> None:  # type: ignore
+        await ensure_player(ctx, self.player_cache_service, self.player_repository)
         await ensure_farm(ctx, self.farm_cache_service, self.farm_repository, self.cornfield_repository)
         await ensure_cornfield_and_attach(ctx, self.cornfield_repository)
 
 
 async def setup(bot: Bot) -> None:
-    await bot.add_cog(CornfieldController(bot, GlobalFarmCache, FarmRepository(), CornfieldRepository()))
+    await bot.add_cog(
+        CornfieldController(
+            bot, GlobalFarmCache, FarmRepository(), CornfieldRepository(), PlayerRepository(), GlobalPlayerCache
+        )
+    )
