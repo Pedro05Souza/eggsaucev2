@@ -59,9 +59,6 @@ async def ensure_player_and_attach(
     player_cache: "PlayerCacheService",
     player_repository: "PlayerRepositoryProtocol",
 ) -> None:
-    if ctx.target_member.id != ctx.author.id:
-        return
-
     player_entity = await ensure_player(ctx, player_cache, player_repository)
     ctx.entities.player_entity = player_entity
 
@@ -78,7 +75,9 @@ async def ensure_farm(
     Args:
         ctx ("EggsauceContext"): The context object.
         farm_cache (FarmCacheService): The cache service that will be used to fetch the farm entity.
-        player_repository (FarmRepositoryProtocol): The repository that will be used to fetch the farm entity.
+        farm_repository (FarmRepositoryProtocol): The repository that will be used to fetch the farm entity.
+        cornfield_repository (CornfieldRepositoryProtocol): The repository that will be used to fetch
+        the cornfield entity.
     """
     farm_entity = await farm_cache.get_or_fetch(ctx.author.id)
 
@@ -96,9 +95,6 @@ async def ensure_farm_and_attach(
     farm_repository: "FarmRepositoryProtocol",
     cornfield_repository: "CornfieldRepositoryProtocol",
 ) -> None:
-    if ctx.target_member.id != ctx.author.id:
-        return
-
     farm_entity = await ensure_farm(ctx, farm_cache, farm_repository, cornfield_repository)
     ctx.entities.farm_entity = farm_entity
 

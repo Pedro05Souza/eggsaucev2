@@ -54,7 +54,6 @@ def admin_only():
     Returns:
         bool: True if the user has administrator permissions, False otherwise
     """
-
     async def predicate(ctx: " EggsauceContext") -> bool:
         if isinstance(ctx.author, User):
             return False
