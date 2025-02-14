@@ -1,7 +1,14 @@
 from typing import Optional
 from discord import Member
 from discord.ext.commands import Cog, Bot, hybrid_command, before_invoke, cooldown, BucketType
-from usecases import MarketUsecase, FarmUseCase, RenameFarmUsecase, BuyFarmerUseCase, InspectChickenUseCase
+from usecases import (
+    MarketUsecase,
+    FarmUseCase,
+    RenameFarmUsecase,
+    BuyFarmerUseCase,
+    InspectChickenUseCase,
+    FeedAllChickenUsecase,
+)
 from repositories import (
     FarmRepository,
     FarmRepositoryProtocol,
@@ -14,7 +21,6 @@ from tools import (
     GlobalPlayerCache,
     GlobalFarmCache,
     GlobalBotConfigCache,
-    ensure_farm,
     ensure_farm_and_attach,
     FarmCacheService,
     PlayerCacheService,
@@ -51,8 +57,8 @@ class FarmController(Cog):
         self.cornfield_repository = cornfield_repository
 
     async def _mark_as_updatable_farm_decorator(self, ctx: EggsauceContext):
-        await ensure_player(ctx, self.player_cache, self.player_repository)
-        await ensure_farm(ctx, self.farm_cache, self.farm_repository, self.cornfield_repository)
+        await ensure_player_and_attach(ctx, self.player_cache, self.player_repository)
+        await ensure_farm_and_attach(ctx, self.farm_cache, self.farm_repository, self.cornfield_repository)
         await mark_as_updatable_farm(
             ctx, self.player_cache, self.player_repository, self.farm_cache, self.farm_repository
         )
@@ -103,11 +109,22 @@ class FarmController(Cog):
         chicken_info_usecase = InspectChickenUseCase(ctx, position)
         await chicken_info_usecase.inspect_chicken()
 
+    @hybrid_command(name="feedallchicken", aliases=["fac"], description="🐔 Feed all your chickens!")
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
+    async def feed_all_chicken(self, ctx: EggsauceContext) -> None:
+        feed_all_chicken_usecase = FeedAllChickenUsecase(
+            ctx,
+            self.farm_repository,
+            self.farm_cache,
+            self.cornfield_repository,
+        )
+        await feed_all_chicken_usecase.feed_all_chicken()
+
     async def cog_check(self, ctx: EggsauceContext) -> bool:  # type: ignore
         return await is_using_valid_channel(ctx, self.bot_config_cache)
 
     async def cog_before_invoke(self, ctx: EggsauceContext) -> None:  # type: ignore
-        await ensure_player_and_attach(ctx, self.player_cache, self.player_repository)
+        await ensure_player(ctx, self.player_cache, self.player_repository)
         await ensure_farm_and_attach(ctx, self.farm_cache, self.farm_repository, self.cornfield_repository)
 
 
