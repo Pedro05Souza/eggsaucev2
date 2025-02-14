@@ -3,7 +3,7 @@ from typing import Optional, TYPE_CHECKING
 from discord import Forbidden, Interaction, Embed, ButtonStyle, Member
 from discord.ui import View, button, Button
 from discord.ext.commands import Context
-from tools.constants import EmbedParams, REASON_DM_FAILURE
+from tools.constants import EmbedParams, REASON_DM_FAILURE, MultipleMembersFoundError
 
 if TYPE_CHECKING:
     from entities import FarmEntity, BotConfigEntity, PlayerEntity, CornfieldEntity
@@ -276,11 +276,18 @@ class EggsauceContext(Context):
         if self.kwargs.get("member"):
             return self.kwargs["member"]
 
-        if self.interaction is None and len(self.args) >= 2:
-            possible_member_to_update: Optional[Member] = self.args[2]
+        if self.interaction is None:
+            possible_member_to_update = [arg for arg in self.args if isinstance(arg, Member)]
 
-            if possible_member_to_update:
-                return possible_member_to_update
+            if len(possible_member_to_update) == 0:
+                return self.author  # type: ignore
+
+            if len(possible_member_to_update) > 1:
+                raise MultipleMembersFoundError(
+                    f"Multiple members found. Members found: {possible_member_to_update}"
+                )
+
+            return possible_member_to_update[0]
 
         return self.author  # type: ignore
 
