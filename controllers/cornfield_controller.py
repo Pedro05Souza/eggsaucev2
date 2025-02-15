@@ -12,7 +12,7 @@ from tools import (
     PlayerCacheService,
     mark_as_updatable_corn,
 )
-from usecases import CornFieldUsecase
+from usecases import CornFieldUsecase, ExpandCornLimitUsecase
 from repositories import (
     FarmRepositoryProtocol,
     CornfieldRepositoryProtocol,
@@ -53,6 +53,13 @@ class CornfieldController(Cog):
     async def cornfield(self, ctx: "EggsauceContext", member: Optional[Member] = None) -> None:
         cornfield_usecase = CornFieldUsecase(ctx)
         await cornfield_usecase.cornfield()
+
+    @hybrid_command(name="expand_cornfield", aliases=["expand_corn"], description="🌽 Expand the cornfield limit!")
+    async def expand_cornfield(self, ctx: "EggsauceContext") -> None:
+        expand_corn_limit_usecase = ExpandCornLimitUsecase(
+            ctx, self.cornfield_repository, self.player_cache_service, self.player_repository
+        )
+        await expand_corn_limit_usecase.expand_corn_limit()
 
     async def cog_before_invoke(self, ctx: "EggsauceContext") -> None:  # type: ignore
         await ensure_player(ctx, self.player_cache_service, self.player_repository)

@@ -18,6 +18,7 @@ __all__ = [
     "calculate_food_consuption",
     "generated_chicken_to_chicken_entity",
     "calculate_plot_production",
+    'calculate_corn_limit'
 ]
 
 
