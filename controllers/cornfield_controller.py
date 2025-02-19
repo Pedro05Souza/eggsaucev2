@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from eggsauce_context import EggsauceContext
 
 
-class CornfieldController(Cog):
+class CornfieldController(Cog, name="Cornfield"):
 
     def __init__(
         self,

@@ -27,7 +27,7 @@ from usecases import (
 from eggsauce_context import EggsauceContext
 
 
-class PlayerController(Cog):
+class PlayerController(Cog, name="Player"):
 
     def __init__(
         self,

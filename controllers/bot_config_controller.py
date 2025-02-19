@@ -5,7 +5,7 @@ from tools import BotConfigCacheService, admin_only, ensure_guild_config, Global
 from eggsauce_context import EggsauceContext
 
 
-class BotConfigController(Cog):
+class BotConfigController(Cog, name="Bot Config"):
 
     def __init__(
         self, bot: Bot, bot_config_cache: BotConfigCacheService, bot_config_repository: BotConfigRepositoryProtocol

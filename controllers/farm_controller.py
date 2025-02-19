@@ -32,7 +32,7 @@ from tools.constants import REGULAR_COMMAND_COOLDOWN, SPAM_COMMAND_COOLDOWN
 from eggsauce_context import EggsauceContext
 
 
-class FarmController(Cog):
+class FarmController(Cog, name="Farm"):
 
     def __init__(
         self,
