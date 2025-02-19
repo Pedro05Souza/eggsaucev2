@@ -22,15 +22,12 @@ async def mark_as_updatable_salary(
     player_cache: "PlayerCacheService",
     player_repository: "PlayerRepositoryProtocol",
 ) -> None:
-    if ctx.target_member.id != ctx.author.id:
-        player_entity = await player_cache.get_or_fetch(ctx.target_member.id)
+    player_entity = await player_cache.get_or_fetch(ctx.target_member.id)
 
-        if player_entity is None:
-            return
+    if player_entity is None:
+        return
 
-        ctx.entities.player_entity = player_entity
-    else:
-        player_entity = ctx.entities.player_entity
+    ctx.entities.player_entity = player_entity
 
     salary_gained = await AwayTimeEarningsService.check_away_time_salary(player_entity)
 
@@ -51,19 +48,14 @@ async def mark_as_updatable_farm(
     farm_cache: "FarmCacheService",
     farm_repository: "FarmRepositoryProtocol",
 ) -> None:
-    if ctx.target_member.id != ctx.author.id:
-        player_entity = await player_cache.get_or_fetch(ctx.target_member.id)
-        farm_entity = await farm_cache.get_or_fetch(ctx.target_member.id)
+    player_entity = await player_cache.get_or_fetch(ctx.target_member.id)
+    farm_entity = await farm_cache.get_or_fetch(ctx.target_member.id)
 
-        if player_entity is None or farm_entity is None:
-            return
+    if player_entity is None or farm_entity is None:
+        return
 
-        ctx.entities.player_entity = player_entity
-        ctx.entities.farm_entity = farm_entity
-
-    else:
-        player_entity = ctx.entities.player_entity
-        farm_entity = ctx.entities.farm_entity
+    ctx.entities.player_entity = player_entity
+    ctx.entities.farm_entity = farm_entity
 
     money_gained = await AwayTimeEarningsService.calculate_chicken_profit(player_entity, farm_entity)
 
@@ -81,19 +73,12 @@ async def mark_as_updatable_farm(
 
 async def mark_as_updatable_corn(ctx: "EggsauceContext", cornfield_repository: "CornfieldRepositoryProtocol") -> None:
 
-    if ctx.target_member.id != ctx.author.id:
-        cornfield_entity = await cornfield_repository.get_cornfield_by_user_discord_id(ctx.target_member.id)
+    cornfield_entity = await cornfield_repository.get_cornfield_by_user_discord_id(ctx.target_member.id)
 
-        if cornfield_entity is None:
-            return
+    if cornfield_entity is None:
+        return
 
-        ctx.entities.cornfield_entity = cornfield_entity
-
-    else:
-        cornfield_entity = ctx.entities.cornfield_entity
-
-    if ctx.target_member.id != ctx.author.id:
-        ctx.entities.cornfield_entity = cornfield_entity
+    ctx.entities.cornfield_entity = cornfield_entity
 
     corn_gained = await AwayTimeEarningsService.calculate_corn_production(cornfield_entity)
 
@@ -102,4 +87,4 @@ async def mark_as_updatable_corn(ctx: "EggsauceContext", cornfield_repository: "
 
     await cornfield_repository.update_cornfield(cornfield_entity)
 
-    ctx.propagated_embed_description = f"\n🌽 **{corn_gained}** corn poduced by your cornfield."
+    ctx.propagated_embed_description = f"\n🌽 **{corn_gained}** corn produced by your cornfield."

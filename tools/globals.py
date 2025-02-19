@@ -7,6 +7,6 @@ __all__ = [
     "GlobalFarmCache",
 ]
 
-GlobalPlayerCache = PlayerCacheService(True, PlayerRepository())
+GlobalPlayerCache = PlayerCacheService(False, PlayerRepository())
 GlobalBotConfigCache = BotConfigCacheService(False, BotConfigRepository(), expiration_time=3600)
 GlobalFarmCache = FarmCacheService(True, FarmRepository())

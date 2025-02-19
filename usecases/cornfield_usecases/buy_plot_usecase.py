@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+from tools.constants import REASON_INVALID_USER
 from tools import calculate_plot_production, calculate_plot_price, deduct_from_balance_and_bank
 
 if TYPE_CHECKING:
@@ -28,7 +29,12 @@ class BuyPlotUsecase:
         self._ctx = ctx
 
     async def buy_plot(self) -> None:
-        player_entity = self._player_cache.get_or_raise(self._ctx.author.id)
+        player_entity = await self._player_cache.get_or_fetch(self._ctx.author.id)
+
+        if not player_entity:
+            await self._ctx.send_failed_embed(REASON_INVALID_USER)
+            return
+
         total_price = calculate_plot_price(self._cornfield_entity.plots + 1)
 
         if player_entity.balance + player_entity.bank_balance < total_price:

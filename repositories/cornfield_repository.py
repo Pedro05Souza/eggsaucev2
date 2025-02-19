@@ -3,6 +3,7 @@ from typing import Optional, TYPE_CHECKING
 from datetime import datetime
 from models import Cornfield, Player, Farm
 from .mappers import farm_cornfield_model_to_entity
+from ._repository_meta import RepositoryMeta
 
 if TYPE_CHECKING:
     from entities import CornfieldEntity
@@ -10,7 +11,7 @@ if TYPE_CHECKING:
 __all__ = ["CornfieldRepository"]
 
 
-class CornfieldRepository:
+class CornfieldRepository(metaclass=RepositoryMeta):
 
     async def get_cornfield_by_user_discord_id(self, discord_user_id: int) -> Optional["CornfieldEntity"]:
         cornfield = await Cornfield.filter(farm__player__discord_user_id=discord_user_id).select_related("farm").first()

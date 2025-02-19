@@ -6,8 +6,8 @@ __all__ = ['DatabaseStarterService']
 class DatabaseStarterService():
 
     def __init__(self) -> None:
-        run_async(self.__setup())
+        run_async(self._setup())
 
-    async def __setup(self) -> None:
+    async def _setup(self) -> None:
         await Tortoise.init(config=TORTOISE_ORM)
         await Tortoise.generate_schemas()

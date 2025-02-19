@@ -4,11 +4,12 @@ from tortoise.query_utils import Prefetch
 from entities import FarmEntity, ChickenEntity
 from models import Farm, Player, Chicken
 from .mappers import farm_model_to_entity
+from ._repository_meta import RepositoryMeta
 
 __all__ = ["FarmRepository"]
 
 
-class FarmRepository:
+class FarmRepository(metaclass=RepositoryMeta):
 
     async def get_farm_by_discord_user_id(self, discord_user_id: int) -> Optional[FarmEntity]:
         farm = (

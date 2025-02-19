@@ -4,11 +4,11 @@ from repositories import PlayerRepositoryProtocol
 from tools import (
     PlayerCacheService,
     deduct_from_balance_and_bank,
-)
-from tools.constants import (
     get_titles_prices,
     get_titles_salaries,
     get_titles_emojis,
+)
+from tools.constants import (
     SECONDS_TO_SALARY_DROP,
     REASON_INSUFFICIENT_BALANCE,
 )

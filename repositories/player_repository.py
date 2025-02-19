@@ -3,14 +3,13 @@ from datetime import datetime
 from entities import PlayerEntity
 from models import Player, BankPlayer
 from .mappers import player_model_to_entity
+from ._repository_meta import RepositoryMeta
 
 __all__ = ["PlayerRepository"]
 
 
-class PlayerRepository:
-
+class PlayerRepository(metaclass=RepositoryMeta):
     async def get_player_by_discord_id(self, discord_user_id: int) -> Optional[PlayerEntity]:
-        print("get_player_by_discord_id")
         database_player = await Player.get_or_none(discord_user_id=discord_user_id).select_related("bank_player")
 
         if not database_player:

@@ -1,9 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from asyncio import Lock
-from tortoise.transactions import atomic
 from repositories import PlayerRepositoryProtocol
-from tools.reverse_mapping import player_entity_to_model
 from ._entity_cache import EntityCacheService
 
 if TYPE_CHECKING:
@@ -30,8 +28,6 @@ class PlayerCacheService(EntityCacheService["PlayerEntity"]):
         key: int,
     ):
         async with self._lock:
-            await self._save_expired_or_removed_items()
-
             player_entity = self.get(key)
 
             if player_entity:
@@ -45,20 +41,6 @@ class PlayerCacheService(EntityCacheService["PlayerEntity"]):
 
             if not player_entity:
                 return None
-
-    @atomic()
-    async def _save_expired_or_removed_items(self):
-        """Saves the expired or removed items to the database."""
-        items = await self._get_expired_or_removed_items()
-
-        if len(items) == 0:
-            return
-
-        items = [item[1] for item in items]
-        items = [await player_entity_to_model(item) for item in items]
-
-        await self.player_repository.bulk_update_players(items)
-        self._logger.info("Saved %s expired or removed player entities to the database.", len(items))
 
     @property
     def player_repository(self) -> PlayerRepositoryProtocol:

@@ -59,6 +59,9 @@ async def ensure_player_and_attach(
     player_cache: "PlayerCacheService",
     player_repository: "PlayerRepositoryProtocol",
 ) -> None:
+    if ctx.target_member != ctx.author:
+        return
+
     player_entity = await ensure_player(ctx, player_cache, player_repository)
     ctx.entities.player_entity = player_entity
 
@@ -95,6 +98,9 @@ async def ensure_farm_and_attach(
     farm_repository: "FarmRepositoryProtocol",
     cornfield_repository: "CornfieldRepositoryProtocol",
 ) -> None:
+    if ctx.target_member != ctx.author:
+        return
+
     farm_entity = await ensure_farm(ctx, farm_cache, farm_repository, cornfield_repository)
     ctx.entities.farm_entity = farm_entity
 
@@ -157,7 +163,7 @@ async def ensure_cornfield_and_attach(
     ctx: "EggsauceContext",
     cornfield_repository: "CornfieldRepositoryProtocol",
 ) -> None:
-    if ctx.target_member.id != ctx.author.id:
+    if ctx.target_member != ctx.author:
         return
 
     cornfield_entity = await ensure_cornfield(ctx, cornfield_repository)

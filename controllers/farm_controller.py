@@ -17,17 +17,15 @@ from repositories import (
     CornfieldRepository,
 )
 from tools import (
-    ChickenGeneratorService,
     GlobalPlayerCache,
     GlobalFarmCache,
     GlobalBotConfigCache,
-    ensure_farm_and_attach,
     FarmCacheService,
     PlayerCacheService,
     BotConfigCacheService,
     is_using_valid_channel,
-    ensure_player,
     ensure_player_and_attach,
+    ensure_farm_and_attach,
     mark_as_updatable_farm,
 )
 from tools.constants import REGULAR_COMMAND_COOLDOWN, SPAM_COMMAND_COOLDOWN
@@ -39,7 +37,6 @@ class FarmController(Cog):
     def __init__(
         self,
         bot: Bot,
-        chicken_generator_service: ChickenGeneratorService,
         farm_cache: FarmCacheService,
         player_cache: PlayerCacheService,
         bot_config_cache: BotConfigCacheService,
@@ -48,7 +45,6 @@ class FarmController(Cog):
         cornfield_repository: CornfieldRepository,
     ) -> None:
         self.bot = bot
-        self.chicken_generator_service = chicken_generator_service
         self.farm_cache = farm_cache
         self.player_cache = player_cache
         self.bot_config_cache = bot_config_cache
@@ -57,8 +53,6 @@ class FarmController(Cog):
         self.cornfield_repository = cornfield_repository
 
     async def _mark_as_updatable_farm_decorator(self, ctx: EggsauceContext):
-        await ensure_player_and_attach(ctx, self.player_cache, self.player_repository)
-        await ensure_farm_and_attach(ctx, self.farm_cache, self.farm_repository, self.cornfield_repository)
         await mark_as_updatable_farm(
             ctx, self.player_cache, self.player_repository, self.farm_cache, self.farm_repository
         )
@@ -68,7 +62,6 @@ class FarmController(Cog):
     async def market(self, ctx: EggsauceContext) -> None:
         market_usecase = MarketUsecase(
             ctx,
-            self.chicken_generator_service,
             self.farm_cache,
             self.player_cache,
             self.farm_repository,
@@ -124,7 +117,7 @@ class FarmController(Cog):
         return await is_using_valid_channel(ctx, self.bot_config_cache)
 
     async def cog_before_invoke(self, ctx: EggsauceContext) -> None:  # type: ignore
-        await ensure_player(ctx, self.player_cache, self.player_repository)
+        await ensure_player_and_attach(ctx, self.player_cache, self.player_repository)
         await ensure_farm_and_attach(ctx, self.farm_cache, self.farm_repository, self.cornfield_repository)
 
 
@@ -132,7 +125,6 @@ async def setup(bot: Bot) -> None:
     await bot.add_cog(
         FarmController(
             bot,
-            ChickenGeneratorService(),
             GlobalFarmCache,
             GlobalPlayerCache,
             GlobalBotConfigCache,

@@ -1,8 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from tortoise.transactions import atomic
-from tools.constants import BASE_UPGRADE_CORNFIELD_LIMIT_PRICE
-from tools import deduct_from_balance_and_bank, calculate_corn_limit
+from tools.constants import REASON_INVALID_USER
+from tools import deduct_from_balance_and_bank, calculate_corn_limit, calculate_corn_limit_price
 
 if TYPE_CHECKING:
     from eggsauce_context import EggsauceContext
@@ -31,8 +31,13 @@ class ExpandCornLimitUsecase:
     @atomic()
     async def expand_corn_limit(self) -> None:
 
-        player_entity = self._player_cache.get_or_raise(self._ctx.author.id)
-        total_cost = BASE_UPGRADE_CORNFIELD_LIMIT_PRICE * (self._cornfield_entity.corn_limit_upgrades**2)
+        player_entity = await self._player_cache.get_or_fetch(self._ctx.author.id)
+
+        if not player_entity:
+            await self._ctx.send_failed_embed(REASON_INVALID_USER)
+            return
+
+        total_cost = calculate_corn_limit_price(self._cornfield_entity.corn_limit_upgrades + 1)
 
         if player_entity.balance + player_entity.bank_balance < total_cost:
             await self._ctx.send_failed_embed(
@@ -46,7 +51,8 @@ class ExpandCornLimitUsecase:
 
         if not has_confirmed:
             await message.edit(
-                embed=self._ctx.embed_builder(embed_params={"description": "Cancelled the cornfield limit expansion."})
+                embed=self._ctx.embed_builder(embed_params={"description": "Cancelled the cornfield limit expansion."}),
+                view=None,
             )
             return
 
@@ -61,7 +67,9 @@ class ExpandCornLimitUsecase:
         await message.edit(
             embed=self._ctx.embed_builder(
                 embed_params={
-                    "description": f"Successfully expanded the cornfield limit to **{calculate_corn_limit(self._cornfield_entity.corn_limit_upgrades)}**."
+                    "description": "Successfully expanded the cornfield limit to "
+                    + f"**{calculate_corn_limit(self._cornfield_entity.corn_limit_upgrades)}**."
                 }
-            )
+            ),
+            view=None,
         )

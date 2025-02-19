@@ -6,8 +6,10 @@ from .constants import (
     chicken_quality_rates,
     DELTA_EGG_VALUE,
     DELTA_FOOD_CONSUMPTION,
-    DELTA_PLOT_PRODUCTION,
+    DELTA_CORN_PER_PLOT,
     DELTA_CORN_LIMIT,
+    BASE_PLOT_PRICE,
+    BASE_UPGRADE_CORNFIELD_LIMIT_PRICE,
     GeneratedChicken,
     CHICKEN_RARITIES,
 )
@@ -18,7 +20,9 @@ __all__ = [
     "calculate_food_consuption",
     "generated_chicken_to_chicken_entity",
     "calculate_plot_production",
-    'calculate_corn_limit'
+    "calculate_plot_price",
+    "calculate_corn_limit",
+    "calculate_corn_limit_price",
 ]
 
 
@@ -52,11 +56,19 @@ def _generate_chicken_quality(chicken_rarity: str) -> float:
 
 
 def calculate_plot_production(number_of_plots: int) -> int:
-    return DELTA_PLOT_PRODUCTION * number_of_plots
+    return DELTA_CORN_PER_PLOT * number_of_plots
+
+
+def calculate_plot_price(number_of_plots: int) -> int:
+    return BASE_PLOT_PRICE * number_of_plots
 
 
 def calculate_corn_limit(corn_limit_upgrades: int) -> int:
     return DELTA_CORN_LIMIT * (corn_limit_upgrades**2)
+
+
+def calculate_corn_limit_price(corn_limit_upgrades: int) -> int:
+    return BASE_UPGRADE_CORNFIELD_LIMIT_PRICE * (corn_limit_upgrades**2)
 
 
 async def generated_chicken_to_chicken_entity(

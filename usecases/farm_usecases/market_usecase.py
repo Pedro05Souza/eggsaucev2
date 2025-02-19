@@ -32,14 +32,12 @@ class MarketUsecase:
     def __init__(
         self,
         ctx: EggsauceContext,
-        chicken_generator_service: ChickenGeneratorService,
         farm_cache_service: FarmCacheService,
         player_cache_service: PlayerCacheService,
         farm_repository: FarmRepositoryProtocol,
         player_repository: PlayerRepositoryProtocol,
     ) -> None:
         self._ctx = ctx
-        self._chicken_generator_service = chicken_generator_service
         self._farm_cache_service = farm_cache_service
         self._player_cache_service = player_cache_service
         self._farm_entity = ctx.entities.farm_entity
@@ -70,7 +68,7 @@ class MarketUsecase:
             else MAX_GENERATED_CHICKENS + farmers_dict["generous"]
         )
 
-        generated_chickens = await self._chicken_generator_service.generate_chickens(chickens_to_generated)
+        generated_chickens = await ChickenGeneratorService.generate_chickens(chickens_to_generated)
 
         title = "Here are the chickens that were generated for you!"
         description = "\n".join(

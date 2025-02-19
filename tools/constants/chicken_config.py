@@ -1,17 +1,6 @@
 from enum import Enum
 from typing import NamedTuple, TypedDict
 
-BASE_CHICKEN_PRICE = 800
-BASE_UPGRADE_CORNFIELD_LIMIT_PRICE = 1000
-DELTA_EGG_VALUE = 10
-DELTA_FOOD_CONSUMPTION = 20
-DELTA_CORN_LIMIT = 100
-DELTA_PLOT_PRODUCTION = 40
-FARM_MAX_CHICKENS = 8
-BENCH_MAX_CHICKENS = 5
-BASE_FARMER_PRICE = 5000
-
-
 class ChickenLocationStatus(Enum):
     FARM = "farm"
     BENCH = "bench"

@@ -14,7 +14,8 @@ __all__ = ["ChickenGeneratorService"]
 
 class ChickenGeneratorService:
 
-    async def generate_chickens(self, chickens_to_generate: int) -> list[GeneratedChicken]:
+    @staticmethod
+    async def generate_chickens(chickens_to_generate: int) -> list[GeneratedChicken]:
         chicken_rarities_generated: List[GeneratedChicken] = []
         roll_sum = sum(probability.value for probability in ChickenRaritiesProbabilities)
 
