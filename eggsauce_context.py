@@ -1,27 +1,30 @@
 from __future__ import annotations
-from typing import Optional, TYPE_CHECKING
-from discord import Forbidden, Interaction, Embed, ButtonStyle, Member
+from typing import Optional, TYPE_CHECKING, Any, TypedDict
+from datetime import datetime
+from discord import Embed, Colour
+from discord.types.embed import EmbedType
+from discord import Forbidden, Interaction, ButtonStyle, Member
 from discord.ui import View, button, Button
 from discord.ext.commands import Context
-from tools.constants import EmbedParams, REASON_DM_FAILURE, MultipleMembersFoundError
+from tools.constants import REASON_DM_FAILURE, MultipleMembersFoundError
 
 if TYPE_CHECKING:
     from entities import FarmEntity, BotConfigEntity, PlayerEntity, CornfieldEntity
 
-__all__ = ("EggsauceContext",)
+__all__ = ["EggsauceContext"]
 
 
 class _Entities:
 
     def __init__(self) -> None:
-        self._player_entity: Optional["PlayerEntity"] = None
-        self._farm_entity: Optional["FarmEntity"] = None
-        self._bot_config_entity: Optional["BotConfigEntity"] = None
-        self._cornfield_entity: Optional["CornfieldEntity"] = None
+        self._player_entity: Optional[PlayerEntity] = None
+        self._farm_entity: Optional[FarmEntity] = None
+        self._cornfield_entity: Optional[CornfieldEntity] = None
+        self._bot_config_entity: Optional[BotConfigEntity] = None
 
     @property
-    def player_entity(self) -> "PlayerEntity":
-        if not self._player_entity:
+    def player_entity(self):
+        if self._player_entity is None:
             raise ValueError("Player entity is not set.")
 
         return self._player_entity
@@ -31,8 +34,8 @@ class _Entities:
         self._player_entity = player_entity
 
     @property
-    def farm_entity(self) -> "FarmEntity":
-        if not self._farm_entity:
+    def farm_entity(self):
+        if self._farm_entity is None:
             raise ValueError("Farm entity is not set.")
 
         return self._farm_entity
@@ -42,8 +45,8 @@ class _Entities:
         self._farm_entity = farm_entity
 
     @property
-    def bot_config_entity(self) -> "BotConfigEntity":
-        if not self._bot_config_entity:
+    def bot_config_entity(self):
+        if self._bot_config_entity is None:
             raise ValueError("Bot config entity is not set.")
 
         return self._bot_config_entity
@@ -53,8 +56,8 @@ class _Entities:
         self._bot_config_entity = bot_config_entity
 
     @property
-    def cornfield_entity(self) -> "CornfieldEntity":
-        if not self._cornfield_entity:
+    def cornfield_entity(self):
+        if self._cornfield_entity is None:
             raise ValueError("Cornfield entity is not set.")
 
         return self._cornfield_entity
@@ -62,6 +65,15 @@ class _Entities:
     @cornfield_entity.setter
     def cornfield_entity(self, cornfield_entity: "CornfieldEntity") -> None:
         self._cornfield_entity = cornfield_entity
+
+
+class _EmbedParams(TypedDict, total=False):
+    title: Any | None
+    type: EmbedType
+    url: Any | None
+    description: Any
+    timestamp: datetime | None
+    colour: int | Colour | None
 
 
 class EggsauceContext(Context):
@@ -88,12 +100,11 @@ class EggsauceContext(Context):
     def target_member(self) -> Member:
         if not self._target_member:
             self._target_member = self._get_target_member()
-
         return self._target_member
 
     async def send_bot_embed(
         self,
-        embed_params: EmbedParams,
+        embed_params: _EmbedParams,
         color: str = "#FEE75C",
         footer_text: Optional[str] = None,
         ephemeral: bool = False,
@@ -104,7 +115,7 @@ class EggsauceContext(Context):
 
         Args:
             ctx ([Context | Interaction]): The context of the command.
-            embed_params (EmbedParams): The parameters that will be passed to the embed builder.
+            embed_params (_EmbedParams): The parameters that will be passed to the embed builder.
             color (str, optional): The color of the embed, defaults to "#FEE75C".
             footer_text (Optional[str], optional): The text that will be displayed in the footer of the embed.
             Defaults to None.
@@ -132,7 +143,7 @@ class EggsauceContext(Context):
             await self.send(embed=embed, ephemeral=ephemeral)
 
     async def handle_interaction_response(
-        self, interaction: Interaction, embed: Embed | EmbedParams, ephemeral: bool = True, view: Optional[View] = None
+        self, interaction: Interaction, embed: Embed | _EmbedParams, ephemeral: bool = True, view: Optional[View] = None
     ) -> None:
 
         if isinstance(embed, dict):
@@ -152,7 +163,7 @@ class EggsauceContext(Context):
 
     def embed_builder(
         self,
-        embed_params: EmbedParams,
+        embed_params: _EmbedParams,
         footer_text: Optional[str] = None,
         thumbnail_url: Optional[str] = None,
         color: str = "#FEE75C",
@@ -283,9 +294,7 @@ class EggsauceContext(Context):
                 return self.author  # type: ignore
 
             if len(possible_member_to_update) > 1:
-                raise MultipleMembersFoundError(
-                    f"Multiple members found. Members found: {possible_member_to_update}"
-                )
+                raise MultipleMembersFoundError(f"Multiple members found. Members found: {possible_member_to_update}")
 
             return possible_member_to_update[0]
 
