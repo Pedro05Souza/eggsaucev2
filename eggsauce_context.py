@@ -1,70 +1,14 @@
 from __future__ import annotations
-from typing import Optional, TYPE_CHECKING, Any, TypedDict
+from typing import Optional, Any, TypedDict
 from datetime import datetime
 from discord import Embed, Colour
 from discord.types.embed import EmbedType
-from discord import Forbidden, Interaction, ButtonStyle, Member
+from discord import Forbidden, Interaction, ButtonStyle
 from discord.ui import View, button, Button
 from discord.ext.commands import Context
-from tools.constants import REASON_DM_FAILURE, MultipleMembersFoundError
-
-if TYPE_CHECKING:
-    from entities import FarmEntity, BotConfigEntity, PlayerEntity, CornfieldEntity
+from tools.constants import REASON_DM_FAILURE
 
 __all__ = ["EggsauceContext"]
-
-
-class _Entities:
-
-    def __init__(self) -> None:
-        self._player_entity: Optional[PlayerEntity] = None
-        self._farm_entity: Optional[FarmEntity] = None
-        self._cornfield_entity: Optional[CornfieldEntity] = None
-        self._bot_config_entity: Optional[BotConfigEntity] = None
-
-    @property
-    def player_entity(self):
-        if self._player_entity is None:
-            raise ValueError("Player entity is not set.")
-
-        return self._player_entity
-
-    @player_entity.setter
-    def player_entity(self, player_entity: "PlayerEntity") -> None:
-        self._player_entity = player_entity
-
-    @property
-    def farm_entity(self):
-        if self._farm_entity is None:
-            raise ValueError("Farm entity is not set.")
-
-        return self._farm_entity
-
-    @farm_entity.setter
-    def farm_entity(self, farm_entity: "FarmEntity") -> None:
-        self._farm_entity = farm_entity
-
-    @property
-    def bot_config_entity(self):
-        if self._bot_config_entity is None:
-            raise ValueError("Bot config entity is not set.")
-
-        return self._bot_config_entity
-
-    @bot_config_entity.setter
-    def bot_config_entity(self, bot_config_entity: "BotConfigEntity") -> None:
-        self._bot_config_entity = bot_config_entity
-
-    @property
-    def cornfield_entity(self):
-        if self._cornfield_entity is None:
-            raise ValueError("Cornfield entity is not set.")
-
-        return self._cornfield_entity
-
-    @cornfield_entity.setter
-    def cornfield_entity(self, cornfield_entity: "CornfieldEntity") -> None:
-        self._cornfield_entity = cornfield_entity
 
 
 class _EmbedParams(TypedDict, total=False):
@@ -77,30 +21,6 @@ class _EmbedParams(TypedDict, total=False):
 
 
 class EggsauceContext(Context):
-
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self._entities = _Entities()
-        self._propagated_embed_description: Optional[str] = None
-        self._target_member: Optional[Member] = None
-
-    @property
-    def entities(self) -> _Entities:
-        return self._entities
-
-    @property
-    def propagated_embed_description(self) -> Optional[str]:
-        return self._propagated_embed_description
-
-    @propagated_embed_description.setter
-    def propagated_embed_description(self, description: str) -> None:
-        self._propagated_embed_description = description
-
-    @property
-    def target_member(self) -> Member:
-        if not self._target_member:
-            self._target_member = self._get_target_member()
-        return self._target_member
 
     async def send_bot_embed(
         self,
@@ -275,30 +195,6 @@ class EggsauceContext(Context):
         message = await self.send(embed=embed, view=confirmation_popup)
         await confirmation_popup.wait()
         return confirmation_popup.value, message
-
-    def _get_target_member(self) -> Member:
-        """Gets the target member of the command. This means if a command has an optional member argument,
-        the target member will be the one mentioned in the command. If no member is mentioned, the target member
-        will be the author of the command.
-
-        Returns:
-            Member: The target member of the command.
-        """
-        if self.kwargs.get("member"):
-            return self.kwargs["member"]
-
-        if self.interaction is None:
-            possible_member_to_update = [arg for arg in self.args if isinstance(arg, Member)]
-
-            if len(possible_member_to_update) == 0:
-                return self.author  # type: ignore
-
-            if len(possible_member_to_update) > 1:
-                raise MultipleMembersFoundError(f"Multiple members found. Members found: {possible_member_to_update}")
-
-            return possible_member_to_update[0]
-
-        return self.author  # type: ignore
 
 
 class _ConfirmationPopUp(View):
