@@ -1,6 +1,7 @@
 from typing import Generic, Optional
 from abc import ABC
 from cachetools import Cache
+from tools.utils import get_logger
 from ._types import KT, VT
 
 __all__ = ["CacheBase"]
@@ -9,6 +10,7 @@ __all__ = ["CacheBase"]
 class CacheBase(ABC, Generic[KT, VT]):
     def __init__(self, cache: Cache[KT, VT]) -> None:
         self._cache = cache
+        self._logger = get_logger(__name__)
 
     def get(self, key: KT) -> Optional[VT]:
         if key in self._cache:
@@ -24,7 +26,8 @@ class CacheBase(ABC, Generic[KT, VT]):
     def get_or_raise(self, key: KT) -> VT:
         if key in self._cache:
             return self._cache[key]
-        raise KeyError(f"Key {key} not found in cache.")
+        self._logger.error("Cache miss: Key '%s' not found.", key)
+        raise KeyError(f"Key '{key}' not found.")
 
     def contains(self, key: KT) -> bool:
         return key in self._cache
