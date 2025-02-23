@@ -21,6 +21,14 @@ class CacheBase(ABC, Generic[KT, VT]):
             return True
         return False
 
+    def get_or_raise(self, key: KT) -> VT:
+        if key in self._cache:
+            return self._cache[key]
+        raise KeyError(f"Key {key} not found in cache.")
+
+    def contains(self, key: KT) -> bool:
+        return key in self._cache
+
     @property
     def cache(self) -> Cache[KT, VT]:
         return self._cache
