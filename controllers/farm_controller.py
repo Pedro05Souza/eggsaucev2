@@ -1,6 +1,6 @@
 from typing import Optional
 from discord import Member
-from discord.ext.commands import Cog, Bot, hybrid_command, before_invoke, cooldown, BucketType
+from discord.ext.commands import Cog, Bot, hybrid_command, cooldown, BucketType
 from usecases import (
     MarketUsecase,
     FarmUseCase,
@@ -16,19 +16,11 @@ from repositories import (
     PlayerRepository,
     CornfieldRepository,
 )
-from tools import (
-    GlobalPlayerCache,
-    GlobalFarmCache,
-    GlobalBotConfigCache,
-    FarmCacheService,
-    PlayerCacheService,
-    BotConfigCacheService,
-    is_using_valid_channel,
-    ensure_player_and_attach,
-    ensure_farm_and_attach,
-    mark_as_updatable_farm,
+from tools import GlobalFarmCache, GlobalBotConfigCache, FarmCacheService, BotConfigCacheService, ensure_author_farm
+from tools.constants import (
+    REGULAR_COMMAND_COOLDOWN,
+    SPAM_COMMAND_COOLDOWN,
 )
-from tools.constants import REGULAR_COMMAND_COOLDOWN, SPAM_COMMAND_COOLDOWN
 from eggsauce_context import EggsauceContext
 
 
@@ -38,7 +30,6 @@ class FarmController(Cog, name="Farm"):
         self,
         bot: Bot,
         farm_cache: FarmCacheService,
-        player_cache: PlayerCacheService,
         bot_config_cache: BotConfigCacheService,
         farm_repository: FarmRepositoryProtocol,
         player_repository: PlayerRepositoryProtocol,
@@ -46,16 +37,10 @@ class FarmController(Cog, name="Farm"):
     ) -> None:
         self.bot = bot
         self.farm_cache = farm_cache
-        self.player_cache = player_cache
         self.bot_config_cache = bot_config_cache
         self.farm_repository = farm_repository
         self.player_repository = player_repository
         self.cornfield_repository = cornfield_repository
-
-    async def _mark_as_updatable_farm_decorator(self, ctx: EggsauceContext):
-        await mark_as_updatable_farm(
-            ctx, self.player_cache, self.player_repository, self.farm_cache, self.farm_repository
-        )
 
     @hybrid_command(name="market", aliases=["m"], description="🐔 Roll for a chicken in the market!")
     @cooldown(1, SPAM_COMMAND_COOLDOWN, BucketType.user)
@@ -63,7 +48,6 @@ class FarmController(Cog, name="Farm"):
         market_usecase = MarketUsecase(
             ctx,
             self.farm_cache,
-            self.player_cache,
             self.farm_repository,
             self.player_repository,
         )
@@ -71,9 +55,8 @@ class FarmController(Cog, name="Farm"):
 
     @hybrid_command(name="farm", aliases=["f"], description="🐔 View your farm!")
     @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
-    @before_invoke(_mark_as_updatable_farm_decorator)
     async def farm(self, ctx: EggsauceContext, member: Optional[Member] = None) -> None:
-        farm_usecase = FarmUseCase(ctx, self.farm_cache, self.farm_repository)
+        farm_usecase = FarmUseCase(ctx, self.farm_cache, self.farm_repository, self.player_repository, member)
         await farm_usecase.farm()
 
     @hybrid_command(name="renamefarm", aliases=["rf"], description="🐔 Rename your farm!")
@@ -87,7 +70,6 @@ class FarmController(Cog, name="Farm"):
     async def buy_farmer(self, ctx: EggsauceContext) -> None:
         buy_farmer_usecase = BuyFarmerUseCase(
             ctx,
-            self.player_cache,
             self.farm_cache,
             self.farm_repository,
             self.player_repository,
@@ -99,7 +81,7 @@ class FarmController(Cog, name="Farm"):
     )
     @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
     async def inspect_chicken(self, ctx: EggsauceContext, position: int) -> None:
-        chicken_info_usecase = InspectChickenUseCase(ctx, position)
+        chicken_info_usecase = InspectChickenUseCase(ctx, self.farm_cache, position)
         await chicken_info_usecase.inspect_chicken()
 
     @hybrid_command(name="feedallchicken", aliases=["fac"], description="🐔 Feed all your chickens!")
@@ -113,12 +95,14 @@ class FarmController(Cog, name="Farm"):
         )
         await feed_all_chicken_usecase.feed_all_chicken()
 
-    async def cog_check(self, ctx: EggsauceContext) -> bool:  # type: ignore
-        return await is_using_valid_channel(ctx, self.bot_config_cache)
-
     async def cog_before_invoke(self, ctx: EggsauceContext) -> None:  # type: ignore
-        await ensure_player_and_attach(ctx, self.player_cache, self.player_repository)
-        await ensure_farm_and_attach(ctx, self.farm_cache, self.farm_repository, self.cornfield_repository)
+        await ensure_author_farm(
+            ctx,
+            self.farm_cache,
+            self.farm_repository,
+            self.cornfield_repository,
+            self.player_repository,
+        )
 
 
 async def setup(bot: Bot) -> None:
@@ -126,7 +110,6 @@ async def setup(bot: Bot) -> None:
         FarmController(
             bot,
             GlobalFarmCache,
-            GlobalPlayerCache,
             GlobalBotConfigCache,
             FarmRepository(),
             PlayerRepository(),
