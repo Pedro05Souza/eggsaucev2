@@ -40,9 +40,20 @@ class ExpandCornLimitUsecase:
             f"Are you sure you want to expand the cornfield limit? The cost is **{total_cost}** eggbux."
         )
 
-        if not has_confirmed:
+        if has_confirmed is None:
             await message.edit(
-                embed=self._ctx.embed_builder(embed_params={"description": "Cancelled the cornfield limit expansion."}),
+                embed=self._ctx.embed_builder(
+                    embed_params={"description": "❌  Expanding the cornfield limit has been timed out."}
+                ),
+                view=None,
+            )
+            return
+
+        if has_confirmed is False:
+            await message.edit(
+                embed=self._ctx.embed_builder(
+                    embed_params={"description": "❌ Cancelled the cornfield limit expansion."}
+                ),
                 view=None,
             )
             return
