@@ -8,6 +8,7 @@ from usecases import (
     BuyFarmerUseCase,
     InspectChickenUseCase,
     FeedAllChickenUsecase,
+    FarmProfitUsecase,
 )
 from repositories import (
     FarmRepository,
@@ -94,6 +95,17 @@ class FarmController(Cog, name="Farm"):
             self.cornfield_repository,
         )
         await feed_all_chicken_usecase.feed_all_chicken()
+
+    @hybrid_command(name="farmprofit", aliases=["fp"], description="🐔 View your expected farm profits!")
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
+    async def farm_profit(self, ctx: EggsauceContext, member: Optional[Member] = None) -> None:
+        farm_profit_usecase = FarmProfitUsecase(
+            ctx,
+            self.farm_cache,
+            self.cornfield_repository,
+            member,
+        )
+        await farm_profit_usecase.farm_profit()
 
     async def cog_before_invoke(self, ctx: EggsauceContext) -> None:  # type: ignore
         await ensure_author_farm(

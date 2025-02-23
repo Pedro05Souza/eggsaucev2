@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, List
 from datetime import datetime, timedelta, timezone
 from random import randint
 from tools.constants import (
@@ -28,7 +28,7 @@ __all__ = ["AwayTimeEarningsService"]
 class AwayTimeEarningsService:
 
     @staticmethod
-    async def check_away_time_salary(player_entity: "PlayerEntity") -> Optional[int]:
+    async def calculate_salary_profit(player_entity: "PlayerEntity") -> Optional[int]:
         now = datetime.now(timezone.utc)
         next_salary_time = player_entity.next_salary_time
 
@@ -70,7 +70,7 @@ class AwayTimeEarningsService:
 
         hours_passed = min(hours_passed, CHICKEN_HOURS_THRESHOLD)
 
-        total_gained = sum(chicken.actual_egg_production for chicken in farm_entity.chickens) * hours_passed
+        total_gained = await AwayTimeEarningsService.calculate_chicken_earnings(farm_entity.chickens, hours_passed)
 
         farm_entity.next_egg_drop_time = now + timedelta(seconds=SECONDS_TO_CHICKEN_DROP)
 
@@ -88,7 +88,15 @@ class AwayTimeEarningsService:
         return total_gained
 
     @staticmethod
-    async def calculate_corn_production(cornfield_entity: "CornfieldEntity") -> Optional[int]:
+    async def calculate_chicken_earnings(chickens: List["ChickenEntity"], hours: int) -> int:
+        return sum(chicken.actual_egg_production for chicken in chickens) * hours
+
+    @staticmethod
+    async def calculate_corn_earnings(total_plots: int, hours: int) -> int:
+        return calculate_plot_production(total_plots) * hours
+
+    @staticmethod
+    async def calculate_corn_profit(cornfield_entity: "CornfieldEntity") -> Optional[int]:
         now = datetime.now(timezone.utc)
         time_diffence = cornfield_entity.next_corn_drop - now
 
@@ -99,7 +107,7 @@ class AwayTimeEarningsService:
 
         hours_passed = min(hours_passed, CORN_HOURS_THRESHOLD)
 
-        corn_to_add = calculate_plot_production(cornfield_entity.plots) * hours_passed
+        corn_to_add = await AwayTimeEarningsService.calculate_corn_earnings(cornfield_entity.plots, hours_passed)
 
         reached_limit = cornfield_entity.current_corn + corn_to_add
 
