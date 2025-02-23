@@ -34,7 +34,7 @@ class BuyFarmerUseCase:
     async def buy_farmer(self) -> None:
         farm_entity = self._farm_cache.get_or_raise(self._ctx.author.id)
 
-        if farm_entity.farmer == "Guardian" and len(farm_entity.chickens) >= FARM_MAX_CHICKENS:
+        if farm_entity.farmer == "Guardian" and len(farm_entity.chickens) > FARM_MAX_CHICKENS:
             await self._ctx.send_failed_embed(
                 description="You need to sell the extra farm slots to buy another farmer. "
             )
@@ -92,19 +92,24 @@ class BuyFarmerUseCase:
 
     def _farmer_descriptions(self) -> str:
         return (
-            f"💰 Rich Farmer:  Increase the egg value of the chickens by "
-            f"**{farmers_dict['rich']['egg_value_percentage']}%** and corn production by "
-            f"**{farmers_dict['rich']['corn_production_percentage']}%**.\n\n"
-            f"🛡️ Guardian Farmer: Whenever you sell a chicken, sell it for the full price and"
-            f" reduces farm taxes by **{farmers_dict['guardian']}%**.\n\n"
-            f"👔 Executive Farmer: Get **{farmers_dict['executive']['number_of_extra_rolls']}** extra rolls and"
-            f" chickens in the market come with **{farmers_dict['executive']['extra_market_chickens']}%** discount.\n\n"
-            f"⚔️ Warrior Farmer: Adds **{farmers_dict['warrior']}** extra chickens to the farm.\n\n"
-            f"🎁 Generous Farmer: Generates **{farmers_dict['generous']}** extra chickens in the market\n\n"
-            f"🌱 Sustainable Farmer: Automatically feeds the chickens every"
-            f" **{farmers_dict['sustainable']['auto_feed_time_seconds']}** seconds"
-            f" and increases happiness between **{farmers_dict['sustainable']['min_happiness_gain']}%**"
-            f" to **{farmers_dict['sustainable']['max_happiness_gain']}%**."
+            "👨‍🌾 **Farmer Types & Their Benefits:**\n\n"
+            "💰 **Rich Farmer**\n"
+            f"   ➜ Increases **egg value** by **{farmers_dict['rich']['egg_value_percentage']}%**\n"
+            f"   ➜ Boosts **corn production** by **{farmers_dict['rich']['corn_production_percentage']}%**\n\n"
+            "🛡️ **Guardian Farmer**\n"
+            f"   ➜ Sells chickens for **full price**\n"
+            f"   ➜ Reduces **farm taxes** by **{farmers_dict['guardian']}%**\n\n"
+            "👔 **Executive Farmer**\n"
+            f"   ➜ Grants **{farmers_dict['executive']['number_of_extra_rolls']}** extra rolls\n"
+            f"   ➜ Market chickens have **{farmers_dict['executive']['extra_market_chickens']}%** discount\n\n"
+            "⚔️ **Warrior Farmer**\n"
+            f"   ➜ Adds **{farmers_dict['warrior']}** extra chickens to the farm\n\n"
+            "🎁 **Generous Farmer**\n"
+            f"   ➜ Generates **{farmers_dict['generous']}** extra chickens in the market\n\n"
+            "🌱 **Sustainable Farmer**\n"
+            f"   ➜ **Auto-feeds** chickens every **{farmers_dict['sustainable']['auto_feed_time_seconds']}** seconds\n"
+            f"   ➜ Increases happiness by **{farmers_dict['sustainable']['min_happiness_gain']}%** "
+            f"to **{farmers_dict['sustainable']['max_happiness_gain']}%**\n"
         )
 
 
