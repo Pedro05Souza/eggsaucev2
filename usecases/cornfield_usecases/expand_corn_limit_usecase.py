@@ -1,12 +1,10 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from tortoise.transactions import atomic
-from tools.constants import REASON_INVALID_USER
 from tools import deduct_from_balance_and_bank, calculate_corn_limit, calculate_corn_limit_price
 
 if TYPE_CHECKING:
     from eggsauce_context import EggsauceContext
-    from tools import PlayerCacheService
     from repositories import CornfieldRepositoryProtocol, PlayerRepositoryProtocol
 
 
@@ -19,25 +17,18 @@ class ExpandCornLimitUsecase:
         self,
         ctx: "EggsauceContext",
         cornfield_repository: "CornfieldRepositoryProtocol",
-        player_cache: "PlayerCacheService",
         player_repository: "PlayerRepositoryProtocol",
     ) -> None:
         self._ctx = ctx
-        self._cornfield_entity = self._ctx.entities.cornfield_entity
         self._cornfield_repository = cornfield_repository
-        self._player_cache = player_cache
         self._player_repository = player_repository
 
     @atomic()
     async def expand_corn_limit(self) -> None:
+        cornfield_entity = await self._cornfield_repository.get_or_raise_by_user_discord_user(self._ctx.author.id)
+        player_entity = await self._player_repository.get_or_create(self._ctx.author.id)
 
-        player_entity = await self._player_cache.get_or_fetch(self._ctx.author.id)
-
-        if not player_entity:
-            await self._ctx.send_failed_embed(REASON_INVALID_USER)
-            return
-
-        total_cost = calculate_corn_limit_price(self._cornfield_entity.corn_limit_upgrades + 1)
+        total_cost = calculate_corn_limit_price(cornfield_entity.corn_limit_upgrades + 1)
 
         if player_entity.balance + player_entity.bank_balance < total_cost:
             await self._ctx.send_failed_embed(
@@ -58,17 +49,16 @@ class ExpandCornLimitUsecase:
 
         deduct_from_balance_and_bank(player_entity, total_cost)
 
-        self._cornfield_entity.corn_limit_upgrades += 1
+        cornfield_entity.corn_limit_upgrades += 1
 
-        async with self._player_cache.remove_if_exception(player_entity.discord_user_id):
-            await self._cornfield_repository.update_cornfield(self._cornfield_entity)
-            await self._player_repository.update_player(player_entity)
+        await self._cornfield_repository.update_cornfield(cornfield_entity)
+        await self._player_repository.update_player(player_entity)
 
         await message.edit(
             embed=self._ctx.embed_builder(
                 embed_params={
-                    "description": "Successfully expanded the cornfield limit to "
-                    + f"**{calculate_corn_limit(self._cornfield_entity.corn_limit_upgrades)}**."
+                    "description": "✅ Successfully expanded the cornfield limit to "
+                    + f"**{calculate_corn_limit(cornfield_entity.corn_limit_upgrades)}**."
                 }
             ),
             view=None,

@@ -1,11 +1,10 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from tools.constants import REASON_INVALID_USER
+from tortoise.transactions import atomic
 from tools import calculate_plot_production, calculate_plot_price, deduct_from_balance_and_bank
 
 if TYPE_CHECKING:
     from eggsauce_context import EggsauceContext
-    from tools import PlayerCacheService
     from repositories import CornfieldRepositoryProtocol, PlayerRepositoryProtocol
 
 
@@ -18,24 +17,19 @@ class BuyPlotUsecase:
         self,
         ctx: "EggsauceContext",
         cornfield_repository: "CornfieldRepositoryProtocol",
-        player_cache: "PlayerCacheService",
         player_repository: "PlayerRepositoryProtocol",
     ) -> None:
         self._ctx = ctx
-        self._cornfield_entity = self._ctx.entities.cornfield_entity
         self._cornfield_repository = cornfield_repository
-        self._player_cache = player_cache
         self._player_repository = player_repository
         self._ctx = ctx
 
+    @atomic()
     async def buy_plot(self) -> None:
-        player_entity = await self._player_cache.get_or_fetch(self._ctx.author.id)
+        cornfield_entity = await self._cornfield_repository.get_or_raise_by_user_discord_user(self._ctx.author.id)
+        player_entity = await self._player_repository.get_or_create(self._ctx.author.id)
 
-        if not player_entity:
-            await self._ctx.send_failed_embed(REASON_INVALID_USER)
-            return
-
-        total_price = calculate_plot_price(self._cornfield_entity.plots + 1)
+        total_price = calculate_plot_price(cornfield_entity.plots + 1)
 
         if player_entity.balance + player_entity.bank_balance < total_price:
             await self._ctx.send_failed_embed(
@@ -55,17 +49,16 @@ class BuyPlotUsecase:
             return
 
         deduct_from_balance_and_bank(player_entity, total_price)
-        self._cornfield_entity.plots += 1
+        cornfield_entity.plots += 1
 
-        async with self._player_cache.remove_if_exception(player_entity.discord_user_id):
-            await self._cornfield_repository.update_cornfield(self._cornfield_entity)
-            await self._player_repository.update_player(player_entity)
+        await self._cornfield_repository.update_cornfield(cornfield_entity)
+        await self._player_repository.update_player(player_entity)
 
         await message.edit(
             embed=self._ctx.embed_builder(
                 embed_params={
-                    "description": "Successfully bought a plot!"
-                    + f" You now have **{calculate_plot_production(self._cornfield_entity.plots)}** of corn production."
+                    "description": "✅ Successfully bought a plot!"
+                    + f" You now have **{calculate_plot_production(cornfield_entity.plots)}** of corn production."
                 }
             ),
             view=None,

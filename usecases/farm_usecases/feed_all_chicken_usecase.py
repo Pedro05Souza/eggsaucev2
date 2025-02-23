@@ -22,7 +22,6 @@ class FeedAllChickenUsecase:
         cornfield_repository: "CornfieldRepositoryProtocol",
     ) -> None:
         self._ctx = ctx
-        self._farm_entity = ctx.entities.farm_entity
         self._farm_cache = farm_cache
         self._farm_repository = farm_repository
         self._cornfield_repository = cornfield_repository
@@ -31,8 +30,10 @@ class FeedAllChickenUsecase:
     async def feed_all_chicken(self) -> None:
         are_all_chickens_fed = True
         not_enough_corn = True
+        
+        farm_entity = self._farm_cache.get_or_raise(self._ctx.author.id)
 
-        if len(self._farm_entity.chickens) == 0:
+        if len(farm_entity.chickens) == 0:
             await self._ctx.send_failed_embed("You don't have any chickens to feed!")
             return
 
@@ -41,7 +42,7 @@ class FeedAllChickenUsecase:
         if not cornfield_entity:
             raise ValueError("Cornfield entity not found!")
 
-        for chicken in self._farm_entity.chickens:
+        for chicken in farm_entity.chickens:
 
             if chicken.happiness == 100:
                 continue
@@ -61,10 +62,10 @@ class FeedAllChickenUsecase:
             return
 
         chicken_models = [
-            await chicken_entity_to_model(self._farm_entity.id, chicken) for chicken in self._farm_entity.chickens
+            await chicken_entity_to_model(farm_entity.id, chicken) for chicken in farm_entity.chickens
         ]
 
-        async with self._farm_cache.remove_if_exception(self._farm_entity.discord_user_id):
+        async with self._farm_cache.remove_if_exception(farm_entity.discord_user_id):
             await self._farm_repository.bulk_update_farm_chickens(chicken_models)
             await self._cornfield_repository.update_cornfield(cornfield_entity)
             await self._ctx.send_bot_embed(embed_params={"description": "✅ All chickens have been fed succesfully!"})

@@ -18,23 +18,23 @@ class RenameFarmUsecase:
         farm_repository: FarmRepositoryProtocol,
     ) -> None:
         self._ctx = ctx
-        self._farm_entity = ctx.entities.farm_entity
         self._farm_cache = farm_cache
         self._new_name = new_name
         self._farm_repository = farm_repository
 
     async def rename_farm(self) -> None:
         self._new_name = self._new_name.strip()
+        farm_entity = self._farm_cache.get_or_raise(self._ctx.author.id)
 
         if len(self._new_name) < MIN_FARM_NAME_CHARACTERS:
             return await self._ctx.send_failed_embed(
                 f"Please enter a name with **{MIN_FARM_NAME_CHARACTERS}** or more characters"
             )
 
-        self._farm_entity.farm_title = self._new_name
+        farm_entity.farm_title = self._new_name
 
-        async with self._farm_cache.remove_if_exception(self._farm_entity.discord_user_id):
-            await self._farm_repository.update_farm(self._farm_entity)
+        async with self._farm_cache.remove_if_exception(farm_entity.discord_user_id):
+            await self._farm_repository.update_farm(farm_entity)
 
         return await self._ctx.send_bot_embed(
             embed_params={

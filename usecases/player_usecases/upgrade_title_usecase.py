@@ -1,18 +1,21 @@
+from __future__ import annotations
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from repositories import PlayerRepositoryProtocol
 from tools import (
-    PlayerCacheService,
     deduct_from_balance_and_bank,
-    get_titles_prices,
-    get_titles_salaries,
-    get_titles_emojis,
 )
 from tools.constants import (
     SECONDS_TO_SALARY_DROP,
     REASON_INSUFFICIENT_BALANCE,
+    get_titles_prices,
+    get_titles_salaries,
+    get_titles_emojis,
 )
 from eggsauce_context import EggsauceContext
+
+if TYPE_CHECKING:
+    from entities import PlayerEntity
 
 __all__ = ["UpgradeTitleUsecase"]
 
@@ -22,12 +25,9 @@ class UpgradeTitleUsecase:
     def __init__(
         self,
         ctx: EggsauceContext,
-        player_cache: PlayerCacheService,
         player_repository: PlayerRepositoryProtocol,
     ) -> None:
         self._ctx = ctx
-        self._player_entity = ctx.entities.player_entity
-        self._player_cache = player_cache
         self._get_titles_prices = get_titles_prices()
         self._get_titles_income = get_titles_salaries()
         self._get_titles_emojis = get_titles_emojis()
@@ -35,7 +35,8 @@ class UpgradeTitleUsecase:
 
     async def buy_title(self) -> None:
         title_names = list(self._get_titles_prices.keys())
-        next_title = self._get_next_title(title_names)
+        player_entity = await self._player_repository.get_or_create(self._ctx.author.id)
+        next_title = self._get_next_title(title_names, player_entity)
 
         if not next_title:
             await self._ctx.send_failed_embed("You have already bought all titles.")
@@ -59,20 +60,19 @@ class UpgradeTitleUsecase:
 
             title_price: int = self._get_titles_prices[next_title]
 
-            if title_price > self._player_entity.balance + self._player_entity.bank_balance:
+            if title_price > player_entity.balance + player_entity.bank_balance:
                 await message.edit(
                     content="",
                     embed=self._ctx.embed_builder(embed_params={"description": "❌" + REASON_INSUFFICIENT_BALANCE}),
                 )
                 return
 
-            self._player_entity.last_bought_title = next_title
-            self._player_entity.next_salary_time = datetime.now() + timedelta(seconds=SECONDS_TO_SALARY_DROP)
-            self._player_entity.next_salary_time = self._player_entity.next_salary_time.replace(tzinfo=timezone.utc)
-            deduct_from_balance_and_bank(self._player_entity, title_price)
+            player_entity.last_bought_title = next_title
+            player_entity.next_salary_time = datetime.now() + timedelta(seconds=SECONDS_TO_SALARY_DROP)
+            player_entity.next_salary_time = player_entity.next_salary_time.replace(tzinfo=timezone.utc)
+            deduct_from_balance_and_bank(player_entity, title_price)
 
-            async with self._player_cache.remove_if_exception(self._player_entity.discord_user_id):
-                await self._player_repository.update_player(self._player_entity)
+            await self._player_repository.update_player(player_entity)
 
             await message.edit(
                 embed=self._ctx.embed_builder(
@@ -84,8 +84,8 @@ class UpgradeTitleUsecase:
                 content="", embed=self._ctx.embed_builder(embed_params={"description": "❌ Title purchase timed out."})
             )
 
-    def _get_next_title(self, title_names: list[str]) -> Optional[str]:
-        current_title = self._player_entity.last_bought_title
+    def _get_next_title(self, title_names: list[str], player_entity: "PlayerEntity") -> Optional[str]:
+        current_title = player_entity.last_bought_title
         next_title_index = title_names.index(current_title)
 
         if next_title_index == len(title_names) - 1:

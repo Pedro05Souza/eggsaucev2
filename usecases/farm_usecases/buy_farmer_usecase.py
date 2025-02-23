@@ -1,13 +1,17 @@
-from typing import Optional
+from __future__ import annotations
+from typing import Optional, TYPE_CHECKING
 from tortoise.transactions import atomic
 from discord.ui import View, button, Button
 from discord import ButtonStyle, Interaction, Message
 from entities import FarmerType
 from repositories import FarmRepositoryProtocol, PlayerRepositoryProtocol
-from tools.services import PlayerCacheService, FarmCacheService
+from tools.services import FarmCacheService
 from tools import deduct_from_balance_and_bank
 from tools.constants import farmers_dict, FARM_MAX_CHICKENS, BASE_FARMER_PRICE
 from eggsauce_context import EggsauceContext
+
+if TYPE_CHECKING:
+    from entities import PlayerEntity, FarmEntity
 
 
 __all__ = ["BuyFarmerUseCase"]
@@ -18,27 +22,27 @@ class BuyFarmerUseCase:
     def __init__(
         self,
         ctx: EggsauceContext,
-        player_cache: PlayerCacheService,
         farm_cache: FarmCacheService,
         farm_repository: FarmRepositoryProtocol,
         player_repository: PlayerRepositoryProtocol,
     ) -> None:
         self._ctx = ctx
-        self._player_entity = ctx.entities.player_entity
-        self._farm_entity = ctx.entities.farm_entity
-        self._player_cache = player_cache
         self._farm_cache = farm_cache
         self._farm_repository = farm_repository
         self._player_repository = player_repository
 
     async def buy_farmer(self) -> None:
-        if self._farm_entity.farmer == "Guardian" and len(self._farm_entity.chickens) >= FARM_MAX_CHICKENS:
+        farm_entity = self._farm_cache.get_or_raise(self._ctx.author.id)
+
+        if farm_entity.farmer == "Guardian" and len(farm_entity.chickens) >= FARM_MAX_CHICKENS:
             await self._ctx.send_failed_embed(
                 description="You need to sell the extra farm slots to buy another farmer. "
             )
             return
 
-        if self._player_entity.balance + self._player_entity.bank_balance < BASE_FARMER_PRICE:
+        player_entity = await self._player_repository.get_or_create(self._ctx.author.id)
+
+        if player_entity.balance + player_entity.bank_balance < BASE_FARMER_PRICE:
             await self._ctx.send_failed_embed(
                 description="You don't have enough eggbux to buy a farmer."
                 + f"The price is **{BASE_FARMER_PRICE}** eggbux.",
@@ -55,10 +59,12 @@ class BuyFarmerUseCase:
         view = _FarmersView()
         message = await self._ctx.send(embed=embed, view=view)
         await view.wait()
-        await self._handle_farmer_purchase(message, view.selected_farmer)
+        await self._handle_farmer_purchase(message, view.selected_farmer, player_entity, farm_entity)
 
     @atomic()
-    async def _handle_farmer_purchase(self, message: Message, farmer: Optional[FarmerType]) -> None:
+    async def _handle_farmer_purchase(
+        self, message: Message, farmer: Optional[FarmerType], player_entity: "PlayerEntity", farm_entity: "FarmEntity"
+    ) -> None:
 
         if farmer is None:
             await message.edit(
@@ -66,21 +72,19 @@ class BuyFarmerUseCase:
             )
             return
 
-        if self._farm_entity.farmer == farmer:
+        if farm_entity.farmer == farmer:
             await message.edit(
                 embed=self._ctx.embed_builder(embed_params={"description": "❌ You already have this farmer."}),
                 view=None,
             )
             return
 
-        self._farm_entity.farmer = farmer
-        deduct_from_balance_and_bank(self._player_entity, BASE_FARMER_PRICE)
+        farm_entity.farmer = farmer
+        deduct_from_balance_and_bank(player_entity, BASE_FARMER_PRICE)
 
-        async with self._farm_cache.remove_if_exception(self._farm_entity.discord_user_id):
-            await self._farm_repository.update_farm(self._farm_entity)
-
-        async with self._player_cache.remove_if_exception(self._player_entity.discord_user_id):
-            await self._player_repository.update_player(self._player_entity)
+        async with self._farm_cache.remove_if_exception(farm_entity.discord_user_id):
+            await self._farm_repository.update_farm(farm_entity)
+            await self._player_repository.update_player(player_entity)
 
         await message.edit(
             embed=self._ctx.embed_builder(embed_params={"description": "✅ Farmer bought successfully."}), view=None

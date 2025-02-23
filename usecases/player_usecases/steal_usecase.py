@@ -2,7 +2,6 @@ from random import Random
 from discord import Member
 from tortoise.transactions import atomic
 from repositories import PlayerRepositoryProtocol
-from tools import PlayerCacheService
 from tools.constants import (
     MAX_PERCETANGE_TO_STEAL,
     STEAL_FAILURE_CHANCE,
@@ -22,22 +21,19 @@ class StealUsecase:
         self,
         ctx: EggsauceContext,
         target: Member,
-        player_cache: PlayerCacheService,
         player_repository: PlayerRepositoryProtocol,
     ) -> None:
         self._ctx = ctx
-        self._stealer = ctx.entities.player_entity
         self._target = target
-        self._player_cache = player_cache
         self._random = Random()
         self._player_repository = player_repository
 
     @atomic()
     async def steal(self) -> None:
-        if self._target.id == self._stealer.discord_user_id:
+        if self._target.id == self._ctx.author.id:
             return await self._ctx.send_failed_embed(REASON_CANT_ACTION_SELF)
 
-        target_entity = await self._player_cache.get_or_fetch(self._target.id)
+        target_entity = await self._player_repository.get_by_discord_user_id(self._target.id)
 
         if not target_entity:
             return await self._ctx.send_failed_embed(REASON_INVALID_USER)
@@ -59,16 +55,16 @@ class StealUsecase:
 
         stolen_amount = self._random.randint(1, max_steal_amount)
 
-        self._stealer.balance += stolen_amount
+        author_entity = await self._player_repository.get_or_create(self._ctx.author.id)
+        author_entity.balance += stolen_amount
         target_entity.balance -= stolen_amount
 
-        async with self._player_cache.remove_if_exception(self._stealer.discord_user_id, target_entity.discord_user_id):
-            await self._player_repository.update_player(self._stealer)
-            await self._player_repository.update_player(target_entity)
+        await self._player_repository.update_player(author_entity)
+        await self._player_repository.update_player(target_entity)
 
-            return await self._ctx.send_bot_embed(
-                embed_params={
-                    "title": "✅ Steal successful",
-                    "description": f"You stole **{stolen_amount}** eggbux from {self._target.mention}",
-                },
-            )
+        return await self._ctx.send_bot_embed(
+            embed_params={
+                "title": "✅ Steal successful",
+                "description": f"You stole **{stolen_amount}** eggbux from {self._target.mention}",
+            },
+        )

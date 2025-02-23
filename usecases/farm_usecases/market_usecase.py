@@ -8,7 +8,6 @@ from repositories import FarmRepositoryProtocol, PlayerRepositoryProtocol
 from tools import (
     ChickenGeneratorService,
     FarmCacheService,
-    PlayerCacheService,
     generated_chicken_to_chicken_entity,
 )
 from tools.constants import (
@@ -33,38 +32,37 @@ class MarketUsecase:
         self,
         ctx: EggsauceContext,
         farm_cache_service: FarmCacheService,
-        player_cache_service: PlayerCacheService,
         farm_repository: FarmRepositoryProtocol,
         player_repository: PlayerRepositoryProtocol,
     ) -> None:
         self._ctx = ctx
         self._farm_cache_service = farm_cache_service
-        self._player_cache_service = player_cache_service
-        self._farm_entity = ctx.entities.farm_entity
         self._farm_repository = farm_repository
         self._player_repository = player_repository
 
     async def market(self) -> None:
-        if self._farm_entity.remaining_rolls == 0 and self._farm_entity.next_chicken_roll_time is not None:
+        farm_entity = self._farm_cache_service.get_or_raise(self._ctx.author.id)
+        
+        if farm_entity.remaining_rolls == 0 and farm_entity.next_chicken_roll_time is not None:
             await self._ctx.send_failed_embed(
                 "You have no rolls left. The next roll will be available in "
-                + f"{format_dt(self._farm_entity.next_chicken_roll_time, 'R')}.",
+                + f"{format_dt(farm_entity.next_chicken_roll_time, 'R')}.",
             )
             return
 
-        self._farm_entity.remaining_rolls -= 1
+        farm_entity.remaining_rolls -= 1
         # We don't update to the database to avoid unnecessary writes
         # This will be updated when the cache entry is removed/expired
 
-        if self._farm_entity.remaining_rolls == 0:
-            if not self._farm_entity.next_chicken_roll_time:
-                self._farm_entity.next_chicken_roll_time = datetime.now()
+        if farm_entity.remaining_rolls == 0:
+            if not farm_entity.next_chicken_roll_time:
+                farm_entity.next_chicken_roll_time = datetime.now()
 
-            self._farm_entity.next_chicken_roll_time += timedelta(seconds=SECONDS_TO_FARM_ROLL)
+            farm_entity.next_chicken_roll_time += timedelta(seconds=SECONDS_TO_FARM_ROLL)
 
         chickens_to_generated = (
             MAX_GENERATED_CHICKENS
-            if self._farm_entity.farmer != "Generous"
+            if farm_entity.farmer != "Generous"
             else MAX_GENERATED_CHICKENS + farmers_dict["generous"]
         )
 
@@ -78,9 +76,8 @@ class MarketUsecase:
 
         view = ChickenView(
             self._ctx,
-            self._farm_entity,
+            farm_entity,
             generated_chickens,
-            self._player_cache_service,
             self._farm_cache_service,
             self._farm_repository,
             self._player_repository,
@@ -94,7 +91,6 @@ class ChickenView(View):
         ctx: EggsauceContext,
         farm_entity: FarmEntity,
         chickens: list[GeneratedChicken],
-        player_cache_service: PlayerCacheService,
         farm_cache_service: FarmCacheService,
         farm_repository: FarmRepositoryProtocol,
         player_repository: PlayerRepositoryProtocol,
@@ -104,7 +100,6 @@ class ChickenView(View):
         self._farm_entity = farm_entity
         self._chickens = chickens
         self._select = self.select_maker()
-        self._player_cache_service = player_cache_service
         self._farm_cache_service = farm_cache_service
         self.add_item(self._select)
         self._select.callback = self.callback
@@ -146,7 +141,7 @@ class ChickenView(View):
             await self._ctx.handle_failed_interaction(interaction, REASON_FARM_IS_FULL)
             return
 
-        player_entity = await self._player_cache_service.get_or_fetch(interaction.user.id)
+        player_entity = await self._player_repository.get_by_discord_user_id(self._farm_entity.discord_user_id)
 
         if not player_entity:
             return
@@ -179,8 +174,7 @@ class ChickenView(View):
             self._farm_entity.chickens.sort(key=lambda chicken: chicken.rarity)
             await self._farm_repository.upsert_farm_chicken(self._farm_entity.id, chicken_entity)
 
-        async with self._player_cache_service.remove_if_exception(player_entity.discord_user_id):
-            await self._player_repository.update_player(player_entity)
+        await self._player_repository.update_player(player_entity)
 
         await interaction.message.edit(view=self, embed=embed)  # type: ignore
         await self._ctx.handle_interaction_response(

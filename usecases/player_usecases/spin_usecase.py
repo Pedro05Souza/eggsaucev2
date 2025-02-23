@@ -2,7 +2,6 @@ from enum import Enum
 from typing import NamedTuple, Literal
 from random import Random
 from repositories import PlayerRepositoryProtocol
-from tools import PlayerCacheService
 from tools.constants import REASON_INSUFFICIENT_BALANCE, REASON_INVALID_AMOUNT, MIN_AMOUNT_SPIN
 from eggsauce_context import EggsauceContext
 
@@ -25,13 +24,10 @@ class SpinUsecase:
     def __init__(
         self,
         ctx: EggsauceContext,
-        player_cache: PlayerCacheService,
         color_choice: str,
         amount_betted: int,
         player_repository: PlayerRepositoryProtocol,
     ) -> None:
-        self._player_entity = ctx.entities.player_entity
-        self._player_cache = player_cache
         self._amount_betted = amount_betted
         self._ctx = ctx
         self._random = Random()
@@ -39,7 +35,9 @@ class SpinUsecase:
         self._player_repository = player_repository
 
     async def spin(self) -> None:
-        if self._amount_betted > self._player_entity.balance:
+        player_entity = await self._player_repository.get_or_create(self._ctx.author.id)
+
+        if self._amount_betted > player_entity.balance:
             await self._ctx.send_failed_embed(REASON_INSUFFICIENT_BALANCE)
             return
 
@@ -53,19 +51,18 @@ class SpinUsecase:
 
         spin_data = await self._calculate_spin_result()
 
-        color_emoji = await self.__color_emoji_dict(_SpinColorEnum(spin_data.color))
+        color_emoji = await self._color_emoji_dict(_SpinColorEnum(spin_data.color))
 
         embed_description = f"🎡 **The roulette landed on **" f"{color_emoji} **{spin_data.color.upper()}!**"
 
         if spin_data.amount_result == 0:
-            self._player_entity.balance -= self._amount_betted
+            player_entity.balance -= self._amount_betted
             embed_description += f" You lost **{self._amount_betted}** eggbux."
         else:
-            self._player_entity.balance += spin_data.amount_result
+            player_entity.balance += spin_data.amount_result
             embed_description += f" You won **{spin_data.amount_result}** eggbux!"
 
-        async with self._player_cache.remove_if_exception(self._player_entity.discord_user_id):
-            await self._player_repository.update_player(self._player_entity)
+        await self._player_repository.update_player(player_entity)
 
         await self._ctx.send_bot_embed(
             embed_params={
@@ -100,7 +97,7 @@ class SpinUsecase:
         else:
             return _SpinData(0, random_color)
 
-    async def __color_emoji_dict(self, color: _SpinColorEnum) -> str:
+    async def _color_emoji_dict(self, color: _SpinColorEnum) -> str:
         match color:
             case _SpinColorEnum.RED:
                 return "🟥"

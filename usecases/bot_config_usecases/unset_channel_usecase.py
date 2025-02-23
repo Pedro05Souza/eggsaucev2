@@ -15,19 +15,24 @@ class UnsetChannelUsecase:
     ):
         self._ctx = ctx
         self._channel_id = channel_id
-        self._bot_config_entity = ctx.entities.bot_config_entity
         self._bot_config_cache_service = bot_config_cache_service
         self._bot_config_repository = bot_config_repository
 
     async def unset_channel(self) -> None:
-        if self._channel_id not in self._bot_config_entity.allowed_channels:
+        bot_config_entity = await self._bot_config_cache_service.get_or_fetch(self._ctx.guild.id)  # type: ignore
+
+        if bot_config_entity is None:
+            await self._ctx.send_failed_embed(description="Bot config not set!")
+            return
+
+        if self._channel_id not in bot_config_entity.allowed_channels:
             await self._ctx.send_failed_embed(description="Channel not set!")
             return
 
-        self._bot_config_entity.allowed_channels.remove(self._channel_id)
+        bot_config_entity.allowed_channels.remove(self._channel_id)
 
-        async with self._bot_config_cache_service.remove_if_exception(self._bot_config_entity.guild_id):
-            await self._bot_config_repository.delete_allowed_channel(self._bot_config_entity.id, self._channel_id)
+        async with self._bot_config_cache_service.remove_if_exception(bot_config_entity.guild_id):
+            await self._bot_config_repository.delete_allowed_channel(bot_config_entity.id, self._channel_id)
 
         await self._ctx.send_bot_embed(
             embed_params={"title": "✅ Channel unset successfully!", "description": "Channel unset successfully!"},
