@@ -42,7 +42,7 @@ class MarketUsecase:
 
     async def market(self) -> None:
         farm_entity = self._farm_cache_service.get_or_raise(self._ctx.author.id)
-        
+
         if farm_entity.remaining_rolls == 0 and farm_entity.next_chicken_roll_time is not None:
             await self._ctx.send_failed_embed(
                 "You have no rolls left. The next roll will be available in "

@@ -30,7 +30,7 @@ class FeedAllChickenUsecase:
     async def feed_all_chicken(self) -> None:
         are_all_chickens_fed = True
         not_enough_corn = True
-        
+
         farm_entity = self._farm_cache.get_or_raise(self._ctx.author.id)
 
         if len(farm_entity.chickens) == 0:
@@ -61,9 +61,7 @@ class FeedAllChickenUsecase:
             await self._ctx.send_failed_embed("All chickens are already fed!")
             return
 
-        chicken_models = [
-            await chicken_entity_to_model(farm_entity.id, chicken) for chicken in farm_entity.chickens
-        ]
+        chicken_models = [await chicken_entity_to_model(farm_entity.id, chicken) for chicken in farm_entity.chickens]
 
         async with self._farm_cache.remove_if_exception(farm_entity.discord_user_id):
             await self._farm_repository.bulk_update_farm_chickens(chicken_models)

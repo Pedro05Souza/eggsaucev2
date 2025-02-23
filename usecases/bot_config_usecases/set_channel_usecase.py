@@ -26,7 +26,7 @@ class SetChannelUsecase:
         if bot_config_entity is None:
             await self._ctx.send_failed_embed(description="Bot config not set!")
             return
-        
+
         print("Bot config entity", bot_config_entity)
 
         if self._channel_id in bot_config_entity.allowed_channels:
@@ -34,7 +34,7 @@ class SetChannelUsecase:
             return
 
         bot_config_entity.allowed_channels.add(self._channel_id)
-        
+
         print("Adding channel to allowed channels")
 
         async with self._bot_config_cache_service.remove_if_exception(bot_config_entity.guild_id):
