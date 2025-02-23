@@ -9,6 +9,7 @@ from usecases import (
     InspectChickenUseCase,
     FeedAllChickenUsecase,
     FarmProfitUsecase,
+    GiftChickenUsecase,
 )
 from repositories import (
     FarmRepository,
@@ -106,6 +107,12 @@ class FarmController(Cog, name="Farm"):
             member,
         )
         await farm_profit_usecase.farm_profit()
+
+    @hybrid_command(name="giftchicken", aliases=["gc"], description="🐔 Gift a chicken to another player!")
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
+    async def gift_chicken(self, ctx: EggsauceContext, member: Member, index: int) -> None:
+        gift_chicken_usecase = GiftChickenUsecase(ctx, self.farm_cache, self.farm_repository, member, index)
+        await gift_chicken_usecase.gift_chicken()
 
     async def cog_before_invoke(self, ctx: EggsauceContext) -> None:  # type: ignore
         await ensure_author_farm(

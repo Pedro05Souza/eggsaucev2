@@ -64,3 +64,6 @@ class FarmRepository(metaclass=RepositoryMeta):
             chickens,
             fields=["name", "rarity", "quality", "location_status", "happiness", "farm_id"],
         )
+
+    async def delete_farm_chicken(self, chicken_id: str) -> None:
+        await Chicken.filter(id=chicken_id).delete()
