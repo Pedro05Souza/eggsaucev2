@@ -130,13 +130,6 @@ class ChickenView(View):
         selected_position = int(interaction.data["values"][0])  # type: ignore
         selected_chicken = self._chickens[selected_position - 1]
 
-        if (
-            len(self._farm_entity.chickens) >= FARM_MAX_CHICKENS + farmers_dict["warrior"]
-            and self._farm_entity.farmer == "Warrior"
-        ):
-            await self._ctx.handle_failed_interaction(interaction, REASON_FARM_IS_FULL)
-            return
-
         if len(self._farm_entity.chickens) >= FARM_MAX_CHICKENS:
             await self._ctx.handle_failed_interaction(interaction, REASON_FARM_IS_FULL)
             return
