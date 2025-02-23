@@ -19,6 +19,7 @@ class FarmEntity(BaseEntity):
         "remaining_rolls",
         "next_chicken_roll_time",
         "chickens",
+        "actual_max_farm_size",
     ]
 
     player_id: str
@@ -29,3 +30,4 @@ class FarmEntity(BaseEntity):
     remaining_rolls: int
     next_chicken_roll_time: Optional[datetime]
     chickens: list[ChickenEntity]
+    actual_max_farm_size: int

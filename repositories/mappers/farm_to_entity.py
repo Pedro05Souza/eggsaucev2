@@ -1,6 +1,7 @@
 from tortoise.exceptions import NoValuesFetched
 from entities import FarmEntity
 from models import Farm
+from tools.constants import FARM_MAX_CHICKENS, farmers_dict
 from ._chicken_to_entity import chicken_model_to_entity
 
 __all__ = ["farm_model_to_entity"]
@@ -9,7 +10,7 @@ __all__ = ["farm_model_to_entity"]
 async def farm_model_to_entity(farm: Farm) -> FarmEntity:
 
     try:
-        chickens = [await chicken_model_to_entity(chicken) for chicken in farm.chickens] # type: ignore
+        chickens = [await chicken_model_to_entity(chicken) for chicken in farm.chickens]  # type: ignore
         chickens.sort(key=lambda chicken: chicken.rarity)
 
     except NoValuesFetched:
@@ -25,4 +26,7 @@ async def farm_model_to_entity(farm: Farm) -> FarmEntity:
         remaining_rolls=farm.remaining_rolls,
         next_chicken_roll_time=farm.next_chicken_roll_time,
         chickens=chickens,
+        actual_max_farm_size=(
+            FARM_MAX_CHICKENS if farm.farmer != "Warrior" else FARM_MAX_CHICKENS + farmers_dict["warrior"]
+        ),
     )
