@@ -106,6 +106,7 @@ class AwayTimeEarningsService:
         if cornfield_entity.actual_corn_limit < reached_limit:
 
             if cornfield_entity.actual_corn_limit == cornfield_entity.current_corn:
+                cornfield_entity.next_corn_drop = now + timedelta(seconds=SECONDS_TO_SALARY_DROP)
                 return
 
             corn_to_add = cornfield_entity.actual_corn_limit - cornfield_entity.current_corn
