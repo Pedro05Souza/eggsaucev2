@@ -5,3 +5,4 @@ from .scripts_cli import *
 from .chicken_utils import *
 from .globals import *
 from .reverse_mapping import *
+from .updatables import *
