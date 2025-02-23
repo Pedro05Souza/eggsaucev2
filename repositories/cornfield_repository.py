@@ -21,7 +21,7 @@ class CornfieldRepository(metaclass=RepositoryMeta):
 
         return await farm_cornfield_model_to_entity(cornfield)
 
-    async def get_or_raise_by_user_discord_user(self, discord_user_id: int) -> "CornfieldEntity":
+    async def get_or_raise_by_user_discord_id(self, discord_user_id: int) -> "CornfieldEntity":
         cornfield = await Cornfield.filter(farm__player__discord_user_id=discord_user_id).select_related("farm").first()
 
         if not cornfield:
