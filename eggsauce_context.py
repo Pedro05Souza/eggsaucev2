@@ -3,7 +3,7 @@ from typing import Optional, Any, TypedDict
 from datetime import datetime
 from discord import Embed, Colour
 from discord.types.embed import EmbedType
-from discord import Forbidden, Interaction, ButtonStyle
+from discord import Forbidden, Interaction, ButtonStyle, Member
 from discord.ui import View, button, Button
 from discord.ext.commands import Context
 from tools.constants import REASON_DM_FAILURE
@@ -177,7 +177,11 @@ class EggsauceContext(Context):
         )
 
     async def confirmation_popup(
-        self, description: str, title: str = "🔔 Please Confirm Your Action", ephemeral: bool = True
+        self,
+        description: str,
+        title: str = "🔔 Please Confirm Your Action",
+        member_to_confirm: Optional[Member] = None,
+        ephemeral: bool = True,
     ):
         """This function is responsable for creating a confirmation popup.
 
@@ -185,11 +189,19 @@ class EggsauceContext(Context):
             ctx (Context | Interaction): The context of the command.
             description (str): The description of the embed.
             title (str): The title of the embed. Defaults to "🔔 Please Confirm Your Action".
+            member_to_confirm (Optional[Member]): The member that will be asked to confirm the action. If no value
+            is passed, the author of the command will be asked to confirm. Defaults to None.
             ephemeral (bool): Whether the message should be ephemeral or not.
         """
+        confirmation_user = self.author
+
+        if member_to_confirm:
+            confirmation_user = member_to_confirm
+
         embed = Embed(title=title, description=description)
         confirmation_popup = _ConfirmationPopUp(
             embed,
+            confirmation_user,  # type: ignore
             ephemeral,
         )
         message = await self.send(embed=embed, view=confirmation_popup)
@@ -202,21 +214,31 @@ class _ConfirmationPopUp(View):
     def __init__(
         self,
         embed: Embed,
+        author: Member,
         ephemeral: bool = True,
     ) -> None:
         super().__init__(timeout=50)
         self.value = None
         self.embed = embed
         self.ephemeral = ephemeral
+        self.author = author
 
     @button(label="Cancel", style=ButtonStyle.red, custom_id="cancel")
     async def cancel(self, interaction: Interaction, _: Button[View]):
         await interaction.response.defer()
+
+        if interaction.user != self.author:
+            return
+
         self.value = False
         self.stop()
 
     @button(label="Confirm", style=ButtonStyle.green, custom_id="confirm")
     async def confirm(self, interaction: Interaction, _: Button[View]):
         await interaction.response.defer()
+
+        if interaction.user != self.author:
+            return
+
         self.value = True
         self.stop()
