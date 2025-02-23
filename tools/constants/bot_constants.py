@@ -42,3 +42,15 @@ DELTA_CORN_PER_PLOT: Final[int] = 40
 
 # Other constants
 STEAL_FAILURE_CHANCE: Final[float] = 0.1
+
+
+def get_titles_prices() -> dict[str, int]:
+    return {"Egg Novice": 0, "Egg Apprentice": 10000, "Egg Wizard": 20000, "Egg King": 30000}
+
+
+def get_titles_salaries() -> dict[str, int]:
+    return {"Egg Novice": 200, "Egg Apprentice": 600, "Egg Wizard": 1200, "Egg King": 2400}
+
+
+def get_titles_emojis() -> dict[str, str]:
+    return {"Egg Novice": "🥚", "Egg Apprentice": "🍳", "Egg Wizard": "🪄", "Egg King": "👑"}
