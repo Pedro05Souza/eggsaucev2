@@ -20,7 +20,7 @@ async def update_away_salary(
     player_repository: "PlayerRepositoryProtocol",
     player_entity: "PlayerEntity",
 ) -> Optional[str]:
-    salary_gained = await AwayTimeEarningsService.check_away_time_salary(player_entity)
+    salary_gained = await AwayTimeEarningsService.calculate_salary_profit(player_entity)
 
     if salary_gained is None:
         return
@@ -51,7 +51,7 @@ async def update_away_farm(
 async def update_away_corn(
     cornfield_repository: "CornfieldRepositoryProtocol", cornfield_entity: "CornfieldEntity"
 ) -> Optional[str]:
-    corn_gained = await AwayTimeEarningsService.calculate_corn_production(cornfield_entity)
+    corn_gained = await AwayTimeEarningsService.calculate_corn_profit(cornfield_entity)
 
     if corn_gained is None:
         return

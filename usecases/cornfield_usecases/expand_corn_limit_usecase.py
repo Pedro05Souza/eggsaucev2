@@ -25,7 +25,7 @@ class ExpandCornLimitUsecase:
 
     @atomic()
     async def expand_corn_limit(self) -> None:
-        cornfield_entity = await self._cornfield_repository.get_or_raise_by_user_discord_user(self._ctx.author.id)
+        cornfield_entity = await self._cornfield_repository.get_or_raise_by_user_discord_id(self._ctx.author.id)
         player_entity = await self._player_repository.get_or_create(self._ctx.author.id)
 
         total_cost = calculate_corn_limit_price(cornfield_entity.corn_limit_upgrades + 1)

@@ -31,7 +31,7 @@ class CornFieldUsecase:
                 await self._ctx.send_failed_embed(REASON_INVALID_USER)
                 return
         else:
-            cornfield_entity = await self._cornfield_repository.get_or_raise_by_user_discord_user(self._ctx.author.id)
+            cornfield_entity = await self._cornfield_repository.get_or_raise_by_user_discord_id(self._ctx.author.id)
 
         if not cornfield_entity:
             await self._ctx.send_failed_embed(REASON_INVALID_USER)
