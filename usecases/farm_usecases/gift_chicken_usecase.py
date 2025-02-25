@@ -26,13 +26,13 @@ class GiftChickenUsecase:
         farm_cache: "FarmCacheService",
         farm_repository: "FarmRepositoryProtocol",
         member: Member,
-        index: int,
+        position: int,
     ) -> None:
         self._ctx = ctx
         self._farm_cache = farm_cache
         self._farm_repository = farm_repository
         self._member = member
-        self._index = index - 1
+        self._position = position - 1
 
     async def gift_chicken(self):  # pylint: disable=too-many-return-statements
         if self._ctx.author.id == self._member.id:
@@ -53,7 +53,7 @@ class GiftChickenUsecase:
 
         author_farm_entity = self._farm_cache.get_or_raise(self._ctx.author.id)
 
-        if self._index < 0 or self._index >= len(author_farm_entity.chickens):
+        if self._position < 0 or self._position >= len(author_farm_entity.chickens):
             return await self._ctx.send_failed_embed("Invalid index.")
 
         async with ActionGuardService.guard_player(self._ctx.author.id, self._member.id):
@@ -67,12 +67,11 @@ class GiftChickenUsecase:
             if not has_member_confirmed:
                 return
 
-            chicken_to_gift = author_farm_entity.chickens.pop(self._index)
+            chicken_to_gift = author_farm_entity.chickens.pop(self._position)
             member_farm_entity.chickens.append(chicken_to_gift)
 
             async with self._farm_cache.remove_if_exception(self._ctx.author.id, self._member.id):
-                await self._farm_repository.delete_farm_chicken(chicken_to_gift.id)
-                await self._farm_repository.upsert_farm_chicken(member_farm_entity.id, chicken_to_gift)
+                await self._farm_repository.change_chicken_ownership(chicken_to_gift.id, member_farm_entity.id)
 
             await self._ctx.send_bot_embed(
                 embed_params={
