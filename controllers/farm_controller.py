@@ -110,8 +110,8 @@ class FarmController(Cog, name="Farm"):
 
     @hybrid_command(name="giftchicken", aliases=["gc"], description="🐔 Gift a chicken to another player!")
     @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
-    async def gift_chicken(self, ctx: EggsauceContext, member: Member, index: int) -> None:
-        gift_chicken_usecase = GiftChickenUsecase(ctx, self.farm_cache, self.farm_repository, member, index)
+    async def gift_chicken(self, ctx: EggsauceContext, member: Member, position: int) -> None:
+        gift_chicken_usecase = GiftChickenUsecase(ctx, self.farm_cache, self.farm_repository, member, position)
         await gift_chicken_usecase.gift_chicken()
 
     async def cog_before_invoke(self, ctx: EggsauceContext) -> None:  # type: ignore
