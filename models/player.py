@@ -11,6 +11,10 @@ class Player(Model):
     balance = fields.IntField(default=0)
     last_bought_title = fields.CharEnumField(PlayerTitles, default=PlayerTitles.EGG_NOVICE)
     next_salary_time = fields.DatetimeField()
+    current_mmr = fields.IntField(default=0)
+    highest_mmr = fields.IntField(default=0)
+    wins = fields.IntField(default=0)
+    losses = fields.IntField(default=0)
 
     class Meta:
         table = "player"

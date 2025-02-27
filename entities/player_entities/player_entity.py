@@ -1,15 +1,14 @@
 from datetime import datetime
 from dataclasses import dataclass
-from .._entity_base import BaseEntity
+from ._base_player_entity import BasePlayerEntity
 
 __all__ = ["PlayerEntity"]
 
 
 @dataclass
-class PlayerEntity(BaseEntity):
+class PlayerEntity(BasePlayerEntity):
 
     __slots__ = [
-        "discord_user_id",
         "balance",
         "last_bought_title",
         "next_salary_time",
@@ -18,7 +17,6 @@ class PlayerEntity(BaseEntity):
         "upgrade_level",
     ]
 
-    discord_user_id: int
     balance: int
     last_bought_title: str
     next_salary_time: datetime
