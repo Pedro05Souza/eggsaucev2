@@ -6,4 +6,3 @@ from .error_reasons import *
 from .chicken_config import *
 from .shared_enums import *
 from .tips import *
-from .errors import *

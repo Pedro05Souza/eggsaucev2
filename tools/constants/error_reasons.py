@@ -10,3 +10,4 @@ REASON_FARM_IS_FULL = "You can't perform this action because your farm is full."
 REASON_USER_IS_ALREADY_IN_EVENT = (
     "The user is already in an event. Please wait for the current event to end to start a new one."
 )
+REASON_INVALID_INDEX = "Invalid index."

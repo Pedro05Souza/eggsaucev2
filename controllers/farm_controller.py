@@ -10,6 +10,7 @@ from usecases import (
     FeedAllChickenUsecase,
     FarmProfitUsecase,
     GiftChickenUsecase,
+    RenameChickenUsecase,
 )
 from repositories import (
     FarmRepository,
@@ -113,6 +114,12 @@ class FarmController(Cog, name="Farm"):
     async def gift_chicken(self, ctx: EggsauceContext, member: Member, position: int) -> None:
         gift_chicken_usecase = GiftChickenUsecase(ctx, self.farm_cache, self.farm_repository, member, position)
         await gift_chicken_usecase.gift_chicken()
+
+    @hybrid_command(name="renamechicken", aliases=["rc"], description="🐔 Rename a chicken in your farm!")
+    @cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)
+    async def rename_chicken(self, ctx: EggsauceContext, position: int, new_name: str) -> None:
+        rename_chicken_usecase = RenameChickenUsecase(ctx, self.farm_cache, self.farm_repository, position, new_name)
+        await rename_chicken_usecase.rename_chicken()
 
     async def cog_before_invoke(self, ctx: EggsauceContext) -> None:  # type: ignore
         await ensure_author_farm(
