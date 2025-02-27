@@ -56,7 +56,7 @@ class GiftChickenUsecase:
         if self._position < 0 or self._position >= len(author_farm_entity.chickens):
             return await self._ctx.send_failed_embed("Invalid index.")
 
-        async with ActionGuardService.guard_player(self._ctx.author.id, self._member.id):
+        async with ActionGuardService.guard_players(self._ctx.author.id, self._member.id):
             has_author_confirmed = await self._handle_confirmation_for_author()
 
             if not has_author_confirmed:

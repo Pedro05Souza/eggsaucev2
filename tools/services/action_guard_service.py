@@ -21,7 +21,7 @@ class ActionGuardService:
 
     @classmethod
     @asynccontextmanager
-    async def guard_player(cls, *discord_ids: int):
+    async def guard_players(cls, *discord_ids: int):
         for discord_id in discord_ids:
             cls.guard_player_discord_id(discord_id)
         try:
