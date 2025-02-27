@@ -10,7 +10,7 @@ class TestSetChannelUsecase:
     ) -> None:
         bot_config_cache_service.add(bot_config_entity.guild_id, bot_config_entity)
         bot_config_entity.allowed_channels.add(123)
-        
+
         bot_config_cache_service.get_or_fetch.return_value = bot_config_entity
 
         set_channel_usecase = SetChannelUsecase(ctx, 123, bot_config_cache_service, bot_config_repository)

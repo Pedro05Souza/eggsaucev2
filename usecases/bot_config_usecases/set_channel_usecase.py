@@ -26,7 +26,7 @@ class SetChannelUsecase:
         if bot_config_entity is None:
             await self._ctx.send_failed_embed(description="Bot config not set!")
             return
-        
+
         if self._channel_id in bot_config_entity.allowed_channels:
             await self._ctx.send_failed_embed(description="Channel already set!")
             return
