@@ -8,8 +8,10 @@ class TestSetChannelUsecase:
     async def test_if_channel_is_already_set(
         self, ctx, bot_config_entity, bot_config_cache_service, bot_config_repository
     ) -> None:
+        bot_config_cache_service.add(bot_config_entity.guild_id, bot_config_entity)
         bot_config_entity.allowed_channels.add(123)
-        ctx.entities.bot_config_entity = bot_config_entity
+        
+        bot_config_cache_service.get_or_fetch.return_value = bot_config_entity
 
         set_channel_usecase = SetChannelUsecase(ctx, 123, bot_config_cache_service, bot_config_repository)
 
@@ -21,7 +23,8 @@ class TestSetChannelUsecase:
     async def test_if_channel_was_created(
         self, ctx, bot_config_entity, bot_config_cache_service, bot_config_repository
     ) -> None:
-        ctx.entities.bot_config_entity = bot_config_entity
+        bot_config_cache_service.add(bot_config_entity.guild_id, bot_config_entity)
+        bot_config_cache_service.get_or_fetch.return_value = bot_config_entity
 
         set_channel_usecase = SetChannelUsecase(ctx, 123, bot_config_cache_service, bot_config_repository)
 
@@ -33,7 +36,6 @@ class TestSetChannelUsecase:
     async def test_database_failure(
         self, ctx, bot_config_entity, bot_config_cache_service, bot_config_repository
     ) -> None:
-        ctx.entities.bot_config_entity = bot_config_entity
         bot_config_cache_service.add(bot_config_entity.guild_id, bot_config_entity)
         bot_config_repository.create_allowed_channel.side_effect = Exception()
 
