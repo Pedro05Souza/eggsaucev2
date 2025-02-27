@@ -57,12 +57,17 @@ class GiftChickenUsecase:
             return await self._ctx.send_failed_embed("Invalid index.")
 
         async with ActionGuardService.guard_players(self._ctx.author.id, self._member.id):
-            has_author_confirmed = await self._handle_confirmation_for_author()
+            has_author_confirmed = await self._handle_confirmation(
+                self._ctx.author,  # type: ignore
+                f"Are you sure you want to gift this chicken to **{self._member.display_name}**?",
+            )
 
             if not has_author_confirmed:
                 return
 
-            has_member_confirmed = await self._handle_confirmation_for_member()
+            has_member_confirmed = await self._handle_confirmation(
+                self._member, f"**{self._ctx.author.display_name}** wants to gift you a chicken! Do you accept?"
+            )
 
             if not has_member_confirmed:
                 return
@@ -80,34 +85,8 @@ class GiftChickenUsecase:
                 }
             )
 
-    async def _handle_confirmation_for_author(self):
-        has_confirmed, message = await self._ctx.confirmation_popup(
-            f"Are you sure you want to gift this chicken to **{self._member.display_name}**?"
-        )
-
-        if has_confirmed is None:
-            await message.edit(
-                embed=self._ctx.embed_builder(
-                    embed_params={"description": "❌  Gifting the chicken has been timed out."}
-                ),
-                view=None,
-            )
-            return False
-
-        if has_confirmed is False:
-            await message.edit(
-                embed=self._ctx.embed_builder(embed_params={"description": "❌ Cancelled the chicken gifting."}),
-                view=None,
-            )
-            return False
-
-        return True
-
-    async def _handle_confirmation_for_member(self):
-        has_confirmed, message = await self._ctx.confirmation_popup(
-            f"**{self._ctx.author.display_name}** wants to gift you a chicken! Do you accept?",
-            member_to_confirm=self._member,
-        )
+    async def _handle_confirmation(self, member: Member, embed_message: str):
+        has_confirmed, message = await self._ctx.confirmation_popup(embed_message, member_to_confirm=member)
 
         if has_confirmed is None:
             await message.edit(
