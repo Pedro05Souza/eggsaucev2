@@ -1,5 +1,4 @@
 import os
-from functools import lru_cache
 from typing import List
 from json import loads
 from dotenv import load_dotenv
@@ -17,7 +16,6 @@ def get_env_var(enviroment_variable: str) -> str:
     return env_var
 
 
-@lru_cache(maxsize=128)
 def get_list_env_var(enviroment_variable: str) -> List[str]:
     load_dotenv()
     env_var = os.getenv(enviroment_variable)
