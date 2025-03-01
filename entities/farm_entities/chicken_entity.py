@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Literal
+from ..types import ChickenLocationType
 from .._entity_base import BaseEntity
 
 __all__ = ["ChickenEntity"]
@@ -24,7 +24,7 @@ class ChickenEntity(BaseEntity):
     quality: float
     rarity: str
     price: int
-    location_status: Literal["farm", "vault", "redeemables"]
+    location_status: ChickenLocationType
     name: str
     happiness: int
     emoji: str

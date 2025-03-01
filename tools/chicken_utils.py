@@ -1,7 +1,6 @@
-from typing import Literal
 from uuid import uuid4
 from random import randint, uniform
-from entities import ChickenEntity
+from entities import ChickenEntity, ChickenLocationType
 from .constants import (
     chicken_quality_rates,
     DELTA_EGG_VALUE,
@@ -73,18 +72,14 @@ def calculate_corn_limit_price(corn_limit_upgrades: int) -> int:
 
 
 async def generated_chicken_to_chicken_entity(
-    generated_chicken: GeneratedChicken, location_status: Literal["farm", "vault", "redeemables"]
+    generated_chicken: GeneratedChicken, location_status: ChickenLocationType
 ) -> ChickenEntity:
     """Creates a new chicken entity from a generated chicken.
 
     Args:
         generated_chicken (GeneratedChicken): The generated chicken.
         location_status: The location status of the chicken.
-
-        * farm: The chicken is being added to the farm.
-        * vault: The chicken is being added to
-        * redeemables: The chicken is being added to the redeemables.
-
+        
     Returns:
         ChickenEntity: The new chicken entity.
     """
