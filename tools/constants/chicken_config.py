@@ -85,7 +85,6 @@ class ChickenRarities(str, Enum):
 
 
 class GeneratedChicken(NamedTuple):
-    position: int  # We need this to distinguish between chickens with the same rarity
     rarity: str
     emoji: str
     name: str
