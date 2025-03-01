@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+import asyncio
 from tortoise.transactions import atomic
 from tools import deduct_from_balance_and_bank, calculate_corn_limit, calculate_corn_limit_price
 
@@ -25,8 +26,10 @@ class ExpandCornLimitUsecase:
 
     @atomic()
     async def expand_corn_limit(self) -> None:
-        cornfield_entity = await self._cornfield_repository.get_or_raise_by_user_discord_id(self._ctx.author.id)
-        player_entity = await self._player_repository.get_or_create(self._ctx.author.id)
+        cornfield_entity, player_entity = await asyncio.gather(
+            self._cornfield_repository.get_or_raise_by_user_discord_id(self._ctx.author.id),
+            self._player_repository.get_or_create(self._ctx.author.id),
+        )
 
         total_cost = calculate_corn_limit_price(cornfield_entity.corn_limit_upgrades + 1)
 
