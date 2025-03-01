@@ -67,6 +67,6 @@ class RemoveVaultUsecase:
         await self._ctx.send_bot_embed(
             embed_params={
                 "description": f"✅ **{chicken_to_farm.name}** has been moved to"
-                + f"your farm, replacing **{farm_chicken.name}**."
+                + f" your farm, replacing **{farm_chicken.name}**."
             }
         )
