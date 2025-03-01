@@ -52,7 +52,7 @@ class Eggsauce(Bot):
         else:
             discord_token_key = get_env_var("DISCORD_BOT_TOKEN_PROD")
 
-        super().run(discord_token_key, *args, **kwargs)  # type: ignore
+        super().run(discord_token_key, *args, **kwargs)
 
     async def _get_bot_prefix(self, _: Bot, message: Message) -> str:
 

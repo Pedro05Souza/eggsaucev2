@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+import asyncio
 from tortoise.transactions import atomic
 from tools import calculate_plot_production, calculate_plot_price, deduct_from_balance_and_bank
 
@@ -26,8 +27,10 @@ class BuyPlotUsecase:
 
     @atomic()
     async def buy_plot(self) -> None:
-        cornfield_entity = await self._cornfield_repository.get_or_raise_by_user_discord_id(self._ctx.author.id)
-        player_entity = await self._player_repository.get_or_create(self._ctx.author.id)
+        cornfield_entity, player_entity = await asyncio.gather(
+            self._cornfield_repository.get_or_raise_by_user_discord_id(self._ctx.author.id),
+            self._player_repository.get_or_create(self._ctx.author.id),
+        )
 
         total_price = calculate_plot_price(cornfield_entity.plots + 1)
 

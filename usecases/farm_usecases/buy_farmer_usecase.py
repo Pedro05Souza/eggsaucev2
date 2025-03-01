@@ -56,7 +56,7 @@ class BuyFarmerUseCase:
             footer_text="Click on any of the emojis to buy a farmer.",
         )
 
-        view = _FarmersView()
+        view = _FarmersView(author_id=self._ctx.author.id)
         message = await self._ctx.send(embed=embed, view=view)
         await view.wait()
         await self._handle_farmer_purchase(message, view.selected_farmer, player_entity, farm_entity)
@@ -116,35 +116,61 @@ class BuyFarmerUseCase:
 class _FarmersView(View):
     def __init__(
         self,
+        author_id: int,
     ) -> None:
         super().__init__(timeout=40)
         self.selected_farmer: Optional[FarmerType] = None
+        self.author_id = author_id
 
     @button(style=ButtonStyle.gray, custom_id="Rich", emoji="💰")
     async def rich(self, interaction: Interaction, _: Button[View]) -> None:
+        await interaction.response.defer()
+
+        if interaction.user.id != self.author_id:
+            return
+
         self.selected_farmer = "Rich"
         self.stop()
 
     @button(style=ButtonStyle.gray, custom_id="Guardian", emoji="🛡️")
     async def guardian(self, interaction: Interaction, _: Button[View]) -> None:
+        if not await self._author_check_and_defer(interaction):
+            return
+
         self.selected_farmer = "Guardian"
 
     @button(style=ButtonStyle.gray, custom_id="Executive", emoji="👔")
     async def executive(self, interaction: Interaction, _: Button[View]) -> None:
+        if not await self._author_check_and_defer(interaction):
+            return
+
         self.selected_farmer = "Executive"
         self.stop()
 
     @button(style=ButtonStyle.gray, custom_id="Warrior", emoji="⚔️")
     async def warrior(self, interaction: Interaction, _: Button[View]) -> None:
+        if not await self._author_check_and_defer(interaction):
+            return
+
         self.selected_farmer = "Warrior"
         self.stop()
 
     @button(style=ButtonStyle.gray, custom_id="Generous", emoji="🎁")
     async def generous(self, interaction: Interaction, _: Button[View]) -> None:
+        if not await self._author_check_and_defer(interaction):
+            return
+
         self.selected_farmer = "Generous"
         self.stop()
 
     @button(style=ButtonStyle.gray, custom_id="Sustainable", emoji="🌱")
     async def sustainable(self, interaction: Interaction, _: Button[View]) -> None:
+        if not await self._author_check_and_defer(interaction):
+            return
+
         self.selected_farmer = "Sustainable"
         self.stop()
+
+    async def _author_check_and_defer(self, interaction: Interaction) -> bool:
+        await interaction.response.defer()
+        return interaction.user.id == self.author_id

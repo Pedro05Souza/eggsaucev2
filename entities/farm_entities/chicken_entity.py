@@ -18,6 +18,7 @@ class ChickenEntity(BaseEntity):
         "total_egg_production",
         "actual_egg_production",
         "food_consumption",
+        "can_be_updated",
     ]
 
     quality: float
@@ -30,3 +31,4 @@ class ChickenEntity(BaseEntity):
     total_egg_production: int
     actual_egg_production: int
     food_consumption: int
+    can_be_updated: bool

@@ -75,6 +75,9 @@ class AwayTimeEarningsService:
         farm_entity.next_egg_drop_time = now + timedelta(seconds=SECONDS_TO_CHICKEN_DROP)
 
         for chicken in farm_entity.chickens:
+            if chicken.can_be_updated is False:
+                continue
+
             chicken.happiness = max(0, chicken.happiness - sum(randint(1, 3) for _ in range(hours_passed)))
 
             if chicken.happiness == 0:
@@ -89,7 +92,7 @@ class AwayTimeEarningsService:
 
     @staticmethod
     async def calculate_chicken_earnings(chickens: List["ChickenEntity"], hours: int) -> int:
-        return sum(chicken.actual_egg_production for chicken in chickens) * hours
+        return sum(chicken.actual_egg_production for chicken in chickens if chicken.can_be_updated is True) * hours
 
     @staticmethod
     async def calculate_corn_earnings(total_plots: int, hours: int) -> int:

@@ -105,4 +105,5 @@ async def generated_chicken_to_chicken_entity(
         total_egg_production=total_egg_production,
         actual_egg_production=int(total_egg_production * quality),
         food_consumption=await calculate_food_consuption(chicken_index),
+        can_be_updated=False,
     )
