@@ -1,11 +1,12 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 from discord import Member
-from discord.ext.commands import Cog, Bot, hybrid_command
+from discord.ext.commands import Cog, Bot, hybrid_command, CooldownMapping, BucketType
 from tools import (
     GlobalFarmCache,
     FarmCacheService,
 )
+from tools.constants import REGULAR_COMMAND_COOLDOWN
 from usecases import CornFieldUsecase, ExpandCornLimitUsecase, BuyPlotUsecase
 from repositories import (
     FarmRepositoryProtocol,
@@ -20,7 +21,11 @@ if TYPE_CHECKING:
     from eggsauce_context import EggsauceContext
 
 
-class CornfieldController(Cog, name="Cornfield"):
+class CornfieldController(
+    Cog,
+    name="Cornfield",
+    command_attrs={"cooldown": CooldownMapping.from_cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)},
+):
 
     def __init__(
         self,
