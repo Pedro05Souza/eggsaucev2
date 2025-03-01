@@ -4,7 +4,7 @@ from tools import dev_only, get_logger
 from eggsauce_context import EggsauceContext
 
 
-class DeveloperController(Cog, name="Developer"):
+class DeveloperController(Cog, name="Developer", command_attrs=dict(hidden=True)):
 
     def __init__(self, bot: Bot) -> None:
         self.bot = bot
@@ -22,6 +22,7 @@ class DeveloperController(Cog, name="Developer"):
     async def sync(self, _: EggsauceContext) -> None:
         await self.bot.tree.sync()
         self.logger.info("Synced tree.")
+
 
 async def setup(bot: Bot) -> None:
     await bot.add_cog(DeveloperController(bot))
