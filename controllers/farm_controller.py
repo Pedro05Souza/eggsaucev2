@@ -13,6 +13,7 @@ from usecases import (
     RenameChickenUsecase,
     ChickenVaultUsecase,
     AddVaultUsecase,
+    RemoveVaultUsecase,
 )
 from repositories import (
     FarmRepository,
@@ -133,6 +134,17 @@ class FarmController(
             position,
         )
         await add_vault_usecase.add_vault()
+
+    @hybrid_command(name="removevault", aliases=["rv"], description="🐔 Remove a chicken from your vault!")
+    async def remove_vault(self, ctx: EggsauceContext, position: int, farm_position: Optional[int] = None) -> None:
+        remove_vault_usecase = RemoveVaultUsecase(
+            ctx,
+            self.farm_cache,
+            self.farm_repository,
+            position,
+            farm_position,
+        )
+        await remove_vault_usecase.remove_vault()
 
     async def cog_before_invoke(self, ctx: EggsauceContext) -> None:  # type: ignore
         await ensure_author_farm(

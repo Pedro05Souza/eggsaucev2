@@ -3,7 +3,7 @@ from typing import Protocol, Optional, runtime_checkable, TYPE_CHECKING
 from datetime import datetime
 
 if TYPE_CHECKING:
-    from entities import FarmEntity, ChickenEntity
+    from entities import FarmEntity, ChickenEntity, ChickenLocationType
     from models import Farm, Chicken
 
 __all__ = ["FarmRepositoryProtocol"]
@@ -27,4 +27,4 @@ class FarmRepositoryProtocol(Protocol):
 
     async def get_vaulted_chickens(self, discord_user_id: int) -> list[ChickenEntity]: ...
 
-    async def add_chicken_to_vault(self, chicken_id: str) -> None: ...
+    async def change_chicken_location_status(self, chicken_id: str, location: "ChickenLocationType") -> None: ...
