@@ -34,4 +34,5 @@ class ChickenVaultUsecase:
                 "title": title,
                 "description": description,
             },
+            thumbnail_url=member_to_view.display_avatar.url,
         )

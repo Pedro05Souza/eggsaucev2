@@ -73,3 +73,6 @@ class FarmRepository(metaclass=RepositoryMeta):
         chicken_entities = [await chicken_model_to_entity(chicken) for chicken in chickens]
 
         return chicken_entities
+
+    async def add_chicken_to_vault(self, chicken_id: str) -> None:
+        await Chicken.filter(id=chicken_id).update(location_status="vault")

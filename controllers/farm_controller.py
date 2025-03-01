@@ -12,6 +12,7 @@ from usecases import (
     GiftChickenUsecase,
     RenameChickenUsecase,
     ChickenVaultUsecase,
+    AddVaultUsecase,
 )
 from repositories import (
     FarmRepository,
@@ -122,6 +123,16 @@ class FarmController(
     async def chicken_vault(self, ctx: EggsauceContext, member: Optional[Member] = None) -> None:
         chicken_vault_usecase = ChickenVaultUsecase(ctx, self.farm_repository, member)
         await chicken_vault_usecase.chicken_vault()
+
+    @hybrid_command(name="addvault", aliases=["av"], description="🐔 Add a chicken to your vault!")
+    async def add_vault(self, ctx: EggsauceContext, position: int) -> None:
+        add_vault_usecase = AddVaultUsecase(
+            ctx,
+            self.farm_cache,
+            self.farm_repository,
+            position,
+        )
+        await add_vault_usecase.add_vault()
 
     async def cog_before_invoke(self, ctx: EggsauceContext) -> None:  # type: ignore
         await ensure_author_farm(
