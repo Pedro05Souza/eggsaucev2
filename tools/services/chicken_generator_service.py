@@ -26,12 +26,11 @@ class ChickenGeneratorService:
             for rarity, probability in ChickenRaritiesProbabilities.__members__.items():
                 current_sum += probability.value
                 if roll < current_sum:
-                    position = len(chicken_rarities_generated) + 1
                     rarity_emoji = ChickenRaritiesEmojis[rarity].value
                     chicken_name = "Chicken"
                     chicken_price = int(BASE_CHICKEN_PRICE * ChickenPricesMultiplier[rarity].value)
                     chicken_rarities_generated.append(
-                        GeneratedChicken(position, rarity, rarity_emoji, chicken_name, chicken_price)
+                        GeneratedChicken(rarity, rarity_emoji, chicken_name, chicken_price)
                     )
                     break
         return chicken_rarities_generated

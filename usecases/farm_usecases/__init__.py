@@ -9,3 +9,4 @@ from .gift_chicken_usecase import *
 from .rename_chicken_usecase import *
 from .chicken_vault_usecase import *
 from .add_vault_usecase import *
+from .remove_vault_usecase import *

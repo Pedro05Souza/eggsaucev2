@@ -14,9 +14,9 @@ from tools.constants import (
     REASON_NO_PERMISSION,
     REASON_INSUFFICIENT_BALANCE,
     REASON_FARM_IS_FULL,
-    FARM_MAX_CHICKENS,
     MAX_GENERATED_CHICKENS,
     SECONDS_TO_FARM_ROLL,
+    MAX_VAULTED_CHICKENS,
     GeneratedChicken,
     farmers_dict,
 )
@@ -113,11 +113,11 @@ class ChickenView(View):
             max_values=1,
             options=[
                 SelectOption(
-                    label=f"{chicken.position} {chicken.rarity} {chicken.name} " + f"- {chicken.price} eggbux",
-                    value=str(chicken.position),
+                    label=f"{chicken.rarity} {chicken.name} " + f"- {chicken.price} eggbux",
+                    value=str(index),
                     emoji=chicken.emoji,
                 )
-                for chicken in self._chickens
+                for index, chicken in enumerate(self._chickens, start=1)
             ],
         )
 
@@ -130,9 +130,17 @@ class ChickenView(View):
         selected_position = int(interaction.data["values"][0])  # type: ignore
         selected_chicken = self._chickens[selected_position - 1]
 
-        if len(self._farm_entity.chickens) >= FARM_MAX_CHICKENS:
-            await self._ctx.handle_failed_interaction(interaction, REASON_FARM_IS_FULL)
-            return
+        add_to_vault = False
+
+        if len(self._farm_entity.chickens) >= self._farm_entity.actual_max_farm_size:
+
+            vaulted_chickens = await self._farm_repository.get_vaulted_chickens(self._farm_entity.discord_user_id)
+
+            if len(vaulted_chickens) >= MAX_VAULTED_CHICKENS:
+                await self._ctx.handle_failed_interaction(interaction, REASON_FARM_IS_FULL)
+                return
+
+            add_to_vault = True
 
         player_entity = await self._player_repository.get_by_discord_user_id(self._farm_entity.discord_user_id)
 
@@ -144,10 +152,34 @@ class ChickenView(View):
             await interaction.message.edit(view=self)  # type: ignore
             return
 
-        chicken_entity = await generated_chicken_to_chicken_entity(selected_chicken, "farm")
-        self._farm_entity.chickens.append(chicken_entity)
+        chicken_entity = await generated_chicken_to_chicken_entity(
+            selected_chicken, "farm" if not add_to_vault else "vault"
+        )
+
+        if not add_to_vault:
+            self._farm_entity.chickens.append(chicken_entity)
+
+        async with self._farm_cache_service.remove_if_exception(self._farm_entity.discord_user_id):
+            self._farm_entity.chickens.sort(key=lambda chicken: chicken.rarity)
+            await self._farm_repository.upsert_farm_chicken(self._farm_entity.id, chicken_entity)
+
+        await self._player_repository.update_player(player_entity)
+        await self._ctx.handle_interaction_response(
+            interaction,
+            embed={
+                "description": f"✅ **{interaction.user.display_name}** has successfully bought a"
+                + f" {selected_chicken.emoji} **{selected_chicken.rarity} {selected_chicken.name}**"
+                + f" for **{selected_chicken.price}** eggbux!"
+            },
+            ephemeral=False,
+        )
         player_entity.balance -= selected_chicken.price
         self._chickens.remove(selected_chicken)
+
+        if not self._chickens:
+            await interaction.message.delete(delay=1) # type: ignore
+            return
+
         self.clear_items()
         self._select = self.select_maker()
         self.add_item(self._select)
@@ -162,20 +194,4 @@ class ChickenView(View):
                 ),
             },
         )
-
-        async with self._farm_cache_service.remove_if_exception(self._farm_entity.discord_user_id):
-            self._farm_entity.chickens.sort(key=lambda chicken: chicken.rarity)
-            await self._farm_repository.upsert_farm_chicken(self._farm_entity.id, chicken_entity)
-
-        await self._player_repository.update_player(player_entity)
-
         await interaction.message.edit(view=self, embed=embed)  # type: ignore
-        await self._ctx.handle_interaction_response(
-            interaction,
-            embed={
-                "description": f"✅ **{interaction.user.display_name}** has successfully bought a"
-                + f"{selected_chicken.emoji} **{selected_chicken.rarity} {selected_chicken.name}**"
-                + f" for **{selected_chicken.price}** eggbux!"
-            },
-            ephemeral=False,
-        )

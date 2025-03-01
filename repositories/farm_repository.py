@@ -1,10 +1,14 @@
-from typing import Optional
+from __future__ import annotations
+from typing import Optional, TYPE_CHECKING
 from datetime import datetime
 from tortoise.query_utils import Prefetch
 from entities import FarmEntity, ChickenEntity
 from models import Farm, Player, Chicken
 from .mappers import farm_model_to_entity, chicken_model_to_entity
 from ._repository_meta import RepositoryMeta
+
+if TYPE_CHECKING:
+    from entities import ChickenLocationType
 
 __all__ = ["FarmRepository"]
 
@@ -74,5 +78,5 @@ class FarmRepository(metaclass=RepositoryMeta):
 
         return chicken_entities
 
-    async def add_chicken_to_vault(self, chicken_id: str) -> None:
-        await Chicken.filter(id=chicken_id).update(location_status="vault")
+    async def change_chicken_location_status(self, chicken_id: str, location: "ChickenLocationType") -> None:
+        await Chicken.filter(id=chicken_id).update(location_status=location)

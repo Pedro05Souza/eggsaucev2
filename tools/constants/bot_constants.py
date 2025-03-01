@@ -21,7 +21,7 @@ MIN_AMOUNT_SPIN: Final[int] = 100
 MIN_FARM_NAME_CHARACTERS: Final[int] = 3
 
 # Cooldowns
-REGULAR_COMMAND_COOLDOWN: Final[int] = 5
+REGULAR_COMMAND_COOLDOWN: Final[int] = 3
 SPAM_COMMAND_COOLDOWN: Final[int] = 1
 
 # Time thresholds (in hours)

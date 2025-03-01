@@ -42,7 +42,7 @@ class AddVaultUsecase:
         chicken_to_vault = farm_entity.chickens.pop(self._position)
 
         async with self._farm_cache.remove_if_exception(self._ctx.author.id):
-            await self._farm_repository.add_chicken_to_vault(chicken_to_vault.id)
+            await self._farm_repository.change_chicken_location_status(chicken_to_vault.id, "vault")
 
         await self._ctx.send_bot_embed(
             embed_params={"description": f"✅ **{chicken_to_vault.name}** has successfully been vaulted."}
