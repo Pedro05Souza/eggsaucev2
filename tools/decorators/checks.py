@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from discord import User
 from discord.ext.commands import check
-from tools.constants import get_env_var
+from tools.constants import get_list_env_var
 
 
 if TYPE_CHECKING:
@@ -19,9 +19,9 @@ __all__ = [
 
 def dev_only():
     async def predicate(ctx: " EggsauceContext") -> bool:
-        dev_ids = get_env_var("LIST_DEVELOPER_IDS")
+        dev_ids = get_list_env_var("LIST_DEVELOPER_IDS")
 
-        if ctx.author.id not in dev_ids:  # type: ignore
+        if ctx.author.id not in dev_ids:
             return False
 
         return True
