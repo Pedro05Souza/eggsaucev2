@@ -1,7 +1,6 @@
-from typing import Literal
 from uuid import uuid4
 from random import randint, uniform
-from entities import ChickenEntity
+from entities import ChickenEntity, ChickenLocationType
 from .constants import (
     chicken_quality_rates,
     DELTA_EGG_VALUE,
@@ -23,6 +22,7 @@ __all__ = [
     "calculate_plot_price",
     "calculate_corn_limit",
     "calculate_corn_limit_price",
+    "format_chickens",
 ]
 
 
@@ -72,19 +72,14 @@ def calculate_corn_limit_price(corn_limit_upgrades: int) -> int:
 
 
 async def generated_chicken_to_chicken_entity(
-    generated_chicken: GeneratedChicken, location_status: Literal["farm", "bench", "market", "redeemables"]
+    generated_chicken: GeneratedChicken, location_status: ChickenLocationType
 ) -> ChickenEntity:
     """Creates a new chicken entity from a generated chicken.
 
     Args:
         generated_chicken (GeneratedChicken): The generated chicken.
-        location_status (Literal["farm", "bench", "market", "redeemables"]): The location status of the chicken.
-
-        * farm: The chicken is being added to the farm.
-        * bench: The chicken is being added to
-        * market: The chicken is being added to the market.
-        * redeemables: The chicken is being added to the redeemables.
-
+        location_status: The location status of the chicken.
+        
     Returns:
         ChickenEntity: The new chicken entity.
     """
@@ -106,4 +101,19 @@ async def generated_chicken_to_chicken_entity(
         actual_egg_production=int(total_egg_production * quality),
         food_consumption=await calculate_food_consuption(chicken_index),
         can_be_updated=False,
+    )
+
+
+async def format_chickens(chickens: list["ChickenEntity"]) -> str:
+
+    if len(chickens) == 0:
+        return "No chickens in the farm yet!"
+
+    return "\n\n".join(
+        [
+            f"**{index}.**{chicken.emoji} - **{chicken.rarity} {chicken.name}**"
+            + f"\n💖 Happiness: **{chicken.happiness}%**"
+            + f"\n📊 Quality: **{get_quality_text(chicken.quality)}**"
+            for index, chicken in enumerate(chickens, start=1)
+        ]
     )

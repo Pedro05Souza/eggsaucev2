@@ -11,6 +11,7 @@ from usecases import (
     FarmProfitUsecase,
     GiftChickenUsecase,
     RenameChickenUsecase,
+    ChickenVaultUsecase,
 )
 from repositories import (
     FarmRepository,
@@ -87,7 +88,7 @@ class FarmController(
         chicken_info_usecase = InspectChickenUseCase(ctx, self.farm_cache, position)
         await chicken_info_usecase.inspect_chicken()
 
-    @hybrid_command(name="feedallchicken", aliases=["fac"], description="🐔 Feed all your chickens!")
+    @hybrid_command(name="feedall", aliases=["fa"], description="🐔 Feed all your chickens!")
     async def feed_all_chicken(self, ctx: EggsauceContext) -> None:
         feed_all_chicken_usecase = FeedAllChickenUsecase(
             ctx,
@@ -116,6 +117,11 @@ class FarmController(
     async def rename_chicken(self, ctx: EggsauceContext, position: int, new_name: str) -> None:
         rename_chicken_usecase = RenameChickenUsecase(ctx, self.farm_cache, self.farm_repository, position, new_name)
         await rename_chicken_usecase.rename_chicken()
+
+    @hybrid_command(name="vault", aliases=["v"], description="🐔 View your vaulted chickens!")
+    async def chicken_vault(self, ctx: EggsauceContext, member: Optional[Member] = None) -> None:
+        chicken_vault_usecase = ChickenVaultUsecase(ctx, self.farm_repository, member)
+        await chicken_vault_usecase.chicken_vault()
 
     async def cog_before_invoke(self, ctx: EggsauceContext) -> None:  # type: ignore
         await ensure_author_farm(

@@ -2,7 +2,7 @@ from tortoise.exceptions import NoValuesFetched
 from entities import FarmEntity
 from models import Farm
 from tools.constants import FARM_MAX_CHICKENS, farmers_dict
-from ._chicken_to_entity import chicken_model_to_entity
+from .chicken_to_entity import chicken_model_to_entity
 
 __all__ = ["farm_model_to_entity"]
 
