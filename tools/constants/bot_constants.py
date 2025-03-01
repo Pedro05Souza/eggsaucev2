@@ -33,6 +33,7 @@ CORN_HOURS_THRESHOLD: Final[int] = 24
 MAX_GENERATED_CHICKENS: Final[int] = 8
 FARM_MAX_CHICKENS: Final[int] = 8
 BENCH_MAX_CHICKENS: Final[int] = 5
+MAX_VAULTED_CHICKENS: Final[int] = 5
 
 # Constants used in formulas
 DELTA_EGG_VALUE: Final[int] = 10
