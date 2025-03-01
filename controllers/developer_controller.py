@@ -4,7 +4,7 @@ from tools import dev_only, get_logger
 from eggsauce_context import EggsauceContext
 
 
-class DeveloperController(Cog, name="Developer", command_attrs=dict(hidden=True)):
+class DeveloperController(Cog, name="Developer", command_attrs={"hidden": True}):
 
     def __init__(self, bot: Bot) -> None:
         self.bot = bot
