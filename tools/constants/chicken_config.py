@@ -1,10 +1,10 @@
 from enum import Enum
 from typing import NamedTuple, TypedDict
 
+
 class ChickenLocationStatus(Enum):
     FARM = "farm"
-    BENCH = "bench"
-    MARKET = "market"
+    VAULT = "vault"
     REDEEMABLES = "redeemables"
 
 
@@ -166,6 +166,7 @@ class ChickenPricesMultiplier(Enum):
     ASCENDED = 16
     BETA = 17
     ETHEREAL = 250
+
 
 CHICKEN_RARITIES = [
     "DEAD",

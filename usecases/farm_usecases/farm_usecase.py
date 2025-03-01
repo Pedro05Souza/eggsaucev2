@@ -2,7 +2,7 @@ from typing import Optional
 from discord import Member
 from repositories import FarmRepositoryProtocol, PlayerRepositoryProtocol
 from tools.constants import REASON_INVALID_USER
-from tools import get_quality_text, FarmCacheService, get_random_tip_message, update_away_farm
+from tools import format_chickens, FarmCacheService, get_random_tip_message, update_away_farm
 from eggsauce_context import EggsauceContext
 
 __all__ = ["FarmUseCase"]
@@ -49,16 +49,7 @@ class FarmUseCase:
             f"{farm_entity.farmer + ' Farmer' if farm_entity.farmer else 'No farmer'}"
         )
 
-        farm_chickens = "\n\n".join(
-            [
-                f"**{index}.**{chicken.emoji} - **{chicken.rarity} {chicken.name}**"
-                + f"\n💖 Happiness: **{chicken.happiness}%**"
-                + f"\n📊 Quality: **{get_quality_text(chicken.quality)}**"
-                for index, chicken in enumerate(farm_entity.chickens, start=1)
-            ]
-            if farm_entity.chickens
-            else ["No chickens in the farm yet!"]
-        )
+        farm_chickens = await format_chickens(farm_entity.chickens)
 
         if updatable_farm_description:
             farm_chickens += f"\n\n{updatable_farm_description}"

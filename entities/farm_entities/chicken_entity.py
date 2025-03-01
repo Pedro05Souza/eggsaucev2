@@ -24,7 +24,7 @@ class ChickenEntity(BaseEntity):
     quality: float
     rarity: str
     price: int
-    location_status: Literal["farm", "bench", "market", "redeemables"]
+    location_status: Literal["farm", "vault", "redeemables"]
     name: str
     happiness: int
     emoji: str

@@ -7,3 +7,4 @@ from .feed_all_chicken_usecase import *
 from .farm_profit_usecase import *
 from .gift_chicken_usecase import *
 from .rename_chicken_usecase import *
+from .chicken_vault_usecase import *

@@ -3,7 +3,7 @@ from datetime import datetime
 from tortoise.query_utils import Prefetch
 from entities import FarmEntity, ChickenEntity
 from models import Farm, Player, Chicken
-from .mappers import farm_model_to_entity
+from .mappers import farm_model_to_entity, chicken_model_to_entity
 from ._repository_meta import RepositoryMeta
 
 __all__ = ["FarmRepository"]
@@ -67,3 +67,9 @@ class FarmRepository(metaclass=RepositoryMeta):
 
     async def change_chicken_ownership(self, chicken_id: str, new_farm_id: str) -> None:
         await Chicken.filter(id=chicken_id).update(farm_id=new_farm_id)
+
+    async def get_vaulted_chickens(self, discord_user_id: int) -> list[ChickenEntity]:
+        chickens = await Chicken.filter(farm__player__discord_user_id=discord_user_id, location_status="vault")
+        chicken_entities = [await chicken_model_to_entity(chicken) for chicken in chickens]
+
+        return chicken_entities
