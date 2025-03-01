@@ -73,6 +73,7 @@ class GiftChickenUsecase:
                 return
 
             chicken_to_gift = author_farm_entity.chickens.pop(self._position)
+            chicken_to_gift.can_be_updated = False
             member_farm_entity.chickens.append(chicken_to_gift)
 
             async with self._farm_cache.remove_if_exception(self._ctx.author.id, self._member.id):

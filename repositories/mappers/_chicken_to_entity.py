@@ -20,4 +20,5 @@ async def chicken_model_to_entity(chicken: Chicken) -> ChickenEntity:
         total_egg_production=total_egg_production,
         actual_egg_production=int(total_egg_production * chicken.quality),
         food_consumption=await calculate_food_consuption(chicken_index),
+        can_be_updated=True
     )
