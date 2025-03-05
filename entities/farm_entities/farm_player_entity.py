@@ -2,7 +2,7 @@ from typing import Optional
 from dataclasses import dataclass
 from datetime import datetime
 from entities.farm_entities.chicken_entity import ChickenEntity
-from .._entity_base import BaseEntity
+from .._base_entity import BaseEntity
 from ..types import FarmerType
 
 __all__ = ["FarmEntity"]

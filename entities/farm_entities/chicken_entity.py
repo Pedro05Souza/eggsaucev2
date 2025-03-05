@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from ..types import ChickenLocationType
-from .._entity_base import BaseEntity
+from .._base_entity import BaseEntity
 
 __all__ = ["ChickenEntity"]
 
@@ -32,3 +32,6 @@ class ChickenEntity(BaseEntity):
     actual_egg_production: int
     food_consumption: int
     can_be_updated: bool
+
+    def format_chicken(self) -> str:
+        return f"{self.emoji} **{self.rarity} {self.name}**"

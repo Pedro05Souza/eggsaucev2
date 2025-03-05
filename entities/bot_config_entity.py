@@ -1,6 +1,6 @@
 from typing import Set
 from dataclasses import dataclass
-from ._entity_base import BaseEntity
+from ._base_entity import BaseEntity
 
 __all__ = ["BotConfigEntity"]
 
