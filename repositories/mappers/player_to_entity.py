@@ -17,4 +17,8 @@ def player_model_to_entity(player: Player) -> PlayerEntity:
         bank_balance=bank_player.balance,
         bank_capacity=bank_player.upgrade_level * AMOUNT_PER_BANK_UPGRADE,
         upgrade_level=bank_player.upgrade_level,
+        current_mmr=player.current_mmr,
+        highest_mmr=player.highest_mmr,
+        wins=player.wins,
+        losses=player.losses,
     )
