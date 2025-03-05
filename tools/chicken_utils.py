@@ -23,6 +23,7 @@ __all__ = [
     "calculate_corn_limit",
     "calculate_corn_limit_price",
     "format_chickens",
+    "sort_chickens",
 ]
 
 
@@ -71,6 +72,10 @@ def calculate_corn_limit_price(corn_limit_upgrades: int) -> int:
     return BASE_UPGRADE_CORNFIELD_LIMIT_PRICE * (corn_limit_upgrades**2)
 
 
+async def sort_chickens(chickens: list["ChickenEntity"]) -> list["ChickenEntity"]:
+    return sorted(chickens, key=lambda chicken: -CHICKEN_RARITIES.index(chicken.rarity))
+
+
 async def generated_chicken_to_chicken_entity(
     generated_chicken: GeneratedChicken, location_status: ChickenLocationType
 ) -> ChickenEntity:
@@ -79,7 +84,7 @@ async def generated_chicken_to_chicken_entity(
     Args:
         generated_chicken (GeneratedChicken): The generated chicken.
         location_status: The location status of the chicken.
-        
+
     Returns:
         ChickenEntity: The new chicken entity.
     """
