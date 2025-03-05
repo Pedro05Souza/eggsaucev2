@@ -7,6 +7,7 @@ BASE_CHICKEN_PRICE: Final[int] = 800
 BASE_UPGRADE_CORNFIELD_LIMIT_PRICE: Final[int] = 1000
 BASE_FARMER_PRICE: Final[int] = 5000
 BASE_PLOT_PRICE: Final[int] = 1000
+BASE_MMR_CHANGE: Final[int] = 20
 
 # Time intervals for game events (in seconds)
 SECONDS_TO_SALARY_DROP: Final[int] = 3600
