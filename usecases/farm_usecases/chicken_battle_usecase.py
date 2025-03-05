@@ -92,7 +92,7 @@ class ChickenBattleUsecase:
 
         winner = author if len(author_alive_chickens) > 0 else opponent
         loser = author if len(author_alive_chickens) == 0 else opponent
-        
+
         await self.on_battle_end(winner, loser)
 
     async def _matchups_handler(
@@ -241,7 +241,6 @@ class ChickenBattleUsecase:
 
             await author.message.edit(embed=embed)
             await opponent.message.edit(embed=embed)
-            return
 
     async def on_battle_end(self, winner: MatchMakingUser, loser: MatchMakingUser) -> None:
         """Handles the end of a battle.

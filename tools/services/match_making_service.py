@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import List, TYPE_CHECKING, DefaultDict, Set, Optional
 from collections import defaultdict
 from dataclasses import dataclass
-from random import randint, random
+from random import randint, random, choice
 from math import ceil
 import asyncio
 from discord import Message
@@ -32,7 +32,7 @@ class MatchMakingUser:
         if isinstance(self, MatchMakingPlayer):
             return self.ctx.author.name
 
-        elif isinstance(self, MatchMakingBot):
+        if isinstance(self, MatchMakingBot):
             return self.name
 
         raise ValueError("Invalid MatchMakingUser instance")
@@ -52,6 +52,51 @@ class MatchMakingPlayer(MatchMakingUser):
 @dataclass
 class MatchMakingBot(MatchMakingUser):
     name: str
+
+    @classmethod
+    async def generate_syllabe(cls) -> str:
+        """
+        Generates a syllabe for the bot name.
+
+        Returns:
+            str
+        """
+        pattern = [
+            "CVC",
+            "VC",
+            "CV",
+            "V",
+            "C",
+            "CCV",
+            "VCC",
+            "CVV",
+            "VV",
+            "CCVC",
+        ]
+
+        syllable = ""
+
+        for char in pattern:
+            if char == "C":
+                syllable += choice("bdfghjklmnpqrstvwxyz")
+            elif char == "V":
+                syllable += choice("aeiou")
+        return syllable
+
+    @classmethod
+    async def name_maker(cls) -> str:
+        """
+        Generates a name for the bot.
+
+        Returns:
+            str
+        """
+        name = ""
+        for _ in range(randint(2, 3)):
+            name += await MatchMakingBot.generate_syllabe()
+        if randint(0, 1):
+            name += str(randint(0, 999))
+        return name.capitalize() if randint(0, 1) else name
 
     @classmethod
     async def bot_maker_factory(cls, player_mmr: int) -> MatchMakingBot:
@@ -88,16 +133,21 @@ class MatchMakingBot(MatchMakingUser):
         generated_chickens: list[GeneratedChicken] = []
 
         for rarity in bot_chicken_deck:
-            rarity_emoji = ChickenRaritiesEmojis[rarity].value
-            chicken_name = "Chicken"
-            chicken_price = int(ChickenPricesMultiplier[rarity].value)
-            generated_chickens.append(GeneratedChicken(rarity, rarity_emoji, chicken_name, chicken_price))
+            generated_chickens.append(
+                GeneratedChicken(
+                    rarity, ChickenRaritiesEmojis[rarity].value, "Chicken", int(ChickenPricesMultiplier[rarity].value)
+                )
+            )
 
         chicken_entities = await asyncio.gather(
             *(generated_chicken_to_chicken_entity(chicken, "farm") for chicken in generated_chickens)
         )
 
-        return cls(chicken_deck=chicken_entities, current_mmr=randint(player_mmr - 100, player_mmr + 100), name="Bot")
+        return cls(
+            chicken_deck=chicken_entities,
+            current_mmr=randint(player_mmr - 100, player_mmr + 100),
+            name=await cls.name_maker(),
+        )
 
 
 class MatchMakingService:

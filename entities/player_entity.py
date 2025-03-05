@@ -1,6 +1,6 @@
 from datetime import datetime
 from dataclasses import dataclass
-from ._base_entity import BaseEntity
+from .base_entity import BaseEntity
 
 __all__ = ["PlayerEntity"]
 

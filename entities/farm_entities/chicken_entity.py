@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from ..types import ChickenLocationType
-from .._base_entity import BaseEntity
+from ..base_entity import BaseEntity
 
 __all__ = ["ChickenEntity"]
 

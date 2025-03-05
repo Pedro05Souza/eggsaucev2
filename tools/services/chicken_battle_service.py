@@ -24,7 +24,8 @@ class ChickenBattleService:
             second_chicken (ChickenEntity): The second chicken to battle.
 
         Returns:
-            tuple[int, float, float]: A tuple containing the winner flag, the win rate of the first chicken and the win rate of the second chicken.
+            tuple[int, float, float]: A tuple containing the winner flag, 
+            the win rate of the first chicken and the win rate of the second chicken.
             The winner flag is True if the first chicken wins, False otherwise.
         """
         win_rate_first_chicken = 0.5
