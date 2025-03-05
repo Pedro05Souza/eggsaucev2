@@ -14,6 +14,7 @@ from usecases import (
     ChickenVaultUsecase,
     AddVaultUsecase,
     RemoveVaultUsecase,
+    ChickenBattleUsecase,
 )
 from repositories import (
     FarmRepository,
@@ -145,6 +146,16 @@ class FarmController(
             farm_position,
         )
         await remove_vault_usecase.remove_vault()
+
+    @hybrid_command(name="battle", aliases=["b"], description="🐔 Battle a chicken against another player!")
+    async def chicken_battle(self, ctx: EggsauceContext) -> None:
+        chicken_battle_usecase = ChickenBattleUsecase(
+            ctx,
+            self.farm_repository,
+            self.farm_cache,
+            self.player_repository,
+        )
+        await chicken_battle_usecase.queue()
 
     async def cog_before_invoke(self, ctx: EggsauceContext) -> None:  # type: ignore
         await ensure_author_farm(
