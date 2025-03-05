@@ -45,5 +45,5 @@ class AddVaultUsecase:
             await self._farm_repository.change_chicken_location_status(chicken_to_vault.id, "vault")
 
         await self._ctx.send_bot_embed(
-            embed_params={"description": f"✅ **{chicken_to_vault.name}** has successfully been vaulted."}
+            embed_params={"description": f"✅ **{chicken_to_vault.format_chicken()}** has successfully been vaulted."}
         )
