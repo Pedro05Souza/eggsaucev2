@@ -5,8 +5,15 @@ import asyncio
 from math import sqrt
 from discord import Embed
 from tools import get_random_tip_message
-from tools.constants import BASE_MMR_CHANGE
-from tools.services import MatchMakingService, ChickenBattleService, MatchMakingPlayer, MatchMakingBot, MatchMakingUser
+from tools.constants import BASE_MMR_CHANGE, REASON_USER_IS_ALREADY_IN_EVENT
+from tools.services import (
+    MatchMakingService,
+    ChickenBattleService,
+    MatchMakingPlayer,
+    MatchMakingBot,
+    MatchMakingUser,
+    ActionGuardService,
+)
 
 if TYPE_CHECKING:
     from repositories import FarmRepositoryProtocol, PlayerRepositoryProtocol
@@ -34,31 +41,36 @@ class ChickenBattleUsecase:
         self._farm_entity = None
 
     async def queue(self) -> None:
-        self._player_entity = await self._player_repository.get_or_create(self._ctx.author.id)
-        self._farm_entity = self._farm_cache.get_or_raise(self._ctx.author.id)
 
-        match_making_player = MatchMakingPlayer(
-            discord_user_id=self._ctx.author.id,
-            chicken_deck=self._farm_entity.chickens,
-            current_mmr=self._player_entity.current_mmr,
-            ctx=self._ctx,
-        )
+        if ActionGuardService.is_player_discord_id_guarded(self._ctx.author.id):
+            return await self._ctx.send_failed_embed(REASON_USER_IS_ALREADY_IN_EVENT)
 
-        embed = self._ctx.embed_builder(
-            embed_params={
-                "description": "🔍 You have joined the matchmaking queue! Please wait while we find an opponent for you."
-            },
-            footer_text=get_random_tip_message(),
-        )
+        async with ActionGuardService.guard_players(self._ctx.author.id):
+            self._player_entity = await self._player_repository.get_or_create(self._ctx.author.id)
+            self._farm_entity = self._farm_cache.get_or_raise(self._ctx.author.id)
 
-        message = await self._ctx.send(embed=embed)
-        match_making_player.message = message
-        opponent = await MatchMakingService.match_finder(match_making_player)
+            match_making_player = MatchMakingPlayer(
+                discord_user_id=self._ctx.author.id,
+                chicken_deck=self._farm_entity.chickens,
+                current_mmr=self._player_entity.current_mmr,
+                ctx=self._ctx,
+            )
 
-        if opponent is None:
-            return
+            embed = self._ctx.embed_builder(
+                embed_params={
+                    "description": "🔍 You have joined the matchmaking queue! Please wait while we find an opponent for you."
+                },
+                footer_text=get_random_tip_message(),
+            )
 
-        await self.battle(match_making_player, opponent)
+            message = await self._ctx.send(embed=embed)
+            match_making_player.message = message
+            opponent = await MatchMakingService.match_finder(match_making_player)
+
+            if opponent is None:
+                return
+
+            await self.battle(match_making_player, opponent)
 
     async def battle(self, author: MatchMakingPlayer, opponent: MatchMakingUser) -> None:
         author_alive_chickens = author.chicken_deck.copy()
