@@ -3,7 +3,7 @@ from typing import List, TYPE_CHECKING, DefaultDict, Set, Optional
 from collections import defaultdict
 from dataclasses import dataclass
 from random import randint, random, choice
-from math import ceil
+from math import ceil, floor
 import asyncio
 from discord import Message
 from tools.chicken_utils import generated_chicken_to_chicken_entity
@@ -168,10 +168,11 @@ class MatchMakingService:
     @classmethod
     async def match_finder(cls, player: MatchMakingPlayer, retries: int = 5) -> Optional[MatchMakingUser]:
         delay = 1
-        base_mmr = round(player.current_mmr, -2)
+        base_mmr = floor(player.current_mmr / 100) * 100
+
+        pool = cls._matchmaking_pools[base_mmr]
 
         await cls._add_player_to_pool(player)
-        pool = cls._matchmaking_pools[base_mmr]
 
         for _ in range(retries):
 
