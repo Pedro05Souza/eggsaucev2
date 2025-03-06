@@ -58,7 +58,8 @@ class ChickenBattleUsecase:
 
             embed = self._ctx.embed_builder(
                 embed_params={
-                    "description": "🔍 You have joined the matchmaking queue! Please wait while we find an opponent for you."
+                    "description": "🔍 You have joined the matchmaking queue!"
+                    + "Please wait while we find an opponent for you."
                 },
                 footer_text=get_random_tip_message(),
             )
