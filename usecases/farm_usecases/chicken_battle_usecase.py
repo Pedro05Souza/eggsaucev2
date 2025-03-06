@@ -332,3 +332,7 @@ class ChickenBattleUsecase:
             return self._player_entity
 
         return await self._player_repository.get_or_create(user.discord_user_id)
+
+    async def distribute_rewards(self) -> None:
+        # TODO: Implement reward distribution
+        pass
