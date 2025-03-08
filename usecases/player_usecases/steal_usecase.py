@@ -30,6 +30,7 @@ class StealUsecase:
 
     @atomic()
     async def steal(self) -> None:
+        # TODO: make this command paid
         if self._target.id == self._ctx.author.id:
             return await self._ctx.send_failed_embed(REASON_CANT_ACTION_SELF)
 
