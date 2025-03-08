@@ -1,9 +1,17 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from datetime import datetime, timedelta, timezone
+from math import floor
 from random import choice
 from logging import Logger, config, getLogger
-from .constants import LOGGING_CONFIG, tips, get_titles_salaries, SECONDS_TO_CHICKEN_DROP, SECONDS_TO_CORNFIELD_DROP
+from .constants import (
+    LOGGING_CONFIG,
+    tips,
+    get_titles_salaries,
+    SECONDS_TO_CHICKEN_DROP,
+    SECONDS_TO_CORNFIELD_DROP,
+    RANKS_DICT,
+)
 
 if TYPE_CHECKING:
     from repositories import FarmRepositoryProtocol, CornfieldRepositoryProtocol, PlayerRepositoryProtocol
@@ -17,7 +25,8 @@ __all__ = [
     "deduct_from_balance_and_bank",
     "get_salary_from_title",
     "get_random_tip_message",
-    'ensure_author_farm'
+    "ensure_author_farm",
+    "get_player_rank",
 ]
 
 
@@ -70,3 +79,9 @@ async def ensure_author_farm(
         await cornfield_repository.create_cornfield(ctx.author.id, next_corn_drop_time)
 
     farm_cache.add(ctx.author.id, farm_entity)
+
+
+async def get_player_rank(mmr: int) -> str:
+    parsed_mmr = floor(mmr / 200) * 200
+
+    return RANKS_DICT[parsed_mmr]
