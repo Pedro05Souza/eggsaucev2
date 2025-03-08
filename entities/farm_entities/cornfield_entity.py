@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from .._entity_base import BaseEntity
+from ..base_entity import BaseEntity
 
 __all__ = ["CornfieldEntity"]
 

@@ -66,7 +66,7 @@ class RemoveVaultUsecase:
         await self._farm_repository.change_chicken_location_status(farm_chicken.id, "vault")
         await self._ctx.send_bot_embed(
             embed_params={
-                "description": f"✅ **{chicken_to_farm.name}** has been moved to"
+                "description": f"✅ **{chicken_to_farm.format_chicken()}** has been moved to"
                 + f" your farm, replacing **{farm_chicken.name}**."
             }
         )
