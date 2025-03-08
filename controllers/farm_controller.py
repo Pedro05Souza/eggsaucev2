@@ -187,6 +187,20 @@ class FarmController(
         battle_info_usecase = BattleInfoUsecase(ctx, self.player_repository, member)
         await battle_info_usecase.battle_info()
 
+    @hybrid_command(
+        name="friendlybattle", aliases=["fb"], description="🐔 Battle against a friend without losing your rank"
+    )
+    async def friendly_battle(self, ctx: EggsauceContext, member: Member) -> None:
+        friendly_battle_usecase = ChickenBattleUsecase(
+            ctx,
+            self.farm_repository,
+            self.farm_cache,
+            self.player_repository,
+            member,
+        )
+
+        await friendly_battle_usecase.queue()
+
     async def cog_before_invoke(self, ctx: EggsauceContext) -> None:  # type: ignore
         await ensure_author_farm(
             ctx,

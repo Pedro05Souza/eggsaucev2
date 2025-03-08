@@ -25,18 +25,9 @@ __all__ = ["MatchMakingPlayer", "MatchMakingBot", "MatchMakingService", "MatchMa
 
 @dataclass
 class MatchMakingUser:
+    name: str
     chicken_deck: List["ChickenEntity"]
     current_mmr: int
-
-    def get_user_name(self) -> str:
-        if isinstance(self, MatchMakingPlayer):
-            return self.ctx.author.name
-
-        if isinstance(self, MatchMakingBot):
-            return self.name
-
-        raise ValueError("Invalid MatchMakingUser instance")
-
 
 @dataclass
 class MatchMakingPlayer(MatchMakingUser):
@@ -51,8 +42,6 @@ class MatchMakingPlayer(MatchMakingUser):
 
 @dataclass
 class MatchMakingBot(MatchMakingUser):
-    name: str
-
     @classmethod
     async def generate_syllabe(cls) -> str:
         """
@@ -102,7 +91,7 @@ class MatchMakingBot(MatchMakingUser):
     async def bot_maker_factory(cls, player_mmr: int) -> MatchMakingBot:
         player_mmr = min(player_mmr, 1000)
 
-        chicken_deck_size = min(FARM_MAX_CHICKENS, randint(2, max(2, ceil(player_mmr / 100))))
+        chicken_deck_size = min(FARM_MAX_CHICKENS, randint(2, max(2, ceil(player_mmr / 50))))
 
         bot_rarity_deck_pool = CHICKEN_RARITIES[1:]  # Exclude the dead chicken rarity
         most_probable_chicken = player_mmr * len(bot_rarity_deck_pool) // 1000

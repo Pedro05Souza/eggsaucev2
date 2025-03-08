@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Optional, Dict
 from collections import defaultdict
 import asyncio
 from math import sqrt
-from discord import Embed
+from discord import Embed, Member
 from tortoise.transactions import atomic
 from tools import get_random_tip_message, generated_chicken_to_chicken_entity
 from tools.constants import (
@@ -15,6 +15,7 @@ from tools.constants import (
     ChickenRaritiesEmojis,
     ChickenPricesMultiplier,
     BASE_CHICKEN_PRICE,
+    REASON_CANT_ACTION_SELF,
 )
 from tools.services import (
     MatchMakingService,
@@ -42,6 +43,7 @@ class ChickenBattleUsecase:
         farm_repository: FarmRepositoryProtocol,
         farm_cache: "FarmCacheService",
         player_repository: PlayerRepositoryProtocol,
+        friendly_battle_user: Optional[Member] = None,
     ):
         self._ctx = ctx
         self._farm_repository = farm_repository
@@ -49,13 +51,22 @@ class ChickenBattleUsecase:
         self._player_repository = player_repository
         self._player_entity = None
         self._farm_entity = None
+        self._friendly_battle_user = friendly_battle_user
+        self._is_friendly_battle = friendly_battle_user is not None
 
     async def queue(self) -> None:
+        discord_ids_to_guard = [self._ctx.author.id]
+
+        if self._is_friendly_battle is True and self._friendly_battle_user is not None:
+            discord_ids_to_guard.append(self._friendly_battle_user.id)
+
+            if ActionGuardService.is_player_discord_id_guarded(self._friendly_battle_user.id):
+                return await self._ctx.send_failed_embed(REASON_USER_IS_ALREADY_IN_EVENT)
 
         if ActionGuardService.is_player_discord_id_guarded(self._ctx.author.id):
             return await self._ctx.send_failed_embed(REASON_USER_IS_ALREADY_IN_EVENT)
 
-        async with ActionGuardService.guard_players(self._ctx.author.id):
+        async with ActionGuardService.guard_players(*discord_ids_to_guard):
             self._player_entity = await self._player_repository.get_or_create(self._ctx.author.id)
             self._farm_entity = self._farm_cache.get_or_raise(self._ctx.author.id)
 
@@ -67,24 +78,82 @@ class ChickenBattleUsecase:
                 chicken_deck=self._farm_entity.chickens,
                 current_mmr=self._player_entity.current_mmr,
                 ctx=self._ctx,
+                name=self._ctx.author.display_name,
             )
 
-            embed = self._ctx.embed_builder(
-                embed_params={
-                    "description": "🔍 You have joined the matchmaking queue!"
-                    + " Please wait while we find an opponent for you."
-                },
-                footer_text=get_random_tip_message(),
-            )
+            if self._is_friendly_battle is False:
+                embed = self._ctx.embed_builder(
+                    embed_params={
+                        "description": "🔍 You have joined the matchmaking queue!"
+                        + " Please wait while we find an opponent for you."
+                    },
+                    footer_text=get_random_tip_message(),
+                )
 
-            message = await self._ctx.send(embed=embed)
-            match_making_player.message = message
-            opponent = await MatchMakingService.match_finder(match_making_player)
+                message = await self._ctx.send(embed=embed)
+                match_making_player.message = message
+
+            opponent = await self._find_opponent_for_user(match_making_player)
+
+            # We do this so message dispatching works correctly with friendly battles
+
+            if isinstance(opponent, MatchMakingPlayer) and self._is_friendly_battle is True:
+                match_making_player.message = opponent.message
 
             if opponent is None:
                 return
 
             await self.battle(match_making_player, opponent)
+
+    async def _find_opponent_for_user(self, match_making_user: "MatchMakingPlayer") -> Optional[MatchMakingUser]:
+        """Finds an opponent for the user.
+
+        Returns:
+            MatchMakingUser: The opponent of the user.
+        """
+        if self._is_friendly_battle is True:
+            return await self._handle_friendly_match_opponent()
+
+        return await MatchMakingService.match_finder(match_making_user)
+
+    async def _handle_friendly_match_opponent(self) -> Optional[MatchMakingPlayer]:
+        if self._is_friendly_battle is True and self._friendly_battle_user is not None:
+
+            if self._friendly_battle_user.id == self._ctx.author.id:
+                return await self._ctx.send_failed_embed(REASON_CANT_ACTION_SELF)
+
+            has_confirmed, message = await self._ctx.confirmation_popup(
+                f"🔍 **{self._ctx.author.display_name}** has requested a friendly battle with you!",
+                member_to_confirm=self._friendly_battle_user,
+                ephemeral=False,
+                title=f"{self._friendly_battle_user.display_name}, you have a pending friendly battle request!",
+            )
+
+            if has_confirmed is False or has_confirmed is None:
+                return None
+
+            member_entity = await self._player_repository.get_by_discord_user_id(self._friendly_battle_user.id)
+
+            if member_entity is None:
+                raise ValueError("Member entity is None")
+
+            member_farm_entity = await self._farm_cache.get_or_fetch(member_entity.discord_user_id)
+
+            if member_farm_entity is None:
+                raise ValueError("Member farm entity is None")
+
+            if len(member_farm_entity.chickens) == 0:
+                return await self._ctx.send_failed_embed("Your friend needs to have chickens to battle!")
+
+            return MatchMakingPlayer(
+                chicken_deck=member_farm_entity.chickens,
+                current_mmr=member_entity.current_mmr,
+                discord_user_id=self._friendly_battle_user.id,
+                ctx=self._ctx,
+                has_match=True,
+                message=message,
+                name=self._friendly_battle_user.display_name,
+            )
 
     async def battle(self, author: MatchMakingPlayer, opponent: MatchMakingUser) -> None:
         author_alive_chickens = author.chicken_deck.copy()
@@ -104,7 +173,7 @@ class ChickenBattleUsecase:
             embed = self._ctx.embed_builder(
                 embed_params={
                     "description": embed_description,
-                    "title": f"⚔️ **{author.ctx.author.display_name}** vs **{opponent.get_user_name()}**",
+                    "title": f"⚔️ **{author.ctx.author.display_name}** vs **{opponent.name}**",
                 }
             )
 
@@ -142,13 +211,13 @@ class ChickenBattleUsecase:
 
                 embed_description += (
                     f"🥇 {author.ctx.author.display_name}'s {author_alive_chickens[i].format_chicken()} won"
-                    f" against {opponent.get_user_name()}'s {opponent_alive_chickens[i].format_chicken()}!\n"
-                    f"📊 Win rate: **{win_rate_author_pct}%** vs **{win_rate_opponent_pct}%**\n"
+                    f" against {opponent.name}'s {opponent_alive_chickens[i].format_chicken()}!\n"
+                    f"📊 Win rate: **{win_rate_author_pct}%** vs **{win_rate_opponent_pct}%**\n\n"
                 )
             else:
                 dead_chickens["author"].append(author_alive_chickens[i])
                 embed_description += (
-                    f"🥇 {opponent.get_user_name()}'s {opponent_alive_chickens[i].format_chicken()} won"
+                    f"🥇 {opponent.name}'s {opponent_alive_chickens[i].format_chicken()} won"
                     f" against {author.ctx.author.display_name}'s {author_alive_chickens[i].format_chicken()}!\n"
                     f"📊 Win rate: **{win_rate_opponent_pct}%** vs **{win_rate_author_pct}%**\n"
                 )
@@ -181,7 +250,7 @@ class ChickenBattleUsecase:
 
         if len(author_alive_chickens) < len(opponent_alive_chickens):
             extra_chickens = opponent_alive_chickens[len(author_alive_chickens) :]
-            name_to_format = opponent.get_user_name()
+            name_to_format = opponent.name
 
         return f"\n\n🐔 **{name_to_format}'s** extra chickens:\n\n" + "\n".join(
             [chicken.format_chicken() for chicken in extra_chickens]
@@ -274,6 +343,11 @@ class ChickenBattleUsecase:
             winner (MatchMakingUser): The winner of the battle.
             loser (MatchMakingUser): The loser of the battle.
         """
+
+        if self._is_friendly_battle is True:
+            await self._handle_friendly_match_battle_end(winner, loser)  # type: ignore
+            return
+
         mmr_gain = await self._calculate_mmr_change(winner, loser, has_won=True)
         chicken_gained = None
 
@@ -301,19 +375,33 @@ class ChickenBattleUsecase:
         if isinstance(loser, MatchMakingPlayer):
             loser_entity = await self._match_making_player_to_entity(loser)
             loser_entity.losses += 1
-            loser_entity.current_mmr -= min(mmr_loss, 0)
+            loser_entity.current_mmr -= mmr_loss
+            loser_entity.current_mmr = max(loser_entity.current_mmr, 0)
             await self._player_repository.update_player(loser_entity)
 
         embed_description = (
-            f"🎉 **{winner.get_user_name()}** has won the battle!\n\n"
-            f"🏆 **{winner.get_user_name()}** gained **{mmr_gain}** MMR\n"
-            f"🔻 **{loser.get_user_name()}** lost **{abs(mmr_loss)}** MMR"
+            f"🎉 **{winner.name}** has won the battle!\n\n"
+            f"🏆 **{winner.name}** gained **{mmr_gain}** MMR\n"
+            f"🔻 **{loser.name}** lost **{abs(mmr_loss)}** MMR"
         )
 
         if chicken_gained is not None:
             embed_description += (
-                f"\n🐔 **{winner.get_user_name()}** has ranked up and received a {chicken_gained.format_chicken()}"
+                f"\n🐔 **{winner.name}** has ranked up and received a {chicken_gained.format_chicken()}"
             )
+
+        embed = self._ctx.embed_builder(
+            embed_params={
+                "description": embed_description,
+                "title": "🏁 Battle results",
+            }
+        )
+
+        await self._message_dispatcher(winner, loser, embed)
+
+    async def _handle_friendly_match_battle_end(self, winner: MatchMakingPlayer, loser: MatchMakingPlayer) -> None:
+
+        embed_description = f"🎉 **{winner.ctx.author.display_name}** has won the battle!\n\n"
 
         embed = self._ctx.embed_builder(
             embed_params={
@@ -344,7 +432,7 @@ class ChickenBattleUsecase:
 
         mmr_diff = sqrt(mmr_diff)
 
-        return int(BASE_MMR_CHANGE + mmr_diff) if has_won else int(-BASE_MMR_CHANGE - mmr_diff)
+        return int(BASE_MMR_CHANGE + mmr_diff) if has_won else int(BASE_MMR_CHANGE - mmr_diff)
 
     async def _match_making_player_to_entity(self, user: MatchMakingPlayer) -> "PlayerEntity":
         """Converts a MatchMakingPlayer to a PlayerEntity.

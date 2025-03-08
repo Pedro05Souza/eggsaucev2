@@ -65,7 +65,7 @@ class ChickenBattleService:
 
     @staticmethod
     async def _calculate_rarity_difference(diff_rarity: int) -> float:
-        return 0.4 * diff_rarity
+        return 0.45 * diff_rarity
 
     @staticmethod
     async def _calculate_quality_difference(diff_quality: int) -> float:

@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 
 __all__ = ["BattleInfoUsecase"]
 
+
 class BattleInfoUsecase:
 
     def __init__(
@@ -36,10 +37,14 @@ class BattleInfoUsecase:
 
         title = f"🗡️ {member_to_send.display_name}'s Battle Status:"
 
+        win_rate = (player_entity.wins / (player_entity.wins + player_entity.losses)) * 100
+        win_rate = round(win_rate, 2) if win_rate > 0 else 0
+
         rank_field = (
             f"🥇 Rank: **{await get_player_rank(player_entity.current_mmr)}**\n"
             f"🏆 MMR: **{player_entity.current_mmr}**\n"
-            f"📈 Highest MMR: **{player_entity.highest_mmr}**\n\n"
+            f"📈 Highest MMR: **{player_entity.highest_mmr}**\n"
+            f"🎯 Win Rate: **{win_rate}%**\n\n"
         )
 
         await self._ctx.send_bot_embed(
