@@ -27,6 +27,7 @@ __all__ = [
     "get_random_tip_message",
     "ensure_author_farm",
     "get_player_rank",
+    "increment_balance_and_bank",
 ]
 
 
@@ -47,6 +48,16 @@ def deduct_from_balance_and_bank(player_entity: "PlayerEntity", price: int) -> N
         price -= player_entity.balance
         player_entity.balance = 0
         player_entity.bank_balance -= price
+
+
+def increment_balance_and_bank(player_entity: "PlayerEntity", price: int) -> None:
+    available_bank_space = player_entity.bank_capacity - player_entity.bank_balance
+
+    if price <= available_bank_space:
+        player_entity.bank_balance += price
+    else:
+        player_entity.bank_balance = player_entity.bank_capacity
+        player_entity.balance += price - available_bank_space
 
 
 def get_salary_from_title(title: str) -> int:

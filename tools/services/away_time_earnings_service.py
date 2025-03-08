@@ -11,10 +11,11 @@ from tools.constants import (
     CHICKEN_RARITIES,
     NON_DEVOLVABLE_RARITIES,
     BASE_CHICKEN_PRICE,
+    FARMERS_DICT,
     ChickenPricesMultiplier,
     ChickenRaritiesEmojis,
 )
-from tools.utils import get_salary_from_title
+from tools.utils import get_salary_from_title, increment_balance_and_bank
 from tools.chicken_utils import calculate_base_egg_production, calculate_plot_production
 
 
@@ -46,7 +47,8 @@ class AwayTimeEarningsService:
         total_gained_salary = hourly_salary * hours_passed
 
         player_entity.next_salary_time = now + timedelta(seconds=SECONDS_TO_SALARY_DROP)
-        player_entity.balance += total_gained_salary
+
+        increment_balance_and_bank(player_entity, total_gained_salary)
         return total_gained_salary
 
     @staticmethod
@@ -70,7 +72,11 @@ class AwayTimeEarningsService:
 
         hours_passed = min(hours_passed, CHICKEN_HOURS_THRESHOLD)
 
-        total_gained = await AwayTimeEarningsService.calculate_chicken_earnings(farm_entity.chickens, hours_passed)
+        has_rich_farmer = farm_entity.farmer == "Rich"
+
+        total_gained = await AwayTimeEarningsService.calculate_chicken_earnings(
+            farm_entity.chickens, hours_passed, has_rich_farmer
+        )
 
         farm_entity.next_egg_drop_time = now + timedelta(seconds=SECONDS_TO_CHICKEN_DROP)
 
@@ -83,16 +89,16 @@ class AwayTimeEarningsService:
             if chicken.happiness == 0:
                 await AwayTimeEarningsService._maybe_devolve_chicken(chicken)
 
-        if player_entity.bank_capacity > player_entity.bank_balance + total_gained:
-            player_entity.bank_balance += total_gained
-        else:
-            player_entity.balance += total_gained
-
+        increment_balance_and_bank(player_entity, total_gained)
         return total_gained
 
     @staticmethod
-    async def calculate_chicken_earnings(chickens: List["ChickenEntity"], hours: int) -> int:
-        return sum(chicken.actual_egg_production for chicken in chickens if chicken.can_be_updated is True) * hours
+    async def calculate_chicken_earnings(chickens: List["ChickenEntity"], hours: int, has_rich_farmer: bool) -> int:
+        total = sum(chicken.actual_egg_production for chicken in chickens if chicken.can_be_updated is True) * hours
+
+        if has_rich_farmer:
+            total += int(total * FARMERS_DICT["rich"]["egg_value_percentage"] / 100)
+        return total
 
     @staticmethod
     async def calculate_corn_earnings(total_plots: int, hours: int) -> int:
