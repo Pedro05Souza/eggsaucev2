@@ -59,7 +59,7 @@ class SellChickenUsecase:
                     embed=self._ctx.embed_builder(
                         embed_params={
                             "description": f"{chicken_to_sell.format_chicken()} has"
-                            + f"been sold for **{price_to_sell}** eggbux!"
+                            + f" been sold for **{price_to_sell}** eggbux!"
                         }
                     )
                 )
