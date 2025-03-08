@@ -206,6 +206,8 @@ class EggsauceContext(Context):
         )
         message = await self.send(embed=embed, view=confirmation_popup)
         await confirmation_popup.wait()
+        await message.edit(view=None)
+
         return confirmation_popup.value, message
 
 
