@@ -15,6 +15,7 @@ from usecases import (
     AddVaultUsecase,
     RemoveVaultUsecase,
     ChickenBattleUsecase,
+    BattleInfoUsecase,
 )
 from repositories import (
     FarmRepository,
@@ -156,6 +157,11 @@ class FarmController(
             self.player_repository,
         )
         await chicken_battle_usecase.queue()
+
+    @hybrid_command(name="battleinfo", aliases=["bi"], description="🐔 View your battle status!")
+    async def battle_info(self, ctx: EggsauceContext, member: Optional[Member] = None) -> None:
+        battle_info_usecase = BattleInfoUsecase(ctx, self.player_repository, member)
+        await battle_info_usecase.battle_info()
 
     async def cog_before_invoke(self, ctx: EggsauceContext) -> None:  # type: ignore
         await ensure_author_farm(

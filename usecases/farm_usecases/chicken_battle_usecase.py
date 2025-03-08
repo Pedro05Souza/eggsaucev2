@@ -4,6 +4,7 @@ from collections import defaultdict
 import asyncio
 from math import sqrt
 from discord import Embed
+from tortoise.transactions import atomic
 from tools import get_random_tip_message, generated_chicken_to_chicken_entity
 from tools.constants import (
     BASE_MMR_CHANGE,
@@ -262,6 +263,7 @@ class ChickenBattleUsecase:
             await author.message.edit(embed=embed)
             await opponent.message.edit(embed=embed)
 
+    @atomic()
     async def on_battle_end(self, winner: MatchMakingUser, loser: MatchMakingUser) -> None:
         """Handles the end of a battle.
 
