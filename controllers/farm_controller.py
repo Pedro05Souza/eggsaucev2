@@ -1,6 +1,6 @@
 from typing import Optional
 from discord import Member
-from discord.ext.commands import Cog, Bot, hybrid_command, cooldown, BucketType, CooldownMapping
+from discord.ext.commands import Cog, Bot, hybrid_command, cooldown, BucketType, CooldownMapping, max_concurrency
 from usecases import (
     MarketUsecase,
     FarmUseCase,
@@ -18,6 +18,7 @@ from usecases import (
     SellChickenUsecase,
     RedeemablesUsecase,
     BattleInfoUsecase,
+    EvolveChickenUsecase,
 )
 from repositories import (
     FarmRepository,
@@ -151,6 +152,7 @@ class FarmController(
         await remove_vault_usecase.remove_vault()
 
     @hybrid_command(name="battle", aliases=["b"], description="🐔 Battle a chicken against another player!")
+    @max_concurrency(100, BucketType.guild)
     async def chicken_battle(self, ctx: EggsauceContext) -> None:
         chicken_battle_usecase = ChickenBattleUsecase(
             ctx,
@@ -190,6 +192,7 @@ class FarmController(
     @hybrid_command(
         name="friendlybattle", aliases=["fb"], description="🐔 Battle against a friend without losing your rank"
     )
+    @max_concurrency(100, BucketType.guild)
     async def friendly_battle(self, ctx: EggsauceContext, member: Member) -> None:
         friendly_battle_usecase = ChickenBattleUsecase(
             ctx,
@@ -198,8 +201,18 @@ class FarmController(
             self.player_repository,
             member,
         )
-
         await friendly_battle_usecase.queue()
+
+    @hybrid_command(name="evolvechicken", aliases=["evolve"], description="🐔 Evolve two chickens of the same rarity!")
+    async def evolve_chicken(self, ctx: EggsauceContext, first_position: int, second_position: int) -> None:
+        evolve_chicken_usecase = EvolveChickenUsecase(
+            ctx,
+            self.farm_cache,
+            self.farm_repository,
+            first_position,
+            second_position,
+        )
+        await evolve_chicken_usecase.evolve_chicken()
 
     async def cog_before_invoke(self, ctx: EggsauceContext) -> None:  # type: ignore
         await ensure_author_farm(

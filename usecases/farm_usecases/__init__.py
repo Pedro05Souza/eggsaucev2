@@ -14,3 +14,4 @@ from .chicken_battle_usecase import *
 from .sell_chicken_usecase import *
 from .redeemables_usecase import *
 from .battle_info_usecase import *
+from .evolve_chicken_usecase import *
