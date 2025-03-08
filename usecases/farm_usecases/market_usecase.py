@@ -5,12 +5,7 @@ from discord.ui import View, Select
 from tortoise.transactions import atomic
 from entities import FarmEntity
 from repositories import FarmRepositoryProtocol, PlayerRepositoryProtocol
-from tools import (
-    ChickenGeneratorService,
-    FarmCacheService,
-    generated_chicken_to_chicken_entity,
-    sort_chickens
-)
+from tools import ChickenGeneratorService, FarmCacheService, generated_chicken_to_chicken_entity, sort_chickens
 from tools.constants import (
     REASON_NO_PERMISSION,
     REASON_INSUFFICIENT_BALANCE,
@@ -53,6 +48,7 @@ class MarketUsecase:
 
         farm_entity.remaining_rolls -= 1
         # We don't update to the database to avoid unnecessary writes
+        # Since this function is called many times
         # This will be updated when the cache entry is removed/expired
 
         if farm_entity.remaining_rolls == 0:
@@ -178,7 +174,7 @@ class ChickenView(View):
         self._chickens.remove(selected_chicken)
 
         if not self._chickens:
-            await interaction.message.delete(delay=1) # type: ignore
+            await interaction.message.delete(delay=1)  # type: ignore
             return
 
         self.clear_items()
