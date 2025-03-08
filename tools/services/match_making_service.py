@@ -100,12 +100,12 @@ class MatchMakingBot(MatchMakingUser):
 
     @classmethod
     async def bot_maker_factory(cls, player_mmr: int) -> MatchMakingBot:
-        player_mmr = min(player_mmr, 2000)
+        player_mmr = min(player_mmr, 1000)
 
         chicken_deck_size = min(FARM_MAX_CHICKENS, randint(2, max(2, ceil(player_mmr / 100))))
 
         bot_rarity_deck_pool = CHICKEN_RARITIES[1:]  # Exclude the dead chicken rarity
-        most_probable_chicken = player_mmr * len(bot_rarity_deck_pool) // 2000
+        most_probable_chicken = player_mmr * len(bot_rarity_deck_pool) // 1000
 
         bot_rarity_distribution_pool = {
             1 / (abs(most_probable_chicken - i) + 1) ** 2: bot_rarity_deck_pool[i]
