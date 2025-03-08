@@ -65,14 +65,16 @@ class SellChickenUsecase:
                     await message.edit(
                         embed=self._ctx.embed_builder(
                             embed_params={
-                                "description": f"{chicken_to_sell.format_chicken()} has"
+                                "description": f"✅ {chicken_to_sell.format_chicken()} has"
                                 + f" been sold for **{price_to_sell}** eggbux!"
                             }
                         )
                     )
 
                 else:
-                    await message.edit(embed=self._ctx.embed_builder(embed_params={"description": "Sell cancelled!"}))
+                    await message.edit(
+                        embed=self._ctx.embed_builder(embed_params={"description": "❌ Sell cancelled!"})
+                    )
 
             else:
-                await message.edit(embed=self._ctx.embed_builder(embed_params={"description": "Sell timed out!"}))
+                await message.edit(embed=self._ctx.embed_builder(embed_params={"description": "❌ Sell timed out!"}))
