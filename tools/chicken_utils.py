@@ -116,7 +116,7 @@ async def format_chickens(chickens: list["ChickenEntity"]) -> str:
 
     return "\n\n".join(
         [
-            f"**{index}. {chicken.format_chicken()}**"
+            f"**{index}.** {chicken.format_chicken()}"
             + f"\n💖 Happiness: **{chicken.happiness}%**"
             + f"\n📊 Quality: **{get_quality_text(chicken.quality)}**"
             for index, chicken in enumerate(chickens, start=1)

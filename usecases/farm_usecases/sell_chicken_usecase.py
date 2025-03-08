@@ -1,7 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from tortoise.transactions import atomic
-from tools.constants import REASON_INVALID_INDEX
+from tools.constants import REASON_INVALID_INDEX, REASON_USER_IS_ALREADY_IN_EVENT
+from tools.services import ActionGuardService
 
 if TYPE_CHECKING:
     from eggsauce_context import EggsauceContext
@@ -30,42 +31,48 @@ class SellChickenUsecase:
 
     @atomic()
     async def sell_chicken(self):
-        farm_entity = self._farm_cache.get_or_raise(self._ctx.author.id)
 
-        if self._position < 0 or self._position >= len(farm_entity.chickens):
-            await self._ctx.send(REASON_INVALID_INDEX)
+        if ActionGuardService.is_player_discord_id_guarded(self._ctx.author.id):
+            await self._ctx.send_bot_embed(embed_params={"description": REASON_USER_IS_ALREADY_IN_EVENT})
             return
 
-        chicken_to_sell = farm_entity.chickens[self._position]
+        async with ActionGuardService.guard_players(self._ctx.author.id):
+            farm_entity = self._farm_cache.get_or_raise(self._ctx.author.id)
 
-        price_to_sell = chicken_to_sell.price if farm_entity.farmer == "Guardian" else chicken_to_sell.price // 2
+            if self._position < 0 or self._position >= len(farm_entity.chickens):
+                await self._ctx.send(REASON_INVALID_INDEX)
+                return
 
-        has_confirmed, message = await self._ctx.confirmation_popup(
-            f"Are you sure you want to sell {chicken_to_sell.format_chicken()} for **{price_to_sell}** eggbux?"
-        )
+            chicken_to_sell = farm_entity.chickens[self._position]
 
-        if has_confirmed is not None:
+            price_to_sell = chicken_to_sell.price if farm_entity.farmer == "Guardian" else chicken_to_sell.price // 2
 
-            if has_confirmed is True:
-                player_entity = await self._player_repository.get_or_create(self._ctx.author.id)
-                player_entity.balance += price_to_sell
-                await self._player_repository.update_player(player_entity)
-                farm_entity.chickens.pop(self._position)
+            has_confirmed, message = await self._ctx.confirmation_popup(
+                f"Are you sure you want to sell {chicken_to_sell.format_chicken()} for **{price_to_sell}** eggbux?"
+            )
 
-                async with self._farm_cache.remove_if_exception(self._ctx.author.id):
-                    await self._farm_repository.delete_chicken(chicken_to_sell.id)
+            if has_confirmed is not None:
 
-                await message.edit(
-                    embed=self._ctx.embed_builder(
-                        embed_params={
-                            "description": f"{chicken_to_sell.format_chicken()} has"
-                            + f" been sold for **{price_to_sell}** eggbux!"
-                        }
+                if has_confirmed is True:
+                    player_entity = await self._player_repository.get_or_create(self._ctx.author.id)
+                    player_entity.balance += price_to_sell
+                    await self._player_repository.update_player(player_entity)
+                    farm_entity.chickens.pop(self._position)
+
+                    async with self._farm_cache.remove_if_exception(self._ctx.author.id):
+                        await self._farm_repository.delete_chicken(chicken_to_sell.id)
+
+                    await message.edit(
+                        embed=self._ctx.embed_builder(
+                            embed_params={
+                                "description": f"{chicken_to_sell.format_chicken()} has"
+                                + f" been sold for **{price_to_sell}** eggbux!"
+                            }
+                        )
                     )
-                )
+
+                else:
+                    await message.edit(embed=self._ctx.embed_builder(embed_params={"description": "Sell cancelled!"}))
 
             else:
-                await message.edit(embed=self._ctx.embed_builder(embed_params={"description": "Sell cancelled!"}))
-
-        else:
-            await message.edit(embed=self._ctx.embed_builder(embed_params={"description": "Sell timed out!"}))
+                await message.edit(embed=self._ctx.embed_builder(embed_params={"description": "Sell timed out!"}))
