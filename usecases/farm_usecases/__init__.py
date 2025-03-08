@@ -11,3 +11,4 @@ from .chicken_vault_usecase import *
 from .add_vault_usecase import *
 from .remove_vault_usecase import *
 from .chicken_battle_usecase import *
+from .battle_info_usecase import *
