@@ -94,3 +94,9 @@ class FarmRepository(metaclass=RepositoryMeta):
         has_next_page = len(chicken_entities) > page_size
 
         return chicken_entities, has_next_page
+
+    async def delete_chicken_by_id(self, chicken_id: str) -> None:
+        await Chicken.filter(id=chicken_id).delete()
+
+    async def bulk_delete_chickens(self, chicken_ids: list[str]) -> None:
+        await Chicken.filter(id__in=chicken_ids).delete()
