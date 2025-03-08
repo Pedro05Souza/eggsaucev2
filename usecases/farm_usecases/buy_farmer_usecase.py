@@ -116,37 +116,26 @@ class _FarmersView(View):
     @button(style=ButtonStyle.gray, custom_id="Rich", emoji="💰")
     async def rich(self, interaction: Interaction, _: Button[View]) -> None:
         await interaction.response.defer()
-
-        if interaction.user.id != self.author_id:
-            return
-
         self.selected_farmer = "Rich"
         self.stop()
 
+    async def interaction_check(self, interaction: Interaction, /) -> bool:
+        return interaction.user.id == self.author_id
+
     @button(style=ButtonStyle.gray, custom_id="Guardian", emoji="🛡️")
     async def guardian(self, interaction: Interaction, _: Button[View]) -> None:
-        if not await self._author_check_and_defer(interaction):
-            return
-
+        await interaction.response.defer()
         self.selected_farmer = "Guardian"
         self.stop()
 
     @button(style=ButtonStyle.gray, custom_id="Warrior", emoji="⚔️")
     async def warrior(self, interaction: Interaction, _: Button[View]) -> None:
-        if not await self._author_check_and_defer(interaction):
-            return
-
+        await interaction.response.defer()
         self.selected_farmer = "Warrior"
         self.stop()
 
     @button(style=ButtonStyle.gray, custom_id="Generous", emoji="🎁")
     async def generous(self, interaction: Interaction, _: Button[View]) -> None:
-        if not await self._author_check_and_defer(interaction):
-            return
-
+        await interaction.response.defer()
         self.selected_farmer = "Generous"
         self.stop()
-
-    async def _author_check_and_defer(self, interaction: Interaction) -> bool:
-        await interaction.response.defer()
-        return interaction.user.id == self.author_id

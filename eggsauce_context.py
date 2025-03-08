@@ -228,19 +228,14 @@ class _ConfirmationPopUp(View):
     @button(label="Cancel", style=ButtonStyle.red, custom_id="cancel")
     async def cancel(self, interaction: Interaction, _: Button[View]):
         await interaction.response.defer()
-
-        if interaction.user != self.author:
-            return
-
         self.value = False
         self.stop()
 
     @button(label="Confirm", style=ButtonStyle.green, custom_id="confirm")
     async def confirm(self, interaction: Interaction, _: Button[View]):
         await interaction.response.defer()
-
-        if interaction.user != self.author:
-            return
-
         self.value = True
         self.stop()
+
+    async def interaction_check(self, interaction: Interaction, /) -> bool:
+        return interaction.user.id == self.author.id
