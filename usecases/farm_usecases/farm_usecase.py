@@ -46,7 +46,7 @@ class FarmUseCase:
 
         farm_title = (
             f"🚜 {farm_entity.farm_title}\n🧑‍🌾 Farmer:"
-            f"{farm_entity.farmer + ' Farmer' if farm_entity.farmer else 'No farmer'}"
+            f" {farm_entity.farmer + ' Farmer' if farm_entity.farmer else 'No farmer'}"
         )
 
         farm_chickens = await format_chickens(farm_entity.chickens)

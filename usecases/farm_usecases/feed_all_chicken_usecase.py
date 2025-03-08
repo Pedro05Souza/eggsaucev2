@@ -64,6 +64,6 @@ class FeedAllChickenUsecase:
         chicken_models = [await chicken_entity_to_model(farm_entity.id, chicken) for chicken in farm_entity.chickens]
 
         async with self._farm_cache.remove_if_exception(farm_entity.discord_user_id):
-            await self._farm_repository.bulk_update_farm_chickens(chicken_models)
+            await self._farm_repository.bulk_update_chickens(chicken_models)
             await self._cornfield_repository.update_cornfield(cornfield_entity)
             await self._ctx.send_bot_embed(embed_params={"description": "✅ All chickens have been fed succesfully!"})

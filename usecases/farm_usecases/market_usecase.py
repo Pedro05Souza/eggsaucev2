@@ -19,7 +19,7 @@ from tools.constants import (
     SECONDS_TO_FARM_ROLL,
     MAX_VAULTED_CHICKENS,
     GeneratedChicken,
-    farmers_dict,
+    FARMERS_DICT,
 )
 from eggsauce_context import EggsauceContext
 
@@ -64,7 +64,7 @@ class MarketUsecase:
         chickens_to_generated = (
             MAX_GENERATED_CHICKENS
             if farm_entity.farmer != "Generous"
-            else MAX_GENERATED_CHICKENS + farmers_dict["generous"]
+            else MAX_GENERATED_CHICKENS + FARMERS_DICT["generous"]
         )
 
         generated_chickens = await ChickenGeneratorService.generate_chickens(chickens_to_generated)
