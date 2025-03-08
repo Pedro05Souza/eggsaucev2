@@ -428,7 +428,7 @@ class ChickenBattleUsecase:
             mmr_diff = winner.current_mmr - loser.current_mmr
 
         if mmr_diff < 0:
-            return BASE_MMR_CHANGE if has_won else -BASE_MMR_CHANGE
+            return BASE_MMR_CHANGE
 
         mmr_diff = sqrt(mmr_diff)
 
