@@ -94,9 +94,9 @@ class BuyFarmerUseCase:
         return (
             "👨‍🌾 **Farmer Types & Their Benefits:**\n\n"
             "💰 **Rich Farmer**\n"
-            f"   ➜ Increases **egg value** by **{FARMERS_DICT['rich']['egg_value_percentage']}%**\n"
+            f"   ➜ Increases **egg value** by **{FARMERS_DICT['rich']['egg_value_percentage']}%**\n\n"
             "🛡️ **Guardian Farmer**\n"
-            f"   ➜ Sells chickens for **full price**\n"
+            f"   ➜ Sells chickens for **full price**\n\n"
             "⚔️ **Warrior Farmer**\n"
             f"   ➜ Adds **{FARMERS_DICT['warrior']}** extra chickens to the farm\n\n"
             "🎁 **Generous Farmer**\n"
