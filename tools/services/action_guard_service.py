@@ -13,7 +13,7 @@ class ActionGuardService:
 
     @classmethod
     def unguard_player_discord_id(cls, discord_id: int) -> None:
-        cls._players_discord_id_guarded.discard(discord_id)
+        cls._players_discord_id_guarded.remove(discord_id)
 
     @classmethod
     def is_player_discord_id_guarded(cls, discord_id: int) -> bool:
