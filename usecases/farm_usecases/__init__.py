@@ -15,3 +15,5 @@ from .sell_chicken_usecase import *
 from .redeemables_usecase import *
 from .battle_info_usecase import *
 from .evolve_chicken_usecase import *
+from .ascendancy_usecase import *
+from .trade_chicken_usecase import *

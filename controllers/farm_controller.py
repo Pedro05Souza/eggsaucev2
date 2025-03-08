@@ -19,6 +19,8 @@ from usecases import (
     RedeemablesUsecase,
     BattleInfoUsecase,
     EvolveChickenUsecase,
+    AscendancyUsecase,
+    TradeChickenUsecase,
 )
 from repositories import (
     FarmRepository,
@@ -35,7 +37,7 @@ from tools.constants import (
 from eggsauce_context import EggsauceContext
 
 
-class FarmController(
+class FarmController(  # pylint: disable=too-many-public-methods
     Cog,
     name="Farm",
     command_attrs={"cooldown": CooldownMapping.from_cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)},
@@ -213,6 +215,29 @@ class FarmController(
             second_position,
         )
         await evolve_chicken_usecase.evolve_chicken()
+
+    @hybrid_command(name="ascendancy", aliases=["asc"], description="🐔 Trade 8 Ascended chickebs for an ethereal one")
+    async def ascendancy(self, ctx: EggsauceContext) -> None:
+        ascendancy_usecase = AscendancyUsecase(
+            ctx,
+            self.farm_cache,
+            self.farm_repository,
+        )
+        await ascendancy_usecase.ascendancy()
+
+    @hybrid_command(name="tradechicken", aliases=["tc"], description="🐔 Trade a chicken with another player!")
+    async def trade_chicken(
+        self, ctx: EggsauceContext, member: Member, farm_position: int, user_farm_position: int
+    ) -> None:
+        trade_chicken_usecase = TradeChickenUsecase(
+            ctx,
+            self.farm_repository,
+            self.farm_cache,
+            farm_position,
+            member,
+            user_farm_position,
+        )
+        await trade_chicken_usecase.trade_chicken()
 
     async def cog_before_invoke(self, ctx: EggsauceContext) -> None:  # type: ignore
         await ensure_author_farm(
