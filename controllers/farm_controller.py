@@ -171,7 +171,9 @@ class FarmController(
         )
         await sell_chicken_usecase.sell_chicken()
 
-    @hybrid_command(name="redeemables", aliases=["re"], description="🐔 View your redeemable chickens!")
+    @hybrid_command(
+        name="redeemables", aliases=["re"], description="🐔 View your chickens that are ready to be redeemed!"
+    )
     async def redeemables(self, ctx: EggsauceContext) -> None:
         redeemables_usecase = RedeemablesUsecase(
             ctx,
