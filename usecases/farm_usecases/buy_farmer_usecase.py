@@ -32,6 +32,7 @@ class BuyFarmerUseCase:
         self._player_repository = player_repository
 
     async def buy_farmer(self) -> None:
+        # TODO: implement the missing farmers.
         farm_entity = self._farm_cache.get_or_raise(self._ctx.author.id)
 
         if farm_entity.farmer == "Guardian" and len(farm_entity.chickens) > FARM_MAX_CHICKENS:
