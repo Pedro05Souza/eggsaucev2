@@ -343,7 +343,6 @@ class ChickenBattleUsecase:
             winner (MatchMakingUser): The winner of the battle.
             loser (MatchMakingUser): The loser of the battle.
         """
-
         if self._is_friendly_battle is True:
             await self._handle_friendly_match_battle_end(winner, loser)  # type: ignore
             return
