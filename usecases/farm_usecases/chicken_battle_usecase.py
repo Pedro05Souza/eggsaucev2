@@ -4,8 +4,17 @@ from collections import defaultdict
 import asyncio
 from math import sqrt
 from discord import Embed
-from tools import get_random_tip_message
-from tools.constants import BASE_MMR_CHANGE, REASON_USER_IS_ALREADY_IN_EVENT
+from tools import get_random_tip_message, generated_chicken_to_chicken_entity
+from tools.constants import (
+    BASE_MMR_CHANGE,
+    REASON_USER_IS_ALREADY_IN_EVENT,
+    RANKS,
+    RANKS_DICT,
+    GeneratedChicken,
+    ChickenRaritiesEmojis,
+    ChickenPricesMultiplier,
+    BASE_CHICKEN_PRICE,
+)
 from tools.services import (
     MatchMakingService,
     ChickenBattleService,
@@ -59,7 +68,7 @@ class ChickenBattleUsecase:
             embed = self._ctx.embed_builder(
                 embed_params={
                     "description": "🔍 You have joined the matchmaking queue!"
-                    + "Please wait while we find an opponent for you."
+                    + " Please wait while we find an opponent for you."
                 },
                 footer_text=get_random_tip_message(),
             )
@@ -100,8 +109,6 @@ class ChickenBattleUsecase:
             await asyncio.sleep(
                 await self._dynamic_match_cooldown(len(author_alive_chickens) + len(opponent_alive_chickens))
             )
-
-            embed_description = ""
 
         winner = author if len(author_alive_chickens) > 0 else opponent
         loser = author if len(author_alive_chickens) == 0 else opponent
@@ -263,13 +270,26 @@ class ChickenBattleUsecase:
             loser (MatchMakingUser): The loser of the battle.
         """
         mmr_gain = await self._calculate_mmr_change(winner, loser, has_won=True)
+        chicken_gained = None
 
         if isinstance(winner, MatchMakingPlayer):
             winner_entity = await self._match_making_player_to_entity(winner)
             winner_entity.current_mmr += max(mmr_gain, 0)
+
+            if winner_entity.current_mmr > winner_entity.highest_mmr:
+
+                if RANKS_DICT.get(winner_entity.current_mmr // 200) != RANKS_DICT.get(winner_entity.highest_mmr // 200):
+                    chicken_gained = await self.distribute_rewards(RANKS[winner_entity.current_mmr // 200])
+
             winner_entity.highest_mmr = max(winner_entity.highest_mmr, winner_entity.current_mmr)
             winner_entity.wins += 1
             await self._player_repository.update_player(winner_entity)
+
+            if self._farm_entity is None:
+                raise ValueError("Farm entity is not set")
+
+            if chicken_gained is not None:
+                await self._farm_repository.upsert_farm_chicken(self._farm_entity.id, chicken_gained)
 
         mmr_loss = await self._calculate_mmr_change(winner, loser, has_won=False)
 
@@ -284,6 +304,11 @@ class ChickenBattleUsecase:
             f"🏆 **{winner.get_user_name()}** gained **{mmr_gain}** MMR\n"
             f"🔻 **{loser.get_user_name()}** lost **{abs(mmr_loss)}** MMR"
         )
+
+        if chicken_gained is not None:
+            embed_description += (
+                f"\n🐔 **{winner.get_user_name()}** has ranked up and received a {chicken_gained.format_chicken()}"
+            )
 
         embed = self._ctx.embed_builder(
             embed_params={
@@ -334,6 +359,17 @@ class ChickenBattleUsecase:
 
         return await self._player_repository.get_or_create(user.discord_user_id)
 
-    async def distribute_rewards(self) -> None:
-        # TODO: Implement reward distribution
-        pass
+    async def distribute_rewards(self, new_rank: str) -> "ChickenEntity":
+        chicken_rarities_to_pick = ["LEGENDARY", "COSMIC", "GALATIC", "IMMORTAL", "ASCENDED"]
+        rank_index = RANKS.index(new_rank)
+
+        chicken_rarity = chicken_rarities_to_pick[rank_index]
+
+        generated_chicken = GeneratedChicken(
+            rarity=chicken_rarity,
+            emoji=ChickenRaritiesEmojis[chicken_rarity].value,
+            name="Chicken",
+            price=int(BASE_CHICKEN_PRICE * ChickenPricesMultiplier[chicken_rarity].value),
+        )
+
+        return await generated_chicken_to_chicken_entity(generated_chicken, "redeemables")
