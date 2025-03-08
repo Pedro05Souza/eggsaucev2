@@ -44,6 +44,8 @@ DELTA_CORN_PER_PLOT: Final[int] = 40
 
 # Other constants
 STEAL_FAILURE_CHANCE: Final[float] = 0.1
+PAGE_SIZE: Final[int] = 5
+
 
 
 def get_titles_prices() -> dict[str, int]:

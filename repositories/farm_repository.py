@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Optional, TYPE_CHECKING
 from datetime import datetime
+import asyncio
 from tortoise.query_utils import Prefetch
 from entities import FarmEntity, ChickenEntity
 from models import Farm, Player, Chicken
@@ -63,7 +64,7 @@ class FarmRepository(metaclass=RepositoryMeta):
             },
         )
 
-    async def bulk_update_farm_chickens(self, chickens: list[Chicken]) -> None:
+    async def bulk_update_chickens(self, chickens: list[Chicken]) -> None:
         await Chicken.bulk_update(
             chickens,
             fields=["name", "rarity", "quality", "location_status", "happiness", "farm_id"],
@@ -74,9 +75,22 @@ class FarmRepository(metaclass=RepositoryMeta):
 
     async def get_vaulted_chickens(self, discord_user_id: int) -> list[ChickenEntity]:
         chickens = await Chicken.filter(farm__player__discord_user_id=discord_user_id, location_status="vault")
-        chicken_entities = [await chicken_model_to_entity(chicken) for chicken in chickens]
+        chicken_entities = await asyncio.gather(*[chicken_model_to_entity(chicken) for chicken in chickens])
 
         return chicken_entities
 
     async def change_chicken_location_status(self, chicken_id: str, location: "ChickenLocationType") -> None:
         await Chicken.filter(id=chicken_id).update(location_status=location)
+
+    async def delete_chicken(self, chicken_id: str) -> None:
+        await Chicken.filter(id=chicken_id).delete()
+
+    async def get_redeemables_chickens(self, page_index: int, page_size: int) -> tuple[list[ChickenEntity], bool]:
+        chickens = (
+            await Chicken.filter(location_status="redeemables").offset(page_index * page_size).limit(page_size + 1)
+        )
+
+        chicken_entities = await asyncio.gather(*[chicken_model_to_entity(chicken) for chicken in chickens])
+        has_next_page = len(chicken_entities) > page_size
+
+        return chicken_entities, has_next_page

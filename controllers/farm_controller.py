@@ -15,6 +15,8 @@ from usecases import (
     AddVaultUsecase,
     RemoveVaultUsecase,
     ChickenBattleUsecase,
+    SellChickenUsecase,
+    RedeemablesUsecase,
     BattleInfoUsecase,
 )
 from repositories import (
@@ -157,6 +159,26 @@ class FarmController(
             self.player_repository,
         )
         await chicken_battle_usecase.queue()
+
+    @hybrid_command(name="sellchicken", aliases=["sc"], description="🐔 Sell a chicken from your farm!")
+    async def sell_chicken(self, ctx: EggsauceContext, position: int) -> None:
+        sell_chicken_usecase = SellChickenUsecase(
+            ctx,
+            self.farm_repository,
+            self.player_repository,
+            self.farm_cache,
+            position,
+        )
+        await sell_chicken_usecase.sell_chicken()
+
+    @hybrid_command(name="redeemables", aliases=["re"], description="🐔 View your redeemable chickens!")
+    async def redeemables(self, ctx: EggsauceContext) -> None:
+        redeemables_usecase = RedeemablesUsecase(
+            ctx,
+            self.farm_cache,
+            self.farm_repository,
+        )
+        await redeemables_usecase.redeemables()
 
     @hybrid_command(name="battleinfo", aliases=["bi"], description="🐔 View your battle status!")
     async def battle_info(self, ctx: EggsauceContext, member: Optional[Member] = None) -> None:

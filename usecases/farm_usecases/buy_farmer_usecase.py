@@ -7,7 +7,7 @@ from entities import FarmerType
 from repositories import FarmRepositoryProtocol, PlayerRepositoryProtocol
 from tools.services import FarmCacheService
 from tools import deduct_from_balance_and_bank
-from tools.constants import farmers_dict, FARM_MAX_CHICKENS, BASE_FARMER_PRICE
+from tools.constants import FARMERS_DICT, FARM_MAX_CHICKENS, BASE_FARMER_PRICE
 from eggsauce_context import EggsauceContext
 
 if TYPE_CHECKING:
@@ -32,7 +32,6 @@ class BuyFarmerUseCase:
         self._player_repository = player_repository
 
     async def buy_farmer(self) -> None:
-        # TODO: implement the missing farmers.
         farm_entity = self._farm_cache.get_or_raise(self._ctx.author.id)
 
         if farm_entity.farmer == "Guardian" and len(farm_entity.chickens) > FARM_MAX_CHICKENS:
@@ -95,22 +94,13 @@ class BuyFarmerUseCase:
         return (
             "👨‍🌾 **Farmer Types & Their Benefits:**\n\n"
             "💰 **Rich Farmer**\n"
-            f"   ➜ Increases **egg value** by **{farmers_dict['rich']['egg_value_percentage']}%**\n"
-            f"   ➜ Boosts **corn production** by **{farmers_dict['rich']['corn_production_percentage']}%**\n\n"
+            f"   ➜ Increases **egg value** by **{FARMERS_DICT['rich']['egg_value_percentage']}%**\n\n"
             "🛡️ **Guardian Farmer**\n"
-            f"   ➜ Sells chickens for **full price**\n"
-            f"   ➜ Reduces **farm taxes** by **{farmers_dict['guardian']}%**\n\n"
-            "👔 **Executive Farmer**\n"
-            f"   ➜ Grants **{farmers_dict['executive']['number_of_extra_rolls']}** extra rolls\n"
-            f"   ➜ Market chickens have **{farmers_dict['executive']['extra_market_chickens']}%** discount\n\n"
+            f"   ➜ Sells chickens for **full price**\n\n"
             "⚔️ **Warrior Farmer**\n"
-            f"   ➜ Adds **{farmers_dict['warrior']}** extra chickens to the farm\n\n"
+            f"   ➜ Adds **{FARMERS_DICT['warrior']}** extra chickens to the farm\n\n"
             "🎁 **Generous Farmer**\n"
-            f"   ➜ Generates **{farmers_dict['generous']}** extra chickens in the market\n\n"
-            "🌱 **Sustainable Farmer**\n"
-            f"   ➜ **Auto-feeds** chickens every **{farmers_dict['sustainable']['auto_feed_time_seconds']}** seconds\n"
-            f"   ➜ Increases happiness by **{farmers_dict['sustainable']['min_happiness_gain']}%** "
-            f"to **{farmers_dict['sustainable']['max_happiness_gain']}%**\n"
+            f"   ➜ Generates **{FARMERS_DICT['generous']}** extra chickens in the market\n\n"
         )
 
 
@@ -139,13 +129,6 @@ class _FarmersView(View):
             return
 
         self.selected_farmer = "Guardian"
-
-    @button(style=ButtonStyle.gray, custom_id="Executive", emoji="👔")
-    async def executive(self, interaction: Interaction, _: Button[View]) -> None:
-        if not await self._author_check_and_defer(interaction):
-            return
-
-        self.selected_farmer = "Executive"
         self.stop()
 
     @button(style=ButtonStyle.gray, custom_id="Warrior", emoji="⚔️")
@@ -162,14 +145,6 @@ class _FarmersView(View):
             return
 
         self.selected_farmer = "Generous"
-        self.stop()
-
-    @button(style=ButtonStyle.gray, custom_id="Sustainable", emoji="🌱")
-    async def sustainable(self, interaction: Interaction, _: Button[View]) -> None:
-        if not await self._author_check_and_defer(interaction):
-            return
-
-        self.selected_farmer = "Sustainable"
         self.stop()
 
     async def _author_check_and_defer(self, interaction: Interaction) -> bool:

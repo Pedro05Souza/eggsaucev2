@@ -33,12 +33,12 @@ class BalanceUsecase:
 
         member_to_extract = self._ctx.author if not self._member else self._member
 
+        updatable_salary_description = await update_away_salary(self._player_repository, player_entity)
+
         description = (
             f"💸 Wallet: **{player_entity.balance}**"
             + f"\n🏦 Bank: **{player_entity.bank_balance}/{player_entity.bank_capacity}**"
         )
-
-        updatable_salary_description = await update_away_salary(self._player_repository, player_entity)
 
         description += f"\n🏆Current Title: **{player_entity.last_bought_title}**"
         description += f"\n⏰Next salary in: **{format_dt(player_entity.next_salary_time, 'R')}**"
