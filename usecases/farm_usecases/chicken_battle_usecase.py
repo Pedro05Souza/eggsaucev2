@@ -59,6 +59,9 @@ class ChickenBattleUsecase:
             self._player_entity = await self._player_repository.get_or_create(self._ctx.author.id)
             self._farm_entity = self._farm_cache.get_or_raise(self._ctx.author.id)
 
+            if len(self._farm_entity.chickens) == 0:
+                return await self._ctx.send_failed_embed("You need to have chickens to queue for a battle!")
+
             match_making_player = MatchMakingPlayer(
                 discord_user_id=self._ctx.author.id,
                 chicken_deck=self._farm_entity.chickens,
