@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 from discord import Member
 from tools import format_chickens
 
@@ -13,19 +13,16 @@ __all__ = ["ChickenVaultUsecase"]
 
 class ChickenVaultUsecase:
 
-    def __init__(
-        self, ctx: "EggsauceContext", farm_repository: FarmRepositoryProtocol, member: Optional[Member] = None
-    ) -> None:
+    def __init__(self, ctx: "EggsauceContext", farm_repository: FarmRepositoryProtocol, member: Member) -> None:
         self._ctx = ctx
         self._farm_repository = farm_repository
         self._member = member
 
     async def chicken_vault(self) -> None:
-        member_to_view = self._member or self._ctx.author
 
-        vaulted_chickens = await self._farm_repository.get_vaulted_chickens(member_to_view.id)
+        vaulted_chickens = await self._farm_repository.get_vaulted_chickens(self._member.id)
 
-        title = f"🐔 {member_to_view.display_name}'s Vault"
+        title = f"🐔 {self._member.display_name}'s Vault"
 
         description = await format_chickens(vaulted_chickens)
 
@@ -34,5 +31,5 @@ class ChickenVaultUsecase:
                 "title": title,
                 "description": description,
             },
-            thumbnail_url=member_to_view.display_avatar.url,
+            thumbnail_url=self._member.display_avatar.url,
         )

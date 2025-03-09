@@ -16,6 +16,7 @@ from tools.constants import (
     ChickenPricesMultiplier,
     BASE_CHICKEN_PRICE,
     REASON_CANT_ACTION_SELF,
+    FARM_MAX_CHICKENS,
 )
 from tools.services import (
     MatchMakingService,
@@ -73,9 +74,11 @@ class ChickenBattleUsecase:
             if len(self._farm_entity.chickens) == 0:
                 return await self._ctx.send_failed_embed("You need to have chickens to queue for a battle!")
 
+            chicken_deck = self._farm_entity.chickens[:FARM_MAX_CHICKENS]
+
             match_making_player = MatchMakingPlayer(
                 discord_user_id=self._ctx.author.id,
-                chicken_deck=self._farm_entity.chickens,
+                chicken_deck=chicken_deck,
                 current_mmr=self._player_entity.current_mmr,
                 ctx=self._ctx,
                 name=self._ctx.author.display_name,
@@ -145,8 +148,10 @@ class ChickenBattleUsecase:
             if len(member_farm_entity.chickens) == 0:
                 return await self._ctx.send_failed_embed("Your friend needs to have chickens to battle!")
 
+            chicken_deck = member_farm_entity.chickens[:FARM_MAX_CHICKENS]
+
             return MatchMakingPlayer(
-                chicken_deck=member_farm_entity.chickens,
+                chicken_deck=chicken_deck,
                 current_mmr=member_entity.current_mmr,
                 discord_user_id=self._friendly_battle_user.id,
                 ctx=self._ctx,

@@ -33,7 +33,7 @@ class UpgradeTitleUsecase:
         self._get_titles_emojis = get_titles_emojis()
         self._player_repository = player_repository
 
-    async def buy_title(self) -> None:
+    async def upgrade_title(self) -> None:
         title_names = list(self._get_titles_prices.keys())
         player_entity = await self._player_repository.get_or_create(self._ctx.author.id)
         next_title = self._get_next_title(title_names, player_entity)

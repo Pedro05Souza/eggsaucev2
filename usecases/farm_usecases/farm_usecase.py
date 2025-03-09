@@ -1,4 +1,3 @@
-from typing import Optional
 from discord import Member
 from repositories import FarmRepositoryProtocol, PlayerRepositoryProtocol
 from tools.constants import REASON_INVALID_USER
@@ -16,7 +15,7 @@ class FarmUseCase:
         farm_cache_service: FarmCacheService,
         farm_repository: FarmRepositoryProtocol,
         player_repository: PlayerRepositoryProtocol,
-        member: Optional[Member],
+        member: Member,
     ) -> None:
         self._ctx = ctx
         self._farm_cache_service = farm_cache_service
@@ -26,7 +25,7 @@ class FarmUseCase:
 
     async def farm(self) -> None:
 
-        if self._member:
+        if self._member != self._ctx.author:
             farm_entity = await self._farm_repository.get_farm_by_discord_user_id(self._member.id)
 
             if not farm_entity:
@@ -36,9 +35,7 @@ class FarmUseCase:
         else:
             farm_entity = self._farm_cache_service.get_or_raise(self._ctx.author.id)
 
-        discord_member = self._ctx.author if not self._member else self._member
-
-        player_entity = await self._player_repository.get_or_create(discord_member.id)
+        player_entity = await self._player_repository.get_or_create(self._member.id)
 
         updatable_farm_description = await update_away_farm(
             self._player_repository, self._farm_repository, player_entity, farm_entity
@@ -59,6 +56,6 @@ class FarmUseCase:
                 "title": farm_title,
                 "description": farm_chickens,
             },
-            thumbnail_url=discord_member.display_avatar.url,
+            thumbnail_url=self._member.display_avatar.url,
             footer_text=get_random_tip_message(),
         )
