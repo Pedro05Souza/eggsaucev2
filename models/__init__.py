@@ -4,4 +4,3 @@ from .chicken import *
 from .cornfield import *
 from .farm import *
 from .player import *
-from .allowed_channels import *
