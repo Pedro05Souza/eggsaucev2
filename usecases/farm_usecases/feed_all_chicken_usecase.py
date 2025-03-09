@@ -42,12 +42,18 @@ class FeedAllChickenUsecase:
         if not cornfield_entity:
             raise ValueError("Cornfield entity not found!")
 
+        total_chickens_to_feed = 0
+        total_chickens_fed = 0
+
         for chicken in farm_entity.chickens:
 
             if chicken.happiness == 100:
                 continue
 
+            total_chickens_to_feed += 1
+
             if cornfield_entity.current_corn >= chicken.food_consumption:
+                total_chickens_fed += 1
                 not_enough_corn = False
                 are_all_chickens_fed = False
                 cornfield_entity.current_corn -= chicken.food_consumption
@@ -66,4 +72,8 @@ class FeedAllChickenUsecase:
         async with self._farm_cache.remove_if_exception(farm_entity.discord_user_id):
             await self._farm_repository.bulk_update_chickens(chicken_models)
             await self._cornfield_repository.update_cornfield(cornfield_entity)
-            await self._ctx.send_bot_embed(embed_params={"description": "✅ All chickens have been fed succesfully!"})
+            await self._ctx.send_bot_embed(
+                embed_params={
+                    "description": f"✅ Fed **{total_chickens_fed}** out of **{total_chickens_to_feed}** chickens!"
+                }
+            )
