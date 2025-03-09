@@ -17,19 +17,19 @@ class CacheBase(ABC, Generic[KT, VT]):
             return self._cache[key]
         return None
 
-    def add(self, key: KT, value: VT) -> bool:
+    def add(self, key: KT, value: VT, /) -> bool:
         if key not in self._cache:
             self._cache[key] = value
             return True
         return False
 
-    def get_or_raise(self, key: KT) -> VT:
+    def get_or_raise(self, key: KT, /) -> VT:
         if key in self._cache:
             return self._cache[key]
         self._logger.error("Cache miss: Key '%s' not found.", key)
         raise KeyError(f"Key '{key}' not found.")
 
-    def contains(self, key: KT) -> bool:
+    def contains(self, key: KT, /) -> bool:
         return key in self._cache
 
     @property
