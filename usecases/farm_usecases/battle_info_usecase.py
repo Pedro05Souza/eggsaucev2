@@ -33,8 +33,11 @@ class BattleInfoUsecase:
 
         title = f"🗡️ {self._member.display_name}'s Battle Status:"
 
-        win_rate = (player_entity.wins / (player_entity.wins + player_entity.losses)) * 100
-        win_rate = round(win_rate, 2) if win_rate > 0 else 0
+        if player_entity.wins + player_entity.losses > 0:
+            win_rate = (player_entity.wins / (player_entity.wins + player_entity.losses)) * 100
+            win_rate = round(win_rate, 2) if win_rate > 0 else 0
+        else:
+            win_rate = 0
 
         rank_field = (
             f"🥇 Rank: **{await get_player_rank(player_entity.current_mmr)}**\n"

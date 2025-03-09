@@ -30,6 +30,8 @@ from usecases import (
     EvolveChickenUsecase,
     AscendancyUsecase,
     TradeChickenUsecase,
+    ChickenDropRateUsecase,
+    ChickenPricesUsecase,
 )
 from repositories import (
     FarmRepository,
@@ -407,6 +409,26 @@ class FarmController(  # pylint: disable=too-many-public-methods
             user_farm_position,
         )
         await trade_chicken_usecase.trade_chicken()
+
+    @hybrid_command(
+        name="chickenrates",
+        aliases=["cr"],
+        description="🐔 View the drop rates of chickens!",
+        help="Displays the drop rates of chickens by rarity. The rates are used in the **market** command.",
+    )
+    async def chicken_drop_rates(self, ctx: EggsauceContext) -> None:
+        chicken_drop_rate_usecase = ChickenDropRateUsecase(ctx)
+        await chicken_drop_rate_usecase.chicken_drop_rates()
+
+    @hybrid_command(
+        name="chickenprices",
+        aliases=["cps"],
+        description="🐔 View the prices of chickens!",
+        help="Displays the prices of chickens by rarity.",
+    )
+    async def chicken_prices(self, ctx: EggsauceContext) -> None:
+        chicken_prices_usecase = ChickenPricesUsecase(ctx)
+        await chicken_prices_usecase.get_chicken_prices()
 
     async def cog_before_invoke(self, ctx: EggsauceContext) -> None:  # type: ignore
         await ensure_author_farm(

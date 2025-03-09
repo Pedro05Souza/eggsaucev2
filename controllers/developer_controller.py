@@ -1,5 +1,5 @@
 from discord.ext.commands import Cog, Bot, command
-from usecases import ReloadCogsUsecase
+from usecases import ReloadCogsUsecase, DevPanelUsecase
 from tools import dev_only, get_logger
 from eggsauce_context import EggsauceContext
 
@@ -22,6 +22,12 @@ class DeveloperController(Cog, name="Developer", command_attrs={"hidden": True})
     async def sync(self, _: EggsauceContext) -> None:
         await self.bot.tree.sync()
         self.logger.info("Synced tree.")
+
+    @command("devpanel", aliases=["dp"])
+    @dev_only()
+    async def devpanel(self, ctx: EggsauceContext) -> None:
+        dev_panel_usecase = DevPanelUsecase(ctx)
+        await dev_panel_usecase.dev_panel()
 
 
 async def setup(bot: Bot) -> None:
