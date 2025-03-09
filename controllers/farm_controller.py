@@ -4,6 +4,7 @@ from discord.ext.commands import (
     Cog,
     Bot,
     hybrid_command,
+    command,
     cooldown,
     BucketType,
     CooldownMapping,
@@ -84,10 +85,9 @@ class FarmController(  # pylint: disable=too-many-public-methods
         )
         await market_usecase.market()
 
-    @hybrid_command(
+    @command(
         name="farm",
         aliases=["f"],
-        description="🐔 View your farm!",
         help="Displays all chickens in a farm. Defaults to your farm unless another user is specified.",
     )
     async def farm(
