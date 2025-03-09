@@ -6,7 +6,14 @@ from tools import (
     GlobalBotConfigCache,
     spin_command_autocomplete,
 )
-from tools.constants import REGULAR_COMMAND_COOLDOWN, MIN_AMOUNT_SPIN, MIN_AMOUNT_TO_STEAL, STEAL_FAILURE_CHANCE
+from tools.constants import (
+    REGULAR_COMMAND_COOLDOWN,
+    MIN_AMOUNT_SPIN,
+    MIN_AMOUNT_TO_STEAL,
+    STEAL_FAILURE_CHANCE,
+    PRICE_TO_STEAL,
+    MAX_PERCETANGE_TO_STEAL,
+)
 from usecases import (
     BalanceUsecase,
     DonateUsecase,
@@ -77,9 +84,12 @@ class PlayerController(
         name="steal",
         aliases=["rob"],
         description="🦹‍♂️ Steal some eggbux from another user!",
-        help="Steal a random amount between **1%** to **25%** of the current money present in the user's wallet."
-        + f" The user must have at least **{MIN_AMOUNT_TO_STEAL}** eggbux to be stolen from."
-        + f" This command has a **{int(STEAL_FAILURE_CHANCE * 100)}** failure rate and doen't steal from the bank.",
+        help=f"Attempt to steal between **1%** and **{int(MAX_PERCETANGE_TO_STEAL * 100)}%** of a user's"
+        + "wallet balance."
+        + f" The target must have at least **{MIN_AMOUNT_TO_STEAL}** eggbux."
+        + "You can't steal from the same user twice in a row."
+        + f" There's a **{int(STEAL_FAILURE_CHANCE * 100)}%** chance of failure."
+        f"This action costs **{PRICE_TO_STEAL}** eggbux, and bank funds cannot be stolen.",
     )
     async def steal(
         self, ctx: EggsauceContext, target: Member = parameter(description="The target to steal from.")
