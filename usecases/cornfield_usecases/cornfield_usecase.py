@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 from discord.utils import format_dt
 from discord import Member
 from tools.constants import SECONDS_TO_CORNFIELD_DROP, REASON_INVALID_USER
@@ -16,7 +16,7 @@ __all__ = ["CornFieldUsecase"]
 class CornFieldUsecase:
 
     def __init__(
-        self, ctx: "EggsauceContext", member: Optional[Member], cornfield_repository: "CornfieldRepositoryProtocol"
+        self, ctx: "EggsauceContext", member: Member, cornfield_repository: "CornfieldRepositoryProtocol"
     ) -> None:
         self._ctx = ctx
         self._member = member
@@ -24,20 +24,11 @@ class CornFieldUsecase:
 
     async def cornfield(self) -> None:
 
-        if self._member is not None:
-            cornfield_entity = await self._cornfield_repository.get_cornfield_by_user_discord_id(self._member.id)
-
-            if not cornfield_entity:
-                await self._ctx.send_failed_embed(REASON_INVALID_USER)
-                return
-        else:
-            cornfield_entity = await self._cornfield_repository.get_or_raise_by_user_discord_id(self._ctx.author.id)
+        cornfield_entity = await self._cornfield_repository.get_cornfield_by_user_discord_id(self._member.id)
 
         if not cornfield_entity:
             await self._ctx.send_failed_embed(REASON_INVALID_USER)
             return
-
-        member = self._ctx.author if not self._member else self._member
 
         updatable_corn_description = await update_away_corn(self._cornfield_repository, cornfield_entity)
 
@@ -55,5 +46,5 @@ class CornFieldUsecase:
 
         await self._ctx.send_bot_embed(
             embed_params={"title": title, "description": description},
-            thumbnail_url=member.display_avatar.url,
+            thumbnail_url=self._member.display_avatar.url,
         )

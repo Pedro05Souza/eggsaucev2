@@ -1,7 +1,7 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 from discord import Member
-from discord.ext.commands import Cog, Bot, hybrid_command, CooldownMapping, BucketType
+from discord.ext.commands import Cog, Bot, hybrid_command, CooldownMapping, BucketType, parameter
 from tools import (
     GlobalFarmCache,
     FarmCacheService,
@@ -25,6 +25,7 @@ class CornfieldController(
     Cog,
     name="Cornfield",
     command_attrs={"cooldown": CooldownMapping.from_cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)},
+    description="Commands to interact the cornfield system.",
 ):
 
     def __init__(
@@ -41,17 +42,40 @@ class CornfieldController(
         self.cornfield_repository = cornfield_repository
         self.player_repository = player_repository
 
-    @hybrid_command(name="cornfield", aliases=["corn", "c"], description="🌽 Visit the cornfield to earn some eggbux!")
-    async def cornfield(self, ctx: "EggsauceContext", member: Optional[Member] = None) -> None:
+    @hybrid_command(
+        name="cornfield",
+        aliases=["corn", "c"],
+        description="🌽 Visit the cornfield to earn some eggbux!",
+        help="Displays all the cornfield information, such as the amount of corn you have,"
+        " corn limit and the expected corn production.",
+    )
+    async def cornfield(
+        self,
+        ctx: "EggsauceContext",
+        member: Member = parameter(
+            default=lambda ctx: ctx.author,
+            description="The member whose cornfield is being accessed. If not specified its the author.",
+        ),
+    ) -> None:
         cornfield_usecase = CornFieldUsecase(ctx, member, self.cornfield_repository)
         await cornfield_usecase.cornfield()
 
-    @hybrid_command(name="expandcornfield", aliases=["ec"], description="🌽 Expand the cornfield limit!")
+    @hybrid_command(
+        name="expandcornfield",
+        aliases=["ec"],
+        description="🌽 Expand the cornfield limit!",
+        help="Increase your storage capacity for more corn.",
+    )
     async def expand_cornfield(self, ctx: "EggsauceContext") -> None:
         expand_corn_limit_usecase = ExpandCornLimitUsecase(ctx, self.cornfield_repository, self.player_repository)
         await expand_corn_limit_usecase.expand_corn_limit()
 
-    @hybrid_command(name="buyplot", aliases=["bp"], description="🌽 Buy a plot for your cornfield!")
+    @hybrid_command(
+        name="buyplot",
+        aliases=["bp"],
+        description="🌽 Buy a plot for your cornfield!",
+        help="Purchase a new plot to increase your corn production.",
+    )
     async def buy_plot(self, ctx: "EggsauceContext") -> None:
         buy_plot_usecase = BuyPlotUsecase(ctx, self.cornfield_repository, self.player_repository)
         await buy_plot_usecase.buy_plot()
