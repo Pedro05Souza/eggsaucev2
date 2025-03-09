@@ -1,6 +1,7 @@
 from pathlib import Path
 from discord import Intents, Message, Interaction
 from discord.ext.commands import Bot
+from discord import Game
 from tools import get_logger, BotConfigCacheService
 from tools.constants import get_env_var
 from eggsauce_context import EggsauceContext
@@ -15,7 +16,9 @@ class Eggsauce(Bot):
         intents = self._setup_intents()
         self.bot_config_cache = bot_config_cache
         self.logger = get_logger(__name__)
-        super().__init__(command_prefix=self._get_bot_prefix, intents=intents, case_insensitive=True)
+        super().__init__(
+            command_prefix=self._get_bot_prefix, intents=intents, case_insensitive=True, activity=Game(name="$help")
+        )
 
     def _setup_intents(self) -> Intents:
         intents = Intents.default()
