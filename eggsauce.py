@@ -60,7 +60,7 @@ class Eggsauce(Bot):
     async def _get_bot_prefix(self, _: Bot, message: Message) -> str:
 
         if not message.guild:
-            return "!"
+            return "$"
 
         bot_config = await self.bot_config_cache.get_or_fetch(message.guild.id)
 
