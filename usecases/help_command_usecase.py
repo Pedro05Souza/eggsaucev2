@@ -10,8 +10,8 @@ class HelpCommandUsecase(MinimalHelpCommand):
         destination = self.get_destination()
 
         for page in self.paginator.pages:
-            emby = Embed(description=page)
-            await destination.send(embed=emby)
+            embed = Embed(description=page)
+            await destination.send(embed=embed)
 
     async def send_bot_help(self, mapping, /):
         embed = Embed(title="📚 Categories")

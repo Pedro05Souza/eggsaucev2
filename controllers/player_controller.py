@@ -153,7 +153,7 @@ class PlayerController(
     @hybrid_command(
         name="deposit",
         aliases=["dep"],
-        descriptiom="💸Deposit money in your bank account!",
+        description="💸Deposit money in your bank account!",
         help="Deposit any valid amount to your bank",
     )
     async def deposit(
