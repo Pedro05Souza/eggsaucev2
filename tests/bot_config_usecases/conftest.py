@@ -17,4 +17,4 @@ def bot_config_cache_service(mocker: MockerFixture) -> BotConfigCacheService:
 
 @pytest.fixture()
 def bot_config_entity() -> BotConfigEntity:
-    return BotConfigEntity(id="1", guild_id=123, prefix="!", allowed_channels=set())
+    return BotConfigEntity(id="1", guild_id=123, prefix="!")
