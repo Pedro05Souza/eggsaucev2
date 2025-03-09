@@ -6,9 +6,10 @@ import re
 AMOUNT_PER_BANK_UPGRADE: Final[int] = 10000
 BASE_CHICKEN_PRICE: Final[int] = 800
 BASE_UPGRADE_CORNFIELD_LIMIT_PRICE: Final[int] = 1000
-BASE_FARMER_PRICE: Final[int] = 5000
+BASE_FARMER_PRICE: Final[int] = 8000
 BASE_PLOT_PRICE: Final[int] = 1000
 BASE_MMR_CHANGE: Final[int] = 20
+PRICE_TO_STEAL: Final[int] = 700
 
 # Time intervals for game events (in seconds)
 SECONDS_TO_SALARY_DROP: Final[int] = 3600
@@ -17,7 +18,7 @@ SECONDS_TO_FARM_ROLL: Final[int] = 3600
 SECONDS_TO_CORNFIELD_DROP: Final[int] = 3600
 
 # Limits
-MAX_PERCETANGE_TO_STEAL: Final[float] = 0.25
+MAX_PERCETANGE_TO_STEAL: Final[float] = 0.35
 MIN_AMOUNT_TO_STEAL: Final[int] = 100
 MIN_AMOUNT_SPIN: Final[int] = 100
 MIN_FARM_NAME_CHARACTERS: Final[int] = 3
@@ -48,7 +49,6 @@ DELTA_CORN_PER_PLOT: Final[int] = 40
 STEAL_FAILURE_CHANCE: Final[float] = 0.1
 PAGE_SIZE: Final[int] = 5
 NAME_REGEX: Final = re.compile(r"^[a-zA-Z0-9_]{3,20}$")
-
 
 
 def get_titles_prices() -> dict[str, int]:
