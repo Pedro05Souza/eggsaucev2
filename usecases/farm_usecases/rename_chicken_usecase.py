@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from tools.constants import REASON_INVALID_INDEX
+from tools.constants import REASON_INVALID_INDEX, NAME_REGEX
 
 if TYPE_CHECKING:
     from eggsauce_context import EggsauceContext
@@ -32,6 +32,11 @@ class RenameChickenUsecase:
 
         if self._position < 0 or self._position >= len(farm_entity.chickens):
             return await self._ctx.send_failed_embed(REASON_INVALID_INDEX)
+
+        if not NAME_REGEX.match(self._new_name):
+            return await self._ctx.send_failed_embed(
+                "Invalid name format. Please use only letters, numbers, and underscores."
+            )
 
         chicken_to_rename = farm_entity.chickens[self._position]
         chicken_to_rename.name = self._new_name

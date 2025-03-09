@@ -2,7 +2,7 @@ from repositories import FarmRepositoryProtocol
 from tools import (
     FarmCacheService,
 )
-from tools.constants import MIN_FARM_NAME_CHARACTERS
+from tools.constants import MIN_FARM_NAME_CHARACTERS, NAME_REGEX
 from eggsauce_context import EggsauceContext
 
 __all__ = ["RenameFarmUsecase"]
@@ -29,6 +29,11 @@ class RenameFarmUsecase:
         if len(self._new_name) < MIN_FARM_NAME_CHARACTERS:
             return await self._ctx.send_failed_embed(
                 f"Please enter a name with **{MIN_FARM_NAME_CHARACTERS}** or more characters"
+            )
+
+        if not NAME_REGEX.match(self._new_name):
+            return await self._ctx.send_failed_embed(
+                "Invalid name format. Please use only letters, numbers, and underscores."
             )
 
         farm_entity.farm_title = self._new_name

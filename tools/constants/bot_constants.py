@@ -1,4 +1,5 @@
 from typing import Final
+import re
 
 
 # Values related to upgrades and economy
@@ -46,6 +47,7 @@ DELTA_CORN_PER_PLOT: Final[int] = 40
 # Other constants
 STEAL_FAILURE_CHANCE: Final[float] = 0.1
 PAGE_SIZE: Final[int] = 5
+NAME_REGEX: Final = re.compile(r"^[a-zA-Z0-9_]{3,20}$")
 
 
 
