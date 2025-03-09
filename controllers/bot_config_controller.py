@@ -5,7 +5,7 @@ from tools import BotConfigCacheService, admin_only, GlobalBotConfigCache
 from eggsauce_context import EggsauceContext
 
 
-class BotConfigController(Cog, name="Bot Configuration", description="Commands to configure the bot."):
+class BotConfigController(Cog, name="Config", description="Commands to configure the bot."):
 
     def __init__(
         self, bot: Bot, bot_config_cache: BotConfigCacheService, bot_config_repository: BotConfigRepositoryProtocol
@@ -21,14 +21,15 @@ class BotConfigController(Cog, name="Bot Configuration", description="Commands t
         await set_prefix_usecase.set_prefix()
 
     @command(
-        name="setchannel", help="Set any channel for the bot to listen to the commands. Supports multiple channels"
+        name="setchannel",
+        help="Set the current channel for the bot to listen to the commands. Supports multiple channels",
     )
     @admin_only()
     async def set_channel(self, ctx: EggsauceContext) -> None:
         set_channel_usecase = SetChannelUsecase(ctx, ctx.channel.id, self.bot_config_cache, self.bot_config_repository)
         await set_channel_usecase.set_channel()
 
-    @command(name="unsetchannel", help="Unset the channel for the bot to listen to the commands")
+    @command(name="unsetchannel", help="Unset the current channel for the bot to listen to the commands")
     @admin_only()
     async def unset_channel(self, ctx: EggsauceContext) -> None:
         unset_channel_usecase = UnsetChannelUsecase(
