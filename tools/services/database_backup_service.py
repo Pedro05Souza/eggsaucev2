@@ -24,7 +24,7 @@ class DatabaseBackupService:
         scheduler = Scheduler(loop=loop)  # type: ignore
 
         scheduler.cyclic(
-            timedelta(seconds=60),
+            timedelta(hours=2),
             self._backup_database,
         )
 
