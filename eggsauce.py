@@ -1,3 +1,4 @@
+from typing import Any, Coroutine, Callable
 from pathlib import Path
 from discord import Intents, Message, Interaction
 from discord.ext.commands import Bot
@@ -6,15 +7,17 @@ from tools import get_logger, BotConfigCacheService
 from tools.constants import get_env_var
 from eggsauce_context import EggsauceContext
 
-
 class Eggsauce(Bot):
 
     def __init__(
         self,
         bot_config_cache: BotConfigCacheService,
+        # We pass a callback instead of a object since we have no running event loop yet
+        database_backup_callback: Callable[[], Coroutine[Any, Any, None]],
     ) -> None:
         intents = self._setup_intents()
         self.bot_config_cache = bot_config_cache
+        self.database_backup_callback = database_backup_callback
         self.logger = get_logger(__name__)
         super().__init__(
             command_prefix=self._get_bot_prefix, intents=intents, case_insensitive=True, activity=Game(name="$help")
@@ -44,6 +47,7 @@ class Eggsauce(Bot):
 
     async def setup_hook(self):
         await self._load_cogs()
+        await self.database_backup_callback()
 
     def run(self, *args, **kwargs) -> None:
         workspace_env = get_env_var("ENVIRONMENT")
