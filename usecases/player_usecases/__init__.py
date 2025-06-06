@@ -9,3 +9,4 @@ from .upgrade_title_usecase import *
 from .withdraw_usecase import *
 from .deposit_usecase import *
 from .dev_panel_usecase import *
+from .give_money_usecase import *
