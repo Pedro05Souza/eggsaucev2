@@ -5,7 +5,6 @@ services:
     command: python3 app.py
     volumes:
       - .:/app
-      - backups:/app/backups
     environment:
       ENVIRONMENT: ${ENVIRONMENT}
       PYTHONUNBUFFERED: 1
@@ -42,12 +41,6 @@ services:
 
 volumes:
   db-data:
-  backups:
-    driver: local
-    driver_opts:
-      type: none
-      device: ./backups
-      o: bind
 
 networks:
   eggsauce_network:
