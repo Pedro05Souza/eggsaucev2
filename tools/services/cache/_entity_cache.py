@@ -21,9 +21,10 @@ class EntityCacheService(TTLCacheService[int, TE]):
         """
         try:
             yield
-        except Exception:
+        except Exception as e:
             for key in keys:
                 self._cache.pop(key)
+            self._logger.error("An exception occurred, invalidating cache for keys: %s", keys, exc_info=e)
 
     async def _save_expired_or_removed_items(self) -> None:
         """Saves the expired or removed items to the database."""
