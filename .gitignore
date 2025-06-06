@@ -208,6 +208,3 @@ override.tf.json
 terraform.rc
 # Ignore local .terraform directory
 .terraform/
-
-backups/*
-!backups/.gitkeep
