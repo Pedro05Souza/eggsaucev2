@@ -7,18 +7,16 @@ from tools.constants import get_list_env_var
 
 if TYPE_CHECKING:
     from eggsauce_context import EggsauceContext
-    from services import BotConfigCacheService
 
 
 __all__ = [
     "dev_only",
     "admin_only",
-    "is_using_valid_channel",
 ]
 
 
 def dev_only():
-    async def predicate(ctx: " EggsauceContext") -> bool:
+    async def predicate(ctx: "EggsauceContext") -> bool:
         dev_ids = get_list_env_var("LIST_DEVELOPER_IDS")
 
         if ctx.author.id not in dev_ids:
@@ -27,25 +25,6 @@ def dev_only():
         return True
 
     return check(predicate)
-
-
-async def is_using_valid_channel(ctx: " EggsauceContext", bot_config_cache: "BotConfigCacheService"):
-    if ctx.guild is None:
-        return True
-
-    bot_config_entity = await bot_config_cache.get_or_fetch(ctx.guild.id)
-
-    if bot_config_entity is None:
-        return False
-
-    if ctx.channel.id in bot_config_entity.allowed_channels:
-        return True
-
-    embed = ctx.embed_builder(
-        embed_params={"title": "❌ Invalid Channel", "description": "This channel does not support my commands."}
-    )
-    await ctx.send_user_dm(embed)
-    return False
 
 
 def admin_only():

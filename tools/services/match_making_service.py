@@ -142,6 +142,7 @@ class MatchMakingBot(MatchMakingUser):
 class MatchMakingService:
     _matchmaking_pools: DefaultDict[int, Set[MatchMakingPlayer]] = defaultdict(set)
     _lock = asyncio.Lock()
+    _delay = 1  # Initial delay for retries
 
     @classmethod
     async def _add_player_to_pool(cls, player: MatchMakingPlayer) -> None:
@@ -156,7 +157,6 @@ class MatchMakingService:
 
     @classmethod
     async def match_finder(cls, player: MatchMakingPlayer, retries: int = 5) -> Optional[MatchMakingUser]:
-        delay = 1
         base_mmr = floor(player.current_mmr / 100) * 100
 
         pool = cls._matchmaking_pools[base_mmr]
@@ -182,8 +182,8 @@ class MatchMakingService:
 
                     return other_player
 
-            await asyncio.sleep(delay)
-            delay = min(delay * 2, 5)
+            await asyncio.sleep(cls._delay)
+            cls._delay = min(cls._delay * 2, 5)
 
         await cls._remove_player_from_pool(player)
         return await MatchMakingBot.bot_maker_factory(player.current_mmr)
