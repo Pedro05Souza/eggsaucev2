@@ -6,7 +6,6 @@ from tools import get_logger, BotConfigCacheService
 from tools.constants import get_env_var
 from eggsauce_context import EggsauceContext
 
-
 class Eggsauce(Bot):
 
     def __init__(
@@ -69,5 +68,5 @@ class Eggsauce(Bot):
 
         return bot_config.prefix
 
-    async def get_context(self, message: Message | Interaction, /, *, cls=EggsauceContext):
-        return await super().get_context(message, cls=EggsauceContext)
+    async def get_context(self, message: Message | Interaction, /, *, cls: type = EggsauceContext):
+        return await super().get_context(message, cls=cls)

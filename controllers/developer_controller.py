@@ -15,19 +15,30 @@ class DeveloperController(Cog, name="Developer", command_attrs={"hidden": True})
     async def reload(self, _: EggsauceContext) -> None:
         reload_usecase = ReloadCogsUsecase(self.bot)
         await reload_usecase.reload_cogs()
-        self.logger.info("Reloaded cogs.")
 
     @command(name="sync")
     @dev_only()
     async def sync(self, _: EggsauceContext) -> None:
         await self.bot.tree.sync()
-        self.logger.info("Synced tree.")
 
     @command("devpanel", aliases=["dp"])
     @dev_only()
     async def devpanel(self, ctx: EggsauceContext) -> None:
         dev_panel_usecase = DevPanelUsecase(ctx)
         await dev_panel_usecase.dev_panel()
+
+    async def cog_after_invoke(self, ctx: EggsauceContext) -> None: # type: ignore
+        if ctx.author and ctx.command and ctx.guild:
+            self.logger.info(
+                "User %s (%s) used command %s in guild %s (%s)",
+                ctx.author,
+                ctx.author.id,
+                ctx.command,
+                ctx.guild,
+                ctx.guild.id,
+            )
+        else:
+            self.logger.warning("Context is missing required attributes for logging.")
 
 
 async def setup(bot: Bot) -> None:
