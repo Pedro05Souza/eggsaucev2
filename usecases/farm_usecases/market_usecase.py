@@ -160,6 +160,8 @@ class ChickenView(View):
             self._farm_entity.chickens = await sort_chickens(self._farm_entity.chickens)
             await self._farm_repository.upsert_farm_chicken(self._farm_entity.id, chicken_entity)
 
+        player_entity.balance -= selected_chicken.price
+        self._chickens.remove(selected_chicken)
         await self._player_repository.update_player(player_entity)
         await self._ctx.handle_interaction_response(
             interaction,
@@ -170,8 +172,6 @@ class ChickenView(View):
             },
             ephemeral=False,
         )
-        player_entity.balance -= selected_chicken.price
-        self._chickens.remove(selected_chicken)
 
         if not self._chickens:
             await interaction.message.delete(delay=1)  # type: ignore
