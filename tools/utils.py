@@ -57,7 +57,7 @@ async def ensure_author_farm(
     if farm_cache.contains(ctx.author.id):
         return
 
-    farm_entity = await farm_repository.get_farm_by_discord_user_id(ctx.author.id)
+    farm_entity = await farm_cache.get_or_fetch(ctx.author.id)
 
     if not farm_entity:
         now = datetime.now(timezone.utc)

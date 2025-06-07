@@ -53,15 +53,14 @@ async def update_away_farm(
     if money_gained is None:
         return
 
-    await asyncio.gather(
-        transaction_service.increment_balance_and_bank(player_entity, money_gained),
-        farm_repository.update_farm(farm_entity),
-        farm_repository.bulk_update_chickens(
-            await asyncio.gather(
-                *[chicken_entity_to_model(farm_entity.id, chicken) for chicken in farm_entity.chickens]
-            )
-        ),
+    # Perform database operations sequentially to avoid connection conflicts
+    await transaction_service.increment_balance_and_bank(player_entity, money_gained)
+    await farm_repository.update_farm(farm_entity)
+
+    chicken_models = await asyncio.gather(
+        *[chicken_entity_to_model(farm_entity.id, chicken) for chicken in farm_entity.chickens]
     )
+    await farm_repository.bulk_update_chickens(chicken_models)
 
     return f"\n💰 **{money_gained}** eggbux from your farm."
 
