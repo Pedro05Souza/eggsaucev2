@@ -7,6 +7,7 @@ from tools import (
     FarmCacheService,
 )
 from tools.constants import REGULAR_COMMAND_COOLDOWN
+from tools.services import TransactionService
 from usecases import CornFieldUsecase, ExpandCornLimitUsecase, BuyPlotUsecase
 from repositories import (
     FarmRepositoryProtocol,
@@ -35,12 +36,14 @@ class CornfieldController(
         farm_repository: FarmRepositoryProtocol,
         cornfield_repository: CornfieldRepositoryProtocol,
         player_repository: PlayerRepositoryProtocol,
+        transaction_service: TransactionService,
     ) -> None:
         self.bot = bot
         self.farm_cache_service = farm_cache_service
         self.farm_repository = farm_repository
         self.cornfield_repository = cornfield_repository
         self.player_repository = player_repository
+        self.transaction_service = transaction_service
 
     @hybrid_command(
         name="cornfield",
@@ -67,7 +70,9 @@ class CornfieldController(
         help="Increase your storage capacity for more corn.",
     )
     async def expand_cornfield(self, ctx: "EggsauceContext") -> None:
-        expand_corn_limit_usecase = ExpandCornLimitUsecase(ctx, self.cornfield_repository, self.player_repository)
+        expand_corn_limit_usecase = ExpandCornLimitUsecase(
+            ctx, self.cornfield_repository, self.player_repository, self.transaction_service
+        )
         await expand_corn_limit_usecase.expand_corn_limit()
 
     @hybrid_command(
@@ -77,7 +82,9 @@ class CornfieldController(
         help="Purchase a new plot to increase your corn production.",
     )
     async def buy_plot(self, ctx: "EggsauceContext") -> None:
-        buy_plot_usecase = BuyPlotUsecase(ctx, self.cornfield_repository, self.player_repository)
+        buy_plot_usecase = BuyPlotUsecase(
+            ctx, self.cornfield_repository, self.player_repository, self.transaction_service
+        )
         await buy_plot_usecase.buy_plot()
 
     async def cog_check(self, ctx: "EggsauceContext"):  # type: ignore
@@ -91,6 +98,10 @@ class CornfieldController(
 
 
 async def setup(bot: Bot) -> None:
+    player_repository = PlayerRepository()
+    transaction_service = TransactionService(player_repository)
     await bot.add_cog(
-        CornfieldController(bot, GlobalFarmCache, FarmRepository(), CornfieldRepository(), PlayerRepository())
+        CornfieldController(
+            bot, GlobalFarmCache, FarmRepository(), CornfieldRepository(), PlayerRepository(), transaction_service
+        )
     )

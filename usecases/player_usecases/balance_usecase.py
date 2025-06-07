@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 from discord.utils import format_dt
 from discord import Member
 from repositories import PlayerRepositoryProtocol
@@ -8,14 +10,24 @@ from tools import (
 )
 from eggsauce_context import EggsauceContext
 
+if TYPE_CHECKING:
+    from tools.services import TransactionService
+
 __all__ = ["BalanceUsecase"]
 
 
 class BalanceUsecase:
 
-    def __init__(self, ctx: EggsauceContext, player_repository: PlayerRepositoryProtocol, member: Member) -> None:
+    def __init__(
+        self,
+        ctx: EggsauceContext,
+        player_repository: PlayerRepositoryProtocol,
+        transaction_service: "TransactionService",
+        member: Member,
+    ) -> None:
         self._ctx = ctx
         self._player_repository = player_repository
+        self._transaction_service = transaction_service
         self._member = member
 
     async def balance(self) -> None:
@@ -28,7 +40,7 @@ class BalanceUsecase:
         if not player_entity:
             return await self._ctx.send_failed_embed(REASON_INVALID_USER)
 
-        updatable_salary_description = await update_away_salary(self._player_repository, player_entity)
+        updatable_salary_description = await update_away_salary(self._player_repository, self._transaction_service, player_entity)
 
         description = (
             f"💸 Wallet: **{player_entity.balance}**"

@@ -42,6 +42,7 @@ from repositories import (
     CornfieldRepository,
 )
 from tools import GlobalFarmCache, GlobalBotConfigCache, FarmCacheService, BotConfigCacheService, ensure_author_farm
+from tools.services import TransactionService
 from tools.constants import REGULAR_COMMAND_COOLDOWN, SPAM_COMMAND_COOLDOWN, MAX_GENERATED_CHICKENS
 from eggsauce_context import EggsauceContext
 
@@ -61,6 +62,7 @@ class FarmController(  # pylint: disable=too-many-public-methods
         farm_repository: FarmRepositoryProtocol,
         player_repository: PlayerRepositoryProtocol,
         cornfield_repository: CornfieldRepository,
+        transaction_service: TransactionService,
     ) -> None:
         self.bot = bot
         self.farm_cache = farm_cache
@@ -68,6 +70,7 @@ class FarmController(  # pylint: disable=too-many-public-methods
         self.farm_repository = farm_repository
         self.player_repository = player_repository
         self.cornfield_repository = cornfield_repository
+        self.transaction_service = transaction_service
 
     @hybrid_command(
         name="market",
@@ -98,7 +101,9 @@ class FarmController(  # pylint: disable=too-many-public-methods
             description="The member whose farm you want to view. Defaults to the command author.",
         ),
     ) -> None:
-        farm_usecase = FarmUseCase(ctx, self.farm_cache, self.farm_repository, self.player_repository, member)
+        farm_usecase = FarmUseCase(
+            ctx, self.farm_cache, self.farm_repository, self.player_repository, self.transaction_service, member
+        )
         await farm_usecase.farm()
 
     @hybrid_command(
@@ -125,6 +130,7 @@ class FarmController(  # pylint: disable=too-many-public-methods
             self.farm_cache,
             self.farm_repository,
             self.player_repository,
+            self.transaction_service,
         )
         await buy_farmer_usecase.buy_farmer()
 
@@ -452,13 +458,16 @@ class FarmController(  # pylint: disable=too-many-public-methods
 
 
 async def setup(bot: Bot) -> None:
+    player_repository = PlayerRepository()
+    transaction_service = TransactionService(player_repository)
     await bot.add_cog(
         FarmController(
             bot,
             GlobalFarmCache,
             GlobalBotConfigCache,
             FarmRepository(),
-            PlayerRepository(),
+            player_repository,
             CornfieldRepository(),
+            transaction_service,
         )
     )

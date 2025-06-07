@@ -2,20 +2,18 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Optional, TYPE_CHECKING
 from repositories import PlayerRepositoryProtocol
-from tools import (
-    deduct_from_balance_and_bank,
-)
 from tools.constants import (
     SECONDS_TO_SALARY_DROP,
     REASON_INSUFFICIENT_BALANCE,
-    get_titles_prices,
-    get_titles_salaries,
-    get_titles_emojis,
+    TITLE_EMOJIS,
+    TITLE_PRICES,
+    TITLE_SALARIES,
 )
 from eggsauce_context import EggsauceContext
 
 if TYPE_CHECKING:
     from entities import PlayerEntity
+    from tools.services import TransactionService
 
 __all__ = ["UpgradeTitleUsecase"]
 
@@ -26,15 +24,14 @@ class UpgradeTitleUsecase:
         self,
         ctx: EggsauceContext,
         player_repository: PlayerRepositoryProtocol,
+        transaction_service: "TransactionService",
     ) -> None:
         self._ctx = ctx
-        self._get_titles_prices = get_titles_prices()
-        self._get_titles_income = get_titles_salaries()
-        self._get_titles_emojis = get_titles_emojis()
         self._player_repository = player_repository
+        self._transaction_service = transaction_service
 
     async def upgrade_title(self) -> None:
-        title_names = list(self._get_titles_prices.keys())
+        title_names = list(TITLE_SALARIES.keys())
         player_entity = await self._player_repository.get_or_create(self._ctx.author.id)
         next_title = self._get_next_title(title_names, player_entity)
 
@@ -58,7 +55,7 @@ class UpgradeTitleUsecase:
                 )
                 return
 
-            title_price: int = self._get_titles_prices[next_title]
+            title_price: int = TITLE_PRICES[next_title]
 
             if title_price > player_entity.balance + player_entity.bank_balance:
                 await message.edit(
@@ -70,10 +67,7 @@ class UpgradeTitleUsecase:
             player_entity.last_bought_title = next_title
             player_entity.next_salary_time = datetime.now() + timedelta(seconds=SECONDS_TO_SALARY_DROP)
             player_entity.next_salary_time = player_entity.next_salary_time.replace(tzinfo=timezone.utc)
-            deduct_from_balance_and_bank(player_entity, title_price)
-
-            await self._player_repository.update_player(player_entity)
-
+            await self._transaction_service.deduct_from_balance_and_bank(player_entity, title_price)
             await message.edit(
                 embed=self._ctx.embed_builder(
                     embed_params={"description": f"Title **{next_title}** has been bought successfully."}
@@ -94,9 +88,9 @@ class UpgradeTitleUsecase:
         return title_names[next_title_index + 1]
 
     def _format_title(self, title: str) -> str:
-        title_price = self._get_titles_prices.get(title)
-        title_income = self._get_titles_income.get(title)
-        title_emoji = self._get_titles_emojis.get(title)
+        title_price = TITLE_PRICES.get(title)
+        title_income = TITLE_SALARIES.get(title)
+        title_emoji = TITLE_EMOJIS.get(title)
 
         if title_price is None or title_income is None or title_emoji is None:
             raise ValueError("Invalid title")

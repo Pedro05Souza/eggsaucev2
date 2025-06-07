@@ -7,7 +7,8 @@ from .reverse_mapping import chicken_entity_to_model
 
 if TYPE_CHECKING:
     from entities import PlayerEntity, FarmEntity, CornfieldEntity
-    from repositories import PlayerRepositoryProtocol, FarmRepositoryProtocol, CornfieldRepositoryProtocol
+    from repositories import FarmRepositoryProtocol, CornfieldRepositoryProtocol, PlayerRepositoryProtocol
+    from tools.services import TransactionService
 
 
 __all__ = [
@@ -20,36 +21,42 @@ __all__ = [
 @atomic()
 async def update_away_salary(
     player_repository: "PlayerRepositoryProtocol",
+    transaction_service: "TransactionService",
     player_entity: "PlayerEntity",
 ) -> Optional[str]:
-    away_earnings_info = await AwayTimeEarningsService.calculate_salary_profit(player_entity)
+    money_gained = await AwayTimeEarningsService.calculate_salary_profit(player_entity)
 
-    if away_earnings_info is None:
+    if money_gained is None:
         return
-
-    if away_earnings_info.update_location:
+    
+    if money_gained <= player_entity.bank_capacity - player_entity.bank_balance:
+        # We need to update the player outside of the transaction service
+        # because the transaction service does not necessarly update the player entity
+        # and in this case, we need to update the player entity directly
+        # for the attribute `next_drop_time` to be updated correctly.
         await player_repository.update_player(player_entity)
-        await player_repository.update_player_bank(player_entity)
-    else:
-        await player_repository.update_player_bank(player_entity)
 
-    return f"\n💰 **{away_earnings_info.amount}** eggbux from your salary."
+    await transaction_service.increment_balance_and_bank(
+        player_entity, money_gained
+    )
+
+    return f"\n💰 **{money_gained}** eggbux from your salary."
 
 
 @atomic()
 async def update_away_farm(
-    player_repository: "PlayerRepositoryProtocol",
+    transaction_service: "TransactionService",
     farm_repository: "FarmRepositoryProtocol",
     player_entity: "PlayerEntity",
     farm_entity: "FarmEntity",
 ) -> Optional[str]:
-    money_gained = await AwayTimeEarningsService.calculate_chicken_profit(player_entity, farm_entity)
+    money_gained = await AwayTimeEarningsService.calculate_chicken_profit(farm_entity)
 
     if money_gained is None:
         return
 
     await asyncio.gather(
-        player_repository.update_player(player_entity),
+        transaction_service.increment_balance_and_bank(player_entity, money_gained),
         farm_repository.update_farm(farm_entity),
         farm_repository.bulk_update_chickens(
             await asyncio.gather(

@@ -1,8 +1,8 @@
 from .bot_constants import MAX_GENERATED_CHICKENS
 
-__all__ = ["tips"]
+__all__ = ["TIPS"]
 
-tips = [
+TIPS = [
     "The currency name is eggbux.",
     "You can buy titles with eggbux that generates passive income forever.",
     "Also try Bleach Hollow Era on roblox!",

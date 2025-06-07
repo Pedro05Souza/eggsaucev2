@@ -6,6 +6,7 @@ from tools import (
     GlobalBotConfigCache,
     spin_command_autocomplete,
 )
+from tools.services import TransactionService
 from tools.constants import (
     REGULAR_COMMAND_COOLDOWN,
     MIN_AMOUNT_SPIN,
@@ -42,10 +43,12 @@ class PlayerController(
         bot: Bot,
         bot_config_cache: BotConfigCacheService,
         player_repository: PlayerRepositoryProtocol,
+        transaction_service: TransactionService,
     ) -> None:
         self.bot = bot
         self.bot_config_cache = bot_config_cache
         self.player_repository = player_repository
+        self.transaction_service = transaction_service
 
     @hybrid_command(
         name="balance",
@@ -62,7 +65,7 @@ class PlayerController(
             description="The member whose balance is being checked. If not specified its the author.",
         ),
     ) -> None:
-        balance_usecase = BalanceUsecase(ctx, self.player_repository, member)
+        balance_usecase = BalanceUsecase(ctx, self.player_repository, self.transaction_service, member)
         await balance_usecase.balance()
 
     @hybrid_command(
@@ -145,7 +148,7 @@ class PlayerController(
         "Each upgrade increases your bank capacity by **10,000** eggbux.",
     )
     async def upgrade_bank_limit(self, ctx: EggsauceContext) -> None:
-        upgrade_bank_limit_usecase = UpgradeBankUsecase(ctx, self.player_repository)
+        upgrade_bank_limit_usecase = UpgradeBankUsecase(ctx, self.player_repository, self.transaction_service)
         await upgrade_bank_limit_usecase.upgrade_bank_limit()
 
     @hybrid_command(
@@ -180,15 +183,18 @@ class PlayerController(
         "The titles give a salary every **60** minutes. You can only upgrade to the next title in the sequence.",
     )
     async def upgrade_title(self, ctx: EggsauceContext) -> None:
-        upgrade_title_usecase = UpgradeTitleUsecase(ctx, self.player_repository)
+        upgrade_title_usecase = UpgradeTitleUsecase(ctx, self.player_repository, self.transaction_service)
         await upgrade_title_usecase.upgrade_title()
 
 
 async def setup(bot: Bot) -> None:
+    player_repository = PlayerRepository()
+    transaction_service = TransactionService(player_repository)
     await bot.add_cog(
         PlayerController(
             bot,
             GlobalBotConfigCache,
-            PlayerRepository(),
+            player_repository,
+            transaction_service,
         )
     )

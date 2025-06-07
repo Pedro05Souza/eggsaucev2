@@ -2,11 +2,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import asyncio
 from tortoise.transactions import atomic
-from tools import deduct_from_balance_and_bank, calculate_corn_limit, calculate_corn_limit_price
+from tools import calculate_corn_limit, calculate_corn_limit_price
 
 if TYPE_CHECKING:
     from eggsauce_context import EggsauceContext
     from repositories import CornfieldRepositoryProtocol, PlayerRepositoryProtocol
+    from tools.services import TransactionService
 
 
 __all__ = ("ExpandCornLimitUsecase",)
@@ -19,10 +20,12 @@ class ExpandCornLimitUsecase:
         ctx: "EggsauceContext",
         cornfield_repository: "CornfieldRepositoryProtocol",
         player_repository: "PlayerRepositoryProtocol",
+        transaction_service: "TransactionService",
     ) -> None:
         self._ctx = ctx
         self._cornfield_repository = cornfield_repository
         self._player_repository = player_repository
+        self._transaction_service = transaction_service
 
     @atomic()
     async def expand_corn_limit(self) -> None:
@@ -61,12 +64,11 @@ class ExpandCornLimitUsecase:
             )
             return
 
-        deduct_from_balance_and_bank(player_entity, total_cost)
+        await self._transaction_service.deduct_from_balance_and_bank(player_entity, total_cost)
 
         cornfield_entity.corn_limit_upgrades += 1
 
         await self._cornfield_repository.update_cornfield(cornfield_entity)
-        await self._player_repository.update_player(player_entity)
 
         await message.edit(
             embed=self._ctx.embed_builder(

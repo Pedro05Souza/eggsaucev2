@@ -1,6 +1,6 @@
 from __future__ import annotations
 import asyncio
-from typing import Optional, TYPE_CHECKING, List, NamedTuple
+from typing import Optional, TYPE_CHECKING, List
 from datetime import datetime, timedelta, timezone
 from random import randint
 from tools.constants import (
@@ -16,7 +16,7 @@ from tools.constants import (
     ChickenPricesMultiplier,
     ChickenRaritiesEmojis,
 )
-from tools.utils import get_salary_from_title, increment_balance_and_bank
+from tools.utils import get_salary_from_title
 from tools.chicken_utils import calculate_base_egg_production, calculate_plot_production
 
 
@@ -26,18 +26,11 @@ if TYPE_CHECKING:
 
 __all__ = ["AwayTimeEarningsService"]
 
-class AmountAndUpdateLocation(NamedTuple):
-    amount: int
-    update_location: bool
-
-    def __str__(self) -> str:
-        return f"AmountAndUpdateLocation(amount={self.amount}, update_location={self.update_location})"
-
 
 class AwayTimeEarningsService:
 
     @staticmethod
-    async def calculate_salary_profit(player_entity: "PlayerEntity") -> Optional[AmountAndUpdateLocation]:
+    async def calculate_salary_profit(player_entity: "PlayerEntity" ) -> Optional[int]:
         now = datetime.now(timezone.utc)
         next_salary_time = player_entity.next_salary_time
 
@@ -45,11 +38,9 @@ class AwayTimeEarningsService:
 
         hours_passed = await AwayTimeEarningsService._calculate_hours_passed(time_diffence)
         
-        hours_passed = 1
-
         if hours_passed < 1:
-            return
-
+            return 
+        
         hours_passed = min(hours_passed, SALARY_HOURS_THRESHOLD)
 
         hourly_salary = get_salary_from_title(player_entity.last_bought_title)
@@ -58,17 +49,14 @@ class AwayTimeEarningsService:
 
         player_entity.next_salary_time = now + timedelta(seconds=SECONDS_TO_SALARY_DROP)
 
-        update_location = increment_balance_and_bank(player_entity, total_gained_salary)
-        return AmountAndUpdateLocation(
-            amount=total_gained_salary, update_location=update_location
-        )
+        return total_gained_salary
 
     @staticmethod
     def _reset_next_egg_drop_time(now: datetime, farm_entity: "FarmEntity") -> None:
         farm_entity.next_egg_drop_time = now + timedelta(seconds=SECONDS_TO_CHICKEN_DROP)
 
     @staticmethod
-    async def calculate_chicken_profit(player_entity: "PlayerEntity", farm_entity: "FarmEntity") -> Optional[int]:
+    async def calculate_chicken_profit(farm_entity: "FarmEntity") -> Optional[int]:
         now = datetime.now(timezone.utc)
 
         if len(farm_entity.chickens) == 0 or not farm_entity.next_egg_drop_time:
@@ -101,7 +89,6 @@ class AwayTimeEarningsService:
             if chicken.happiness == 0:
                 await AwayTimeEarningsService._maybe_devolve_chicken(chicken)
 
-        increment_balance_and_bank(player_entity, total_gained)
         return total_gained
 
     @staticmethod

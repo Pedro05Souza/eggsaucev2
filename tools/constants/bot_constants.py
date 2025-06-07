@@ -50,14 +50,23 @@ STEAL_FAILURE_CHANCE: Final[float] = 0.1
 PAGE_SIZE: Final[int] = 5
 NAME_REGEX: Final = re.compile(r"^[a-zA-Z0-9_]{3,20}$")
 
+TITLE_PRICES = {
+    "Egg Novice": 0,
+    "Egg Apprentice": 10000,
+    "Egg Wizard": 20000,
+    "Egg King": 30000,
+}
 
-def get_titles_prices() -> dict[str, int]:
-    return {"Egg Novice": 0, "Egg Apprentice": 10000, "Egg Wizard": 20000, "Egg King": 30000}
+TITLE_SALARIES = {
+    "Egg Novice": 200,
+    "Egg Apprentice": 600,
+    "Egg Wizard": 1200,
+    "Egg King": 2400,
+}
 
-
-def get_titles_salaries() -> dict[str, int]:
-    return {"Egg Novice": 200, "Egg Apprentice": 600, "Egg Wizard": 1200, "Egg King": 2400}
-
-
-def get_titles_emojis() -> dict[str, str]:
-    return {"Egg Novice": "🥚", "Egg Apprentice": "🍳", "Egg Wizard": "🪄", "Egg King": "👑"}
+TITLE_EMOJIS = {
+    "Egg Novice": "🥚",
+    "Egg Apprentice": "🍳",
+    "Egg Wizard": "🪄",
+    "Egg King": "👑",
+}

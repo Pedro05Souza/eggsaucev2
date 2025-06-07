@@ -6,8 +6,8 @@ from random import choice
 from logging import Logger, config, getLogger
 from .constants import (
     LOGGING_CONFIG,
-    tips,
-    get_titles_salaries,
+    TIPS,
+    TITLE_SALARIES,
     SECONDS_TO_CHICKEN_DROP,
     SECONDS_TO_CORNFIELD_DROP,
     RANKS_DICT,
@@ -22,12 +22,10 @@ if TYPE_CHECKING:
 __all__ = [
     "get_logger",
     "get_balance_diff",
-    "deduct_from_balance_and_bank",
     "get_salary_from_title",
     "get_random_tip_message",
     "ensure_author_farm",
     "get_player_rank",
-    "increment_balance_and_bank",
 ]
 
 
@@ -41,44 +39,12 @@ def get_balance_diff(player_entity: "PlayerEntity", price: int) -> int:
     return total_balance - price
 
 
-def deduct_from_balance_and_bank(player_entity: "PlayerEntity", price: int) -> None:
-    if player_entity.balance >= price:
-        player_entity.balance -= price
-    else:
-        price -= player_entity.balance
-        player_entity.balance = 0
-        player_entity.bank_balance -= price
-
-
-def increment_balance_and_bank(player_entity: "PlayerEntity", price: int) -> bool:
-    """Increments the player's balance and bank balance by the given price.
-
-    Args:
-        player_entity (PlayerEntity): The player entity to update.
-        price (int): The amount to increment the balance and bank balance by.
-        
-        returns:
-        bool: True if only bank balance was incremented, False if both were incremented.
-        
-    """
-    available_bank_space = player_entity.bank_capacity - player_entity.bank_balance
-
-    if price <= available_bank_space:
-        player_entity.bank_balance += price
-        return False
-    else:
-        player_entity.bank_balance = player_entity.bank_capacity
-        player_entity.balance += price - available_bank_space
-        return True
-
-
 def get_salary_from_title(title: str) -> int:
-    titles_prices = get_titles_salaries()
-    return titles_prices.get(title, 0)
+    return TITLE_SALARIES.get(title, 0)
 
 
 def get_random_tip_message() -> str:
-    return choice(tips)
+    return choice(TIPS)
 
 
 async def ensure_author_farm(

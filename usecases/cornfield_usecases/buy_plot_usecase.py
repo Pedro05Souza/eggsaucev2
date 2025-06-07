@@ -2,11 +2,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import asyncio
 from tortoise.transactions import atomic
-from tools import calculate_plot_production, calculate_plot_price, deduct_from_balance_and_bank
+from tools import calculate_plot_production, calculate_plot_price
 
 if TYPE_CHECKING:
     from eggsauce_context import EggsauceContext
     from repositories import CornfieldRepositoryProtocol, PlayerRepositoryProtocol
+    from tools.services import TransactionService
 
 
 __all__ = ("BuyPlotUsecase",)
@@ -19,11 +20,13 @@ class BuyPlotUsecase:
         ctx: "EggsauceContext",
         cornfield_repository: "CornfieldRepositoryProtocol",
         player_repository: "PlayerRepositoryProtocol",
+        transaction_service: "TransactionService",
     ) -> None:
         self._ctx = ctx
         self._cornfield_repository = cornfield_repository
         self._player_repository = player_repository
         self._ctx = ctx
+        self._transaction_service = transaction_service
 
     @atomic()
     async def buy_plot(self) -> None:
@@ -51,11 +54,10 @@ class BuyPlotUsecase:
             )
             return
 
-        deduct_from_balance_and_bank(player_entity, total_price)
+        await self._transaction_service.deduct_from_balance_and_bank(player_entity, total_price)
         cornfield_entity.plots += 1
 
         await self._cornfield_repository.update_cornfield(cornfield_entity)
-        await self._player_repository.update_player(player_entity)
 
         await message.edit(
             embed=self._ctx.embed_builder(

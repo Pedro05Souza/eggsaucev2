@@ -6,12 +6,12 @@ from discord import ButtonStyle, Interaction, Message
 from entities import FarmerType
 from repositories import FarmRepositoryProtocol, PlayerRepositoryProtocol
 from tools.services import FarmCacheService
-from tools import deduct_from_balance_and_bank
 from tools.constants import FARMERS_DICT, FARM_MAX_CHICKENS, BASE_FARMER_PRICE
 from eggsauce_context import EggsauceContext
 
 if TYPE_CHECKING:
     from entities import PlayerEntity, FarmEntity
+    from tools.services import TransactionService
 
 
 __all__ = ["BuyFarmerUseCase"]
@@ -25,11 +25,13 @@ class BuyFarmerUseCase:
         farm_cache: FarmCacheService,
         farm_repository: FarmRepositoryProtocol,
         player_repository: PlayerRepositoryProtocol,
+        transaction_service: "TransactionService",
     ) -> None:
         self._ctx = ctx
         self._farm_cache = farm_cache
         self._farm_repository = farm_repository
         self._player_repository = player_repository
+        self._transaction_service = transaction_service
 
     async def buy_farmer(self) -> None:
         farm_entity = self._farm_cache.get_or_raise(self._ctx.author.id)
@@ -80,11 +82,12 @@ class BuyFarmerUseCase:
             return
 
         farm_entity.farmer = farmer
-        deduct_from_balance_and_bank(player_entity, BASE_FARMER_PRICE)
+        await self._transaction_service.deduct_from_balance_and_bank(
+            player_entity, BASE_FARMER_PRICE
+        )
 
         async with self._farm_cache.remove_if_exception(farm_entity.discord_user_id):
             await self._farm_repository.update_farm(farm_entity)
-            await self._player_repository.update_player(player_entity)
 
         await message.edit(
             embed=self._ctx.embed_builder(embed_params={"description": "✅ Farmer bought successfully."}), view=None
