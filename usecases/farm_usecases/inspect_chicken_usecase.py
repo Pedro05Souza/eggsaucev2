@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+from discord import Member
 
 if TYPE_CHECKING:
     from eggsauce_context import EggsauceContext
@@ -11,13 +12,18 @@ __all__ = ["InspectChickenUseCase"]
 
 class InspectChickenUseCase:
 
-    def __init__(self, ctx: "EggsauceContext", farm_cache: "FarmCacheService", index: int) -> None:
+    def __init__(self, ctx: "EggsauceContext", farm_cache: "FarmCacheService", index: int, member: Member) -> None:
         self._ctx = ctx
         self._farm_cache = farm_cache
         self._index = index
+        self._member = member
 
     async def inspect_chicken(self):
-        farm_entity = self._farm_cache.get_or_raise(self._ctx.author.id)
+        farm_entity = await self._farm_cache.get_or_fetch(self._member.id)
+        
+        if not farm_entity:
+            await self._ctx.send_failed_embed("The user you are trying to inspect does not have a farm.")
+            return
 
         if self._index < 0 or self._index > len(farm_entity.chickens):
             await self._ctx.send_failed_embed("Invalid index")
@@ -25,7 +31,7 @@ class InspectChickenUseCase:
 
         chicken = farm_entity.chickens[self._index - 1]
 
-        happiness_penalty = int(chicken.total_egg_production * (100 - chicken.happiness) / 100)
+        happiness_penalty = int(chicken.actual_egg_production* (100 - chicken.happiness) / 100)
 
         egg_production_with_happiness = chicken.actual_egg_production - happiness_penalty
         await self._ctx.send_bot_embed(

@@ -135,9 +135,15 @@ class FarmController(  # pylint: disable=too-many-public-methods
         help="Displays detailed stats of a chicken by its position in your farm.",
     )
     async def inspect_chicken(
-        self, ctx: EggsauceContext, position: int = parameter(description="The position of the chicken in your farm.")
+        self,
+        ctx: EggsauceContext,
+        position: int = parameter(description="The position of the chicken in your farm."),
+        member: Member = parameter(
+            default=lambda ctx: ctx.author,
+            description="The member whose farm you want to view. Defaults to the command author.",
+        ),
     ) -> None:
-        chicken_info_usecase = InspectChickenUseCase(ctx, self.farm_cache, position)
+        chicken_info_usecase = InspectChickenUseCase(ctx, self.farm_cache, position, member)
         await chicken_info_usecase.inspect_chicken()
 
     @hybrid_command(
@@ -162,7 +168,12 @@ class FarmController(  # pylint: disable=too-many-public-methods
         help="Displays the expected income of a farm. Defaults to your farm unless another user is specified.",
     )
     async def farm_profit(
-        self, ctx: EggsauceContext, member: Member = parameter(description="The member to view the farm profit")
+        self,
+        ctx: EggsauceContext,
+        member: Member = parameter(
+            default=lambda ctx: ctx.author,
+            description="The member whose farm you want to view. Defaults to the command author.",
+        ),
     ) -> None:
         farm_profit_usecase = FarmProfitUsecase(
             ctx,
