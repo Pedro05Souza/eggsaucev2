@@ -44,6 +44,8 @@ class BattleInfoUsecase:
             f"🏆 MMR: **{player_entity.current_mmr}**\n"
             f"📈 Highest MMR: **{player_entity.highest_mmr}**\n"
             f"🎯 Win Rate: **{win_rate}%**\n\n"
+            f"❌ Losses: **{player_entity.losses}**\n"
+            f"✅ Wins: **{player_entity.wins}**\n"
         )
 
         await self._ctx.send_bot_embed(
