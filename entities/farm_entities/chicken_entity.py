@@ -35,3 +35,6 @@ class ChickenEntity(BaseEntity):
 
     def format_chicken(self) -> str:
         return f"{self.emoji} **{self.rarity} {self.name}**"
+
+    async def calculate_actual_egg_production(self) -> int:
+        return int((self.total_egg_production * self.quality) * (100 - self.happiness) / 100)

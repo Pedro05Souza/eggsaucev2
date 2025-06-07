@@ -51,7 +51,7 @@ class FarmProfitUsecase:
         has_rich_farmer = farm_entity.farmer == "Rich"
 
         total_profit_for_chickens = await AwayTimeEarningsService.calculate_chicken_earnings(
-            farm_entity.chickens, time_to_chicken_drop_hours, has_rich_farmer
+            farm_entity.chickens, time_to_chicken_drop_hours, has_rich_farmer, True
         )
 
         description = (

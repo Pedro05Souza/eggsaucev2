@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import Optional, TYPE_CHECKING, List
+import asyncio
+from typing import Optional, TYPE_CHECKING, List, NamedTuple
 from datetime import datetime, timedelta, timezone
 from random import randint
 from tools.constants import (
@@ -25,17 +26,26 @@ if TYPE_CHECKING:
 
 __all__ = ["AwayTimeEarningsService"]
 
+class AmountAndUpdateLocation(NamedTuple):
+    amount: int
+    update_location: bool
+
+    def __str__(self) -> str:
+        return f"AmountAndUpdateLocation(amount={self.amount}, update_location={self.update_location})"
+
 
 class AwayTimeEarningsService:
 
     @staticmethod
-    async def calculate_salary_profit(player_entity: "PlayerEntity") -> Optional[int]:
+    async def calculate_salary_profit(player_entity: "PlayerEntity") -> Optional[AmountAndUpdateLocation]:
         now = datetime.now(timezone.utc)
         next_salary_time = player_entity.next_salary_time
 
         time_diffence = next_salary_time - now
 
         hours_passed = await AwayTimeEarningsService._calculate_hours_passed(time_diffence)
+        
+        hours_passed = 1
 
         if hours_passed < 1:
             return
@@ -48,8 +58,10 @@ class AwayTimeEarningsService:
 
         player_entity.next_salary_time = now + timedelta(seconds=SECONDS_TO_SALARY_DROP)
 
-        increment_balance_and_bank(player_entity, total_gained_salary)
-        return total_gained_salary
+        update_location = increment_balance_and_bank(player_entity, total_gained_salary)
+        return AmountAndUpdateLocation(
+            amount=total_gained_salary, update_location=update_location
+        )
 
     @staticmethod
     def _reset_next_egg_drop_time(now: datetime, farm_entity: "FarmEntity") -> None:
@@ -66,7 +78,7 @@ class AwayTimeEarningsService:
         time_diffence = farm_entity.next_egg_drop_time - now
 
         hours_passed = await AwayTimeEarningsService._calculate_hours_passed(time_diffence)
-
+        
         if hours_passed < 1:
             return
 
@@ -93,8 +105,13 @@ class AwayTimeEarningsService:
         return total_gained
 
     @staticmethod
-    async def calculate_chicken_earnings(chickens: List["ChickenEntity"], hours: int, has_rich_farmer: bool) -> int:
-        total = sum(chicken.actual_egg_production for chicken in chickens if chicken.can_be_updated is True) * hours
+    async def calculate_chicken_earnings(
+        chickens: List["ChickenEntity"], hours: int, has_rich_farmer: bool, ignore_update: bool = False
+    ) -> int:
+        if ignore_update:
+            total = sum(await asyncio.gather(*(chicken.calculate_actual_egg_production() for chicken in chickens))) * hours
+        else:
+            total = sum(await asyncio.gather(*(chicken.calculate_actual_egg_production() for chicken in chickens if chicken.can_be_updated))) * hours
 
         if has_rich_farmer:
             total += int(total * FARMERS_DICT["rich"]["egg_value_percentage"] / 100)
