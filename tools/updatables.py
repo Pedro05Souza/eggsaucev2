@@ -1,7 +1,9 @@
 from __future__ import annotations
+import asyncio
 from typing import TYPE_CHECKING, Optional
 from tortoise.transactions import atomic
 from .services import AwayTimeEarningsService
+from .reverse_mapping import chicken_entity_to_model
 
 if TYPE_CHECKING:
     from entities import PlayerEntity, FarmEntity, CornfieldEntity
@@ -20,14 +22,18 @@ async def update_away_salary(
     player_repository: "PlayerRepositoryProtocol",
     player_entity: "PlayerEntity",
 ) -> Optional[str]:
-    salary_gained = await AwayTimeEarningsService.calculate_salary_profit(player_entity)
+    away_earnings_info = await AwayTimeEarningsService.calculate_salary_profit(player_entity)
 
-    if salary_gained is None:
+    if away_earnings_info is None:
         return
 
-    await player_repository.update_player(player_entity)
+    if away_earnings_info.update_location:
+        await player_repository.update_player(player_entity)
+        await player_repository.update_player_bank(player_entity)
+    else:
+        await player_repository.update_player_bank(player_entity)
 
-    return f"\n💰 **{salary_gained}** eggbux from your salary."
+    return f"\n💰 **{away_earnings_info.amount}** eggbux from your salary."
 
 
 @atomic()
@@ -42,8 +48,15 @@ async def update_away_farm(
     if money_gained is None:
         return
 
-    await player_repository.update_player(player_entity)
-    await farm_repository.update_farm(farm_entity)
+    await asyncio.gather(
+        player_repository.update_player(player_entity),
+        farm_repository.update_farm(farm_entity),
+        farm_repository.bulk_update_chickens(
+            await asyncio.gather(
+                *[chicken_entity_to_model(farm_entity.id, chicken) for chicken in farm_entity.chickens]
+            )
+        ),
+    )
 
     return f"\n💰 **{money_gained}** eggbux from your farm."
 

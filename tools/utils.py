@@ -50,14 +50,26 @@ def deduct_from_balance_and_bank(player_entity: "PlayerEntity", price: int) -> N
         player_entity.bank_balance -= price
 
 
-def increment_balance_and_bank(player_entity: "PlayerEntity", price: int) -> None:
+def increment_balance_and_bank(player_entity: "PlayerEntity", price: int) -> bool:
+    """Increments the player's balance and bank balance by the given price.
+
+    Args:
+        player_entity (PlayerEntity): The player entity to update.
+        price (int): The amount to increment the balance and bank balance by.
+        
+        returns:
+        bool: True if only bank balance was incremented, False if both were incremented.
+        
+    """
     available_bank_space = player_entity.bank_capacity - player_entity.bank_balance
 
     if price <= available_bank_space:
         player_entity.bank_balance += price
+        return False
     else:
         player_entity.bank_balance = player_entity.bank_capacity
         player_entity.balance += price - available_bank_space
+        return True
 
 
 def get_salary_from_title(title: str) -> int:
