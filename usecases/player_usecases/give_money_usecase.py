@@ -28,6 +28,7 @@ class GiveMoneyUsecase:
         return await self._ctx.send_bot_embed(
             embed_params={
                 "title": "💰 Money Given",
-                "description": f"{self._ctx.author.display_name} has given {amount} eggbux to {self._member.display_name}.",
+                "description": f"{self._ctx.author.display_name}"
+                + f"has given {amount} eggbux to {self._member.display_name}.",
             }
         )

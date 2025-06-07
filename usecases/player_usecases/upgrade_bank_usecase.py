@@ -14,7 +14,6 @@ class UpgradeBankUsecase:
         ctx: EggsauceContext,
         player_repository: PlayerRepositoryProtocol,
         transaction_service: "TransactionService",
-        
     ) -> None:
         self._ctx = ctx
         self._player_repository = player_repository
@@ -49,9 +48,7 @@ class UpgradeBankUsecase:
             )
             return
 
-        await self._transaction_service.deduct_from_balance_and_bank(
-            player_entity, bank_upgrade_price
-        )
+        await self._transaction_service.deduct_from_balance_and_bank(player_entity, bank_upgrade_price)
         player_entity.upgrade_level += 1
         player_entity.bank_capacity += 10000
 

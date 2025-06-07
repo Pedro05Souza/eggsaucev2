@@ -20,7 +20,7 @@ class InspectChickenUseCase:
 
     async def inspect_chicken(self):
         farm_entity = await self._farm_cache.get_or_fetch(self._member.id)
-        
+
         if not farm_entity:
             await self._ctx.send_failed_embed("The user you are trying to inspect does not have a farm.")
             return
@@ -31,7 +31,7 @@ class InspectChickenUseCase:
 
         chicken = farm_entity.chickens[self._index - 1]
 
-        happiness_penalty = int(chicken.actual_egg_production* (100 - chicken.happiness) / 100)
+        happiness_penalty = int(chicken.actual_egg_production * (100 - chicken.happiness) / 100)
 
         egg_production_with_happiness = chicken.actual_egg_production - happiness_penalty
         await self._ctx.send_bot_embed(

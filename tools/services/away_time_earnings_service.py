@@ -30,17 +30,17 @@ __all__ = ["AwayTimeEarningsService"]
 class AwayTimeEarningsService:
 
     @staticmethod
-    async def calculate_salary_profit(player_entity: "PlayerEntity" ) -> Optional[int]:
+    async def calculate_salary_profit(player_entity: "PlayerEntity") -> Optional[int]:
         now = datetime.now(timezone.utc)
         next_salary_time = player_entity.next_salary_time
 
         time_diffence = next_salary_time - now
 
         hours_passed = await AwayTimeEarningsService._calculate_hours_passed(time_diffence)
-        
+
         if hours_passed < 1:
-            return 
-        
+            return
+
         hours_passed = min(hours_passed, SALARY_HOURS_THRESHOLD)
 
         hourly_salary = get_salary_from_title(player_entity.last_bought_title)
@@ -66,7 +66,7 @@ class AwayTimeEarningsService:
         time_diffence = farm_entity.next_egg_drop_time - now
 
         hours_passed = await AwayTimeEarningsService._calculate_hours_passed(time_diffence)
-        
+
         if hours_passed < 1:
             return
 
@@ -96,9 +96,18 @@ class AwayTimeEarningsService:
         chickens: List["ChickenEntity"], hours: int, has_rich_farmer: bool, ignore_update: bool = False
     ) -> int:
         if ignore_update:
-            total = sum(await asyncio.gather(*(chicken.calculate_actual_egg_production() for chicken in chickens))) * hours
+            total = (
+                sum(await asyncio.gather(*(chicken.calculate_actual_egg_production() for chicken in chickens))) * hours
+            )
         else:
-            total = sum(await asyncio.gather(*(chicken.calculate_actual_egg_production() for chicken in chickens if chicken.can_be_updated))) * hours
+            total = (
+                sum(
+                    await asyncio.gather(
+                        *(chicken.calculate_actual_egg_production() for chicken in chickens if chicken.can_be_updated)
+                    )
+                )
+                * hours
+            )
 
         if has_rich_farmer:
             total += int(total * FARMERS_DICT["rich"]["egg_value_percentage"] / 100)

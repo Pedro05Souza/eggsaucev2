@@ -29,14 +29,14 @@ class DeveloperController(Cog, name="Developer", command_attrs={"hidden": True})
     async def devpanel(self, ctx: EggsauceContext) -> None:
         dev_panel_usecase = DevPanelUsecase(ctx)
         await dev_panel_usecase.dev_panel()
-        
+
     @command(name="givemoney", aliases=["gm"])
     @dev_only()
     async def give_money(self, ctx: EggsauceContext, member: Member, amount: int) -> None:
         give_money_usecase = GiveMoneyUsecase(ctx, self.player_repository, member, amount)
         await give_money_usecase.give_money(amount)
 
-    async def cog_after_invoke(self, ctx: EggsauceContext) -> None: # type: ignore
+    async def cog_after_invoke(self, ctx: EggsauceContext) -> None:  # type: ignore
         if ctx.author and ctx.command and ctx.guild:
             self.logger.info(
                 "User %s (%s) used command %s in guild %s (%s)",

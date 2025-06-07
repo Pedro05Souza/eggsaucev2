@@ -40,7 +40,9 @@ class BalanceUsecase:
         if not player_entity:
             return await self._ctx.send_failed_embed(REASON_INVALID_USER)
 
-        updatable_salary_description = await update_away_salary(self._player_repository, self._transaction_service, player_entity)
+        updatable_salary_description = await update_away_salary(
+            self._player_repository, self._transaction_service, player_entity
+        )
 
         description = (
             f"💸 Wallet: **{player_entity.balance}**"

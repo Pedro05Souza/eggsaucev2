@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from asyncio import Lock
-from entities.farm_entities.farm_player_entity import FarmEntity
 from repositories import FarmRepositoryProtocol
 from tools.reverse_mapping import farm_entity_to_model
 from ._entity_cache import EntityCacheService
@@ -39,11 +38,10 @@ class FarmCacheService(EntityCacheService["FarmEntity"]):
 
                 self.add(key, farm_entity)
             return farm_entity
-        
 
     async def _save_expired_or_removed_items(self):
         items_to_update = await self._get_expired_or_removed_items()
-        
+
         if len(items_to_update) == 0:
             return
 

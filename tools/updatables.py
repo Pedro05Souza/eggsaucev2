@@ -28,7 +28,7 @@ async def update_away_salary(
 
     if money_gained is None:
         return
-    
+
     if money_gained <= player_entity.bank_capacity - player_entity.bank_balance:
         # We need to update the player outside of the transaction service
         # because the transaction service does not necessarly update the player entity
@@ -36,9 +36,7 @@ async def update_away_salary(
         # for the attribute `next_drop_time` to be updated correctly.
         await player_repository.update_player(player_entity)
 
-    await transaction_service.increment_balance_and_bank(
-        player_entity, money_gained
-    )
+    await transaction_service.increment_balance_and_bank(player_entity, money_gained)
 
     return f"\n💰 **{money_gained}** eggbux from your salary."
 
