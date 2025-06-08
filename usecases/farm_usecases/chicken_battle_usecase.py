@@ -73,8 +73,15 @@ class ChickenBattleUsecase:
 
             if len(self._farm_entity.chickens) == 0:
                 return await self._ctx.send_failed_embed("You need to have chickens to queue for a battle!")
+            
+            if all(
+                chicken.rarity == "DEAD" for chicken in self._farm_entity.chickens
+            ):
+                return await self._ctx.send_failed_embed("You need to have at least one living chicken to battle!")
 
             chicken_deck = self._farm_entity.chickens[:FARM_MAX_CHICKENS]
+            
+            chicken_deck = [chicken for chicken in chicken_deck if chicken.rarity != "DEAD"]
 
             match_making_player = MatchMakingPlayer(
                 discord_user_id=self._ctx.author.id,
@@ -269,7 +276,7 @@ class ChickenBattleUsecase:
             alive_chickens.remove(chicken)
 
     async def _dynamic_match_cooldown(self, total_alive_chickens: int) -> float:
-        base_cooldown = 0.5
+        base_cooldown = 2
 
         return base_cooldown + (total_alive_chickens * 0.5)
 
