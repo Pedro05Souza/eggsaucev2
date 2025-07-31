@@ -73,14 +73,12 @@ class ChickenBattleUsecase:
 
             if len(self._farm_entity.chickens) == 0:
                 return await self._ctx.send_failed_embed("You need to have chickens to queue for a battle!")
-            
-            if all(
-                chicken.rarity == "DEAD" for chicken in self._farm_entity.chickens
-            ):
+
+            if all(chicken.rarity == "DEAD" for chicken in self._farm_entity.chickens):
                 return await self._ctx.send_failed_embed("You need to have at least one living chicken to battle!")
 
             chicken_deck = self._farm_entity.chickens[:FARM_MAX_CHICKENS]
-            
+
             chicken_deck = [chicken for chicken in chicken_deck if chicken.rarity != "DEAD"]
 
             match_making_player = MatchMakingPlayer(
