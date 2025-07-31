@@ -29,6 +29,7 @@ class MatchMakingUser:
     chicken_deck: List["ChickenEntity"]
     current_mmr: int
 
+
 @dataclass
 class MatchMakingPlayer(MatchMakingUser):
     discord_user_id: int
@@ -145,23 +146,31 @@ class MatchMakingService:
     _delay = 1  # Initial delay for retries
 
     @classmethod
-    async def _add_player_to_pool(cls, player: MatchMakingPlayer) -> None:
-        cls._matchmaking_pools[player.current_mmr].add(player)
-
-    @classmethod
     async def _remove_player_from_pool(cls, player: MatchMakingPlayer) -> None:
-        cls._matchmaking_pools[player.current_mmr].remove(player)
+        base_mmr = floor(player.current_mmr / 100) * 100
+        cls._matchmaking_pools[base_mmr].remove(player)
 
-        if len(cls._matchmaking_pools[player.current_mmr]) == 0:
-            del cls._matchmaking_pools[player.current_mmr]  # Prevents memory leak
+        if len(cls._matchmaking_pools[base_mmr]) == 0:
+            del cls._matchmaking_pools[base_mmr]  # Prevents memory leak
 
     @classmethod
     async def match_finder(cls, player: MatchMakingPlayer, retries: int = 5) -> Optional[MatchMakingUser]:
+        """
+        Finds a match for the player.
+
+        Args:
+            player (MatchMakingPlayer): The player to find a match for.
+            retries (int): The number of retries to find a match.
+
+        Returns:
+            Optional[MatchMakingUser]: The matched opponent (either another player or a bot),
+            or None if the player already has a match.
+        """
+        current_delay = cls._delay
         base_mmr = floor(player.current_mmr / 100) * 100
 
         pool = cls._matchmaking_pools[base_mmr]
-
-        await cls._add_player_to_pool(player)
+        pool.add(player)
 
         for _ in range(retries):
 
@@ -182,8 +191,12 @@ class MatchMakingService:
 
                     return other_player
 
-            await asyncio.sleep(cls._delay)
-            cls._delay = min(cls._delay * 2, 5)
+            await asyncio.sleep(current_delay)
+            current_delay = min(current_delay * 2, 5)
 
         await cls._remove_player_from_pool(player)
+
+        if player.has_match is True:
+            return None
+
         return await MatchMakingBot.bot_maker_factory(player.current_mmr)
