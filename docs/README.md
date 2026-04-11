@@ -96,7 +96,7 @@ Once Docker is successfully installed, follow these steps to set up and run the 
 Use the migrate command to generate and apply database migrations.
   * Run this command to create a migration:
     ```bash
-    eggsauce migrate --name <migration_name>
+    eggsauce migrate -name <migration_name>
     ```
     Replace <migration_name> with your desired migration name.
   * The migration is automatically applied after this generation.
