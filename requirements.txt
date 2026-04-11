@@ -1,4 +1,4 @@
-black==24.10.0
+black==26.3.1
 discord.py==2.4.0
 tortoise-orm==0.23.0
 asyncpg==0.30.0
