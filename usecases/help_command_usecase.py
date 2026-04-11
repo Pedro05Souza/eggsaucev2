@@ -5,6 +5,7 @@ __all__ = ("HelpCommandUsecase",)
 
 
 class HelpCommandUsecase(MinimalHelpCommand):
+    ignore_case = True
 
     async def send_pages(self):
         destination = self.get_destination()
