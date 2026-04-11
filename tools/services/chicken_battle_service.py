@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 from random import random
 from tools.constants import CHICKEN_RARITIES
 
@@ -10,12 +10,17 @@ if TYPE_CHECKING:
 __all__ = ["ChickenBattleService"]
 
 
+class _BattleResult(NamedTuple):
+    isFirstChickenWinner: bool
+    win_rate_first_chicken: float
+    win_rate_second_chicken: float
+
 class ChickenBattleService:
 
     @staticmethod
     async def get_chicken_battle_result(
         first_chicken: ChickenEntity, second_chicken: ChickenEntity
-    ) -> tuple[bool, float, float]:
+    ) -> _BattleResult:
         """Gets the result of a chicken battle. Returns a flag indicanting the winner,
         the win rate of the first chicken and the win rate of the second chicken.
 
@@ -24,9 +29,7 @@ class ChickenBattleService:
             second_chicken (ChickenEntity): The second chicken to battle.
 
         Returns:
-            tuple[int, float, float]: A tuple containing the winner flag, 
-            the win rate of the first chicken and the win rate of the second chicken.
-            The winner flag is True if the first chicken wins, False otherwise.
+            _BattleResult: The result of the battle.
         """
         win_rate_first_chicken = 0.5
         win_rate_second_chicken = 0.5
@@ -59,9 +62,9 @@ class ChickenBattleService:
         selected_number = random()
 
         if selected_number < win_rate_first_chicken:
-            return True, win_rate_first_chicken, win_rate_second_chicken
+            return _BattleResult(True, win_rate_first_chicken, win_rate_second_chicken)
 
-        return False, win_rate_first_chicken, win_rate_second_chicken
+        return _BattleResult(False, win_rate_first_chicken, win_rate_second_chicken)
 
     @staticmethod
     async def _calculate_rarity_difference(diff_rarity: int) -> float:

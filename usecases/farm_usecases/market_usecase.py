@@ -5,7 +5,13 @@ from discord.ui import View, Select
 from tortoise.transactions import atomic
 from entities import FarmEntity
 from repositories import FarmRepositoryProtocol, PlayerRepositoryProtocol
-from tools import ChickenGeneratorService, FarmCacheService, generated_chicken_to_chicken_entity, sort_chickens
+from tools import (
+    ChickenGeneratorService,
+    FarmCacheService,
+    generated_chicken_to_chicken_entity,
+    sort_chickens,
+    BotConfigCacheService,
+)
 from tools.constants import (
     REASON_NO_PERMISSION,
     REASON_INSUFFICIENT_BALANCE,
@@ -30,11 +36,13 @@ class MarketUsecase:
         farm_cache_service: FarmCacheService,
         farm_repository: FarmRepositoryProtocol,
         player_repository: PlayerRepositoryProtocol,
+        bot_config_cache_service: BotConfigCacheService,
     ) -> None:
         self._ctx = ctx
         self._farm_cache_service = farm_cache_service
         self._farm_repository = farm_repository
         self._player_repository = player_repository
+        self._bot_config_cache_service = bot_config_cache_service
 
     async def market(self) -> None:
         farm_entity = self._farm_cache_service.get_or_raise(self._ctx.author.id)
@@ -78,6 +86,7 @@ class MarketUsecase:
             self._farm_cache_service,
             self._farm_repository,
             self._player_repository,
+            self._bot_config_cache_service,
         )
         await self._ctx.send_bot_embed(embed_params={"title": title, "description": description}, view=view)
 
@@ -91,6 +100,7 @@ class ChickenView(View):
         farm_cache_service: FarmCacheService,
         farm_repository: FarmRepositoryProtocol,
         player_repository: PlayerRepositoryProtocol,
+        bot_config_cache_service: BotConfigCacheService,
     ):
         super().__init__()
         self._ctx = ctx
@@ -102,6 +112,7 @@ class ChickenView(View):
         self._select.callback = self.callback
         self._farm_repository = farm_repository
         self._player_repository = player_repository
+        self._bot_config_cache_service = bot_config_cache_service
 
     def select_maker(self):
         return Select[ChickenView](
@@ -120,7 +131,13 @@ class ChickenView(View):
 
     @atomic()
     async def callback(self, interaction: Interaction) -> None:
-        if interaction.user.id != self._farm_entity.discord_user_id:
+
+        cached_bot_config = self._bot_config_cache_service.get(interaction.guild_id)  # type: ignore
+
+        if not cached_bot_config:
+            raise Exception("Bot config not found in cache")
+
+        if interaction.user.id != self._farm_entity.discord_user_id and not cached_bot_config.can_steal_chickens:
             await self._ctx.handle_failed_interaction(interaction, REASON_NO_PERMISSION)
             return
 

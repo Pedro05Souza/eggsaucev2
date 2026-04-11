@@ -18,7 +18,9 @@ class BotConfigRepository(metaclass=RepositoryMeta):
         return await bot_config_model_to_entity(bot_config)
 
     async def update_bot_config(self, bot_config: BotConfigEntity) -> BotConfigEntity:
-        await BotConfig.filter(id=bot_config.guild_id).update(prefix=bot_config.prefix)
+        await BotConfig.filter(guild_id=bot_config.guild_id).update(
+            prefix=bot_config.prefix, can_steal_chickens=bot_config.can_steal_chickens
+        )
         return bot_config
 
     async def create_guild_config(self, discord_guild_id: int) -> BotConfigEntity:

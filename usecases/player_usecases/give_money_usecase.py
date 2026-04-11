@@ -29,6 +29,6 @@ class GiveMoneyUsecase:
             embed_params={
                 "title": "💰 Money Given",
                 "description": f"{self._ctx.author.display_name}"
-                + f"has given {amount} eggbux to {self._member.display_name}.",
+                + f" has given {amount} eggbux to {self._member.display_name}.",
             }
         )

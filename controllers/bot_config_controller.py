@@ -1,5 +1,5 @@
 from discord.ext.commands import Bot, Cog, command
-from usecases import SetPrefixUsecase
+from usecases import SetPrefixUsecase, ToggleStealChickensUsecase
 from repositories import BotConfigRepository, BotConfigRepositoryProtocol
 from tools import BotConfigCacheService, admin_only, GlobalBotConfigCache
 from eggsauce_context import EggsauceContext
@@ -20,6 +20,13 @@ class BotConfigController(Cog, name="Config", description="Commands to configure
         set_prefix_usecase = SetPrefixUsecase(ctx, self.bot_config_cache, self.bot_config_repository, prefix)
         await set_prefix_usecase.set_prefix()
 
+    @command(name="togglecanstealchickens", help="Toggle whether players can steal chickens from other players")
+    @admin_only()
+    async def toggle_can_steal_chickens(self, ctx: EggsauceContext) -> None:
+        toggle_can_steal_chickens_usecase = ToggleStealChickensUsecase(
+            ctx, self.bot_config_cache, self.bot_config_repository
+        )
+        await toggle_can_steal_chickens_usecase.toggle_can_steal_chickens()
 
 async def setup(bot: Bot) -> None:
     await bot.add_cog(BotConfigController(bot, GlobalBotConfigCache, BotConfigRepository()))

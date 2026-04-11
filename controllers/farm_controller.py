@@ -85,6 +85,7 @@ class FarmController(  # pylint: disable=too-many-public-methods
             self.farm_cache,
             self.farm_repository,
             self.player_repository,
+            self.bot_config_cache,
         )
         await market_usecase.market()
 
