@@ -66,7 +66,8 @@ class MatchMakingBot(MatchMakingUser):
 
         syllable = ""
 
-        for char in pattern:
+        chosen_pattern = choice(pattern)
+        for char in chosen_pattern:
             if char == "C":
                 syllable += choice("bdfghjklmnpqrstvwxyz")
             elif char == "V":
@@ -178,8 +179,9 @@ class MatchMakingService:
                 # We return None so it doesnt have 2 instances of the same match.
                 return None
 
-            if len(pool) > 1:
-                async with cls._lock:
+            async with cls._lock:
+                if len(pool) > 1:
+
                     other_player = next(iter(pool - {player}), None)
 
                     if other_player is None:

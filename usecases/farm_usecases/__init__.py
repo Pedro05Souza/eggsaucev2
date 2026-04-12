@@ -19,3 +19,4 @@ from .ascendancy_usecase import *
 from .trade_chicken_usecase import *
 from .chicken_drop_rate_usecase import *
 from .chicken_prices_usecase import *
+from .give_chicken_usecase import *

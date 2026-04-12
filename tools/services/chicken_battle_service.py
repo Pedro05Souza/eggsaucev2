@@ -1,4 +1,5 @@
 from __future__ import annotations
+import math
 from typing import TYPE_CHECKING, NamedTuple
 from random import random
 from tools.constants import CHICKEN_RARITIES
@@ -15,61 +16,43 @@ class _BattleResult(NamedTuple):
     win_rate_first_chicken: float
     win_rate_second_chicken: float
 
+
+RARITY_MAX_INDEX = len(CHICKEN_RARITIES) - 1
+RARITY_WEIGHT = 0.8
+QUALITY_WEIGHT = 0.2
+
+
 class ChickenBattleService:
 
     @staticmethod
+    def _compute_power(chicken: ChickenEntity) -> float:
+        rarity_index = CHICKEN_RARITIES.index(chicken.rarity)
+
+        rarity_score = (rarity_index / RARITY_MAX_INDEX) * 100
+        quality_score = chicken.quality * 100
+
+        return (rarity_score * RARITY_WEIGHT) + (quality_score * QUALITY_WEIGHT)
+
+    @staticmethod
+    def _win_probability(power_a: float, power_b: float) -> float:
+        """Sigmoid: maps power difference to a 0–1 probability."""
+        diff = power_a - power_b
+        return 1 / (1 + math.exp(-diff / 20))
+
+    @staticmethod
     async def get_chicken_battle_result(
-        first_chicken: ChickenEntity, second_chicken: ChickenEntity
+        first_chicken: ChickenEntity,
+        second_chicken: ChickenEntity,
     ) -> _BattleResult:
-        """Gets the result of a chicken battle. Returns a flag indicanting the winner,
-        the win rate of the first chicken and the win rate of the second chicken.
+        power_a = ChickenBattleService._compute_power(first_chicken)
+        power_b = ChickenBattleService._compute_power(second_chicken)
 
-        Args:
-            first_chicken (ChickenEntity): The first chicken to battle.
-            second_chicken (ChickenEntity): The second chicken to battle.
+        win_rate_first = ChickenBattleService._win_probability(power_a, power_b)
+        win_rate_second = 1 - win_rate_first
 
-        Returns:
-            _BattleResult: The result of the battle.
-        """
-        win_rate_first_chicken = 0.5
-        win_rate_second_chicken = 0.5
+        winner_is_first = random() < win_rate_first
 
-        weighted_first_rarity = CHICKEN_RARITIES.index(first_chicken.rarity)
-        weighted_second_rarity = CHICKEN_RARITIES.index(second_chicken.rarity)
-
-        weighted_first_quality = int((first_chicken.quality * 100))
-        weighted_second_quality = int((second_chicken.quality * 100))
-
-        diff_rarity = weighted_first_rarity - weighted_second_rarity
-
-        if diff_rarity > 0:
-            win_rate_first_chicken += await ChickenBattleService._calculate_rarity_difference(diff_rarity)
-        else:
-            win_rate_second_chicken += await ChickenBattleService._calculate_rarity_difference(abs(diff_rarity))
-
-        diff_quality = weighted_first_quality - weighted_second_quality
-
-        if diff_quality > 0:
-            win_rate_first_chicken += await ChickenBattleService._calculate_quality_difference(diff_quality)
-        else:
-            win_rate_second_chicken += await ChickenBattleService._calculate_quality_difference(abs(diff_quality))
-
-        total_win_rate = win_rate_first_chicken + win_rate_second_chicken
-
-        win_rate_first_chicken /= total_win_rate
-        win_rate_second_chicken /= total_win_rate
-
-        selected_number = random()
-
-        if selected_number < win_rate_first_chicken:
-            return _BattleResult(True, win_rate_first_chicken, win_rate_second_chicken)
-
-        return _BattleResult(False, win_rate_first_chicken, win_rate_second_chicken)
-
-    @staticmethod
-    async def _calculate_rarity_difference(diff_rarity: int) -> float:
-        return 0.45 * diff_rarity
-
-    @staticmethod
-    async def _calculate_quality_difference(diff_quality: int) -> float:
-        return 0.05 * diff_quality
+        print(
+            f"Battle: {first_chicken.rarity} vs {second_chicken.rarity} | Power: {power_a:.1f} vs {power_b:.1f} | Win rates: {win_rate_first:.2%} vs {win_rate_second:.2%} | Winner: {'First' if winner_is_first else 'Second'}"
+        )
+        return _BattleResult(winner_is_first, win_rate_first, win_rate_second)

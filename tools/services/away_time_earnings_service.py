@@ -95,22 +95,13 @@ class AwayTimeEarningsService:
     async def calculate_chicken_earnings(
         chickens: List["ChickenEntity"], hours: int, has_rich_farmer: bool, ignore_update: bool = False
     ) -> int:
-        if ignore_update:
-            total = (
-                sum(await asyncio.gather(*(chicken.calculate_actual_egg_production() for chicken in chickens))) * hours
-            )
-        else:
-            total = (
-                sum(
-                    await asyncio.gather(
-                        *(chicken.calculate_actual_egg_production() for chicken in chickens if chicken.can_be_updated)
-                    )
-                )
-                * hours
-            )
+        eligible = chickens if ignore_update else [c for c in chickens if c.can_be_updated]
+
+        total = sum(await asyncio.gather(*(c.calculate_actual_egg_production() for c in eligible))) * hours
 
         if has_rich_farmer:
             total += int(total * FARMERS_DICT["rich"]["egg_value_percentage"] / 100)
+
         return total
 
     @staticmethod
@@ -175,4 +166,4 @@ class AwayTimeEarningsService:
         if total_seconds > 0:
             return 0
 
-        return int(divmod(-total_seconds, 3600)[0]) + 1
+        return int(divmod(-total_seconds, 3600)[0])
