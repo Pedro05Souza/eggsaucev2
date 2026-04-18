@@ -1,3 +1,27 @@
+[project]
+name = "eggsauce"
+version = "0.1.0"
+description = "A Discord bot farm game"
+requires-python = ">=3.12"
+dependencies = [
+    "black==26.3.1",
+    "discord.py==2.4.0",
+    "tortoise-orm==0.23.0",
+    "asyncpg==0.30.0",
+    "python-dotenv",
+    "aerich==0.8.1",
+    "tomlkit==0.13.2",
+    "cachetools==5.5.0",
+    "click==8.1.8",
+    "setuptools==78.1.1",
+    "pylint==3.3.3",
+    "pyright==1.1.391",
+    "pytest==8.3.4",
+    "pytest-mock==3.14.0",
+    "pytest-asyncio==0.25.2",
+    "pympler==1.1",
+]
+
 [tool.pylint]
 disable = ["C0114", "C0115", "C0116", "R0903", "W0703", "R0913", "R0917", "R0902", "W0511", "W0621", "W0236", "R0801", "W0613"]
 max-line-length = 120

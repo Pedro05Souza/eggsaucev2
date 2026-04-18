@@ -18,43 +18,35 @@ Follow the steps below to set up the project and get it running in no time.
 
 > **Note**: Without the proper enviroment variables configured, this project will **NOT** function as intended.
 
-### 1️⃣ Setting Up a Virtual Environment  
+### 1️⃣ Install UV
 
-To install dependencies, you must first clone the repo onto a directory of your choice. After proceed with the following terminal command:
+This project uses [UV](https://astral.sh/uv/) for fast and reliable dependency management. Install it first:
 
+**macOS/Linux:**
 ```bash
-python -m venv venv
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-This will create a virtual python enviroment necessary for installing the dependancies.
+**Windows:**
+```bash
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
 
-### 2️⃣ Activate the Virtual Environment
+Or use your package manager:
+```bash
+brew install uv        # macOS
+sudo apt install uv    # Linux (Ubuntu/Debian)
+```
 
-### Windows
+### 2️⃣ Install Dependencies
 
-  ```bash
-  venv/Scripts/activate
- ```
+Clone the repo and install all dependencies with:
 
-Note: If you encounter a permission issue, execute the following command in PowerShell:
+```bash
+uv sync
+```
 
-  ```bash
- Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser 
- ```
-
-### macOS/Linux
-
-  ```bash
-source venv/bin/activate
- ```
-
-### 📦 Installing Dependencies
-
- After activating the virtual environment, install the necessary dependencies with:
-
-  ```bash
-pip install -r requirements.txt
- ```
+UV automatically creates a virtual environment and installs all packages from `pyproject.toml` and `uv.lock`. No manual venv activation needed!
 
 ## Running the Bot
 
@@ -69,26 +61,26 @@ docker --version
 
 ### Installing and Running the CLI
 
-Once Docker is successfully installed, follow these steps to set up and run the `eggsauce CLI`:
+1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/).
 
-1. **Install the CLI**  
-   Run the following command in your terminal to install the CLI:
+2. After installation, confirm Docker is correctly set up by running:
+
+```bash
+docker --version
+```
+
+3. **Run the CLI**
+
+   UV automatically manages the environment, so you can run the CLI directly:
 
    ```bash
-   pip install .
-   ```
-
-2. **Run the CLI**
-  Use the command below to run the `eggsauce CLI:`
-
-  ```bash
-   eggsauce run --env <environment>
+   uv run eggsauce run --env <environment>
    ```
 
    The `--env` flag specifies the environment in which the CLI will run. It supports the following options:
 
   * `dev`: Development environment (default).
-  * `prod`: Production enviroment.
+  * `prod`: Production environment.
 
 ### Additional Commands in the CLI
 
