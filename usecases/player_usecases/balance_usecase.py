@@ -44,21 +44,30 @@ class BalanceUsecase:
             self._player_repository, self._transaction_service, player_entity
         )
 
+        total_assets = player_entity.balance + player_entity.bank_balance
+
         description = (
-            f"💸 Wallet: **{player_entity.balance}**"
-            + f"\n🏦 Bank: **{player_entity.bank_balance}/{player_entity.bank_capacity}**"
+            f"🥚 **Total Assets:** `{total_assets:,}` eggbux\n\n"
+            f"**Breakdown:**\n"
+            f"💸 Wallet: `{player_entity.balance:,}`\n"
+            f"🏦 Bank: `{player_entity.bank_balance:,}` / `{player_entity.bank_capacity:,}`\n"
         )
 
-        description += f"\n🏆Current Title: **{player_entity.last_bought_title}**"
-        description += f"\n⏰Next salary in: **{format_dt(player_entity.next_salary_time, 'R')}**"
+        embed = self._ctx.embed_builder(
+            embed_params={
+                "title": f"💼 {self._member.display_name}'s Balance",
+                "description": description,
+            }
+        )
 
-        description += f"\n\n🥚 Total: **{player_entity.balance + player_entity.bank_balance}** eggbux."
+        embed.add_field(name="🏆 Current Title", value=player_entity.last_bought_title or "None", inline=True)
+
+        embed.add_field(name="⏰ Next Salary", value=format_dt(player_entity.next_salary_time, "R"), inline=True)
 
         if updatable_salary_description:
-            description += f"\n\n{updatable_salary_description}"
+            embed.add_field(name="📈 Away Earnings", value=updatable_salary_description, inline=False)
 
-        return await self._ctx.send_bot_embed(
-            embed_params={"title": f"💼 {self._member.display_name}'s balance", "description": description},
-            thumbnail_url=self._member.display_avatar.url,
-            footer_text=get_random_tip_message(),
-        )
+        embed.set_footer(text=get_random_tip_message())
+        embed.set_thumbnail(url=self._member.display_avatar.url)
+
+        await self._ctx.send(embed=embed)

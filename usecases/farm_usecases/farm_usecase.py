@@ -1,9 +1,10 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from discord import Member
+from discord.utils import format_dt
 from repositories import FarmRepositoryProtocol, PlayerRepositoryProtocol
 from tools.constants import REASON_INVALID_USER
-from tools import format_chickens, FarmCacheService, get_random_tip_message, update_away_farm
+from tools import format_chickens, FarmCacheService, get_random_tip_message, update_away_farm, build_progress_bar
 from eggsauce_context import EggsauceContext
 
 if TYPE_CHECKING:
@@ -55,14 +56,31 @@ class FarmUseCase:
 
         farm_chickens = await format_chickens(farm_entity.chickens)
 
+        farm_stats = self._build_farm_stats(farm_entity)
+
         if updatable_farm_description:
             farm_chickens += f"\n\n{updatable_farm_description}"
+
+        description = f"{farm_stats}\n\n{farm_chickens}"
 
         await self._ctx.send_bot_embed(
             embed_params={
                 "title": farm_title,
-                "description": farm_chickens,
+                "description": description,
             },
             thumbnail_url=self._member.display_avatar.url,
             footer_text=get_random_tip_message(),
         )
+
+    def _build_farm_stats(self, farm_entity) -> str:
+        """Build a formatted stats section for the farm."""
+        chicken_count = len(farm_entity.chickens)
+        space_used = f"{chicken_count}/{farm_entity.actual_max_farm_size}"
+
+        progress_bar = build_progress_bar(chicken_count, farm_entity.actual_max_farm_size)
+
+        rolls_info = f"🎲 Rolls: **{farm_entity.remaining_rolls}**"
+        if farm_entity.next_chicken_roll_time and farm_entity.remaining_rolls == 0:
+            rolls_info += f" (Next: {format_dt(farm_entity.next_chicken_roll_time, 'R')})"
+
+        return f"📊 **Farm Stats**\n" f"🐔 Space: {progress_bar} {space_used}\n" f"{rolls_info}"

@@ -26,6 +26,7 @@ __all__ = [
     "get_random_tip_message",
     "ensure_author_farm",
     "get_player_rank",
+    "build_progress_bar",
 ]
 
 
@@ -74,3 +75,25 @@ async def get_player_rank(mmr: int) -> str:
     parsed_mmr = floor(mmr / 200) * 200
 
     return RANKS_DICT[parsed_mmr]
+
+
+def build_progress_bar(current: int, maximum: int, bar_length: int = 10) -> str:
+    """Build a generic visual progress bar with percentage.
+
+    Args:
+        current: Current value
+        maximum: Maximum value
+        bar_length: Length of the progress bar (default: 10)
+
+    Returns:
+        Formatted progress bar
+    """
+    if maximum == 0:
+        return "█" * bar_length
+
+    percentage = current / maximum
+    filled = int(percentage * bar_length)
+    empty = bar_length - filled
+
+    pbar = "█" * filled + "░" * empty
+    return f"`{pbar}`"
