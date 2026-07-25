@@ -13,7 +13,7 @@ dependencies = [
     "tomlkit==0.13.2",
     "cachetools==5.5.0",
     "click==8.1.8",
-    "setuptools==78.1.1",
+    "setuptools==83.0.0",
     "pylint==3.3.3",
     "pyright==1.1.391",
     "pytest==8.3.4",
