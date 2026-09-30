@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from datetime import datetime, timedelta, timezone
-from math import floor
 from random import choice
 from logging import Logger, config, getLogger
 from .constants import (
@@ -10,7 +9,8 @@ from .constants import (
     TITLE_SALARIES,
     SECONDS_TO_CHICKEN_DROP,
     SECONDS_TO_CORNFIELD_DROP,
-    RANKS_DICT,
+    RANKS,
+    MMR_PER_RANK,
 )
 
 if TYPE_CHECKING:
@@ -26,6 +26,7 @@ __all__ = [
     "get_random_tip_message",
     "ensure_author_farm",
     "get_player_rank",
+    "get_rank_index",
     "build_progress_bar",
 ]
 
@@ -71,10 +72,13 @@ async def ensure_author_farm(
     farm_cache.add(ctx.author.id, farm_entity)
 
 
-async def get_player_rank(mmr: int) -> str:
-    parsed_mmr = floor(mmr / 200) * 200
+def get_rank_index(mmr: int) -> int:
+    """Index in RANKS of the rank for this MMR. Every MMR past the last rank stays in the last rank."""
+    return min(max(mmr, 0) // MMR_PER_RANK, len(RANKS) - 1)
 
-    return RANKS_DICT[parsed_mmr]
+
+async def get_player_rank(mmr: int) -> str:
+    return RANKS[get_rank_index(mmr)]
 
 
 def build_progress_bar(current: int, maximum: int, bar_length: int = 10) -> str:

@@ -34,8 +34,8 @@ powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 Or use your package manager:
 ```bash
-brew install uv        # macOS
-sudo apt install uv    # Linux (Ubuntu/Debian)
+brew install uv                      # macOS
+sudo snap install astral-uv --classic   # Linux (Ubuntu)
 ```
 
 ### 2️⃣ Install Dependencies
@@ -43,23 +43,14 @@ sudo apt install uv    # Linux (Ubuntu/Debian)
 Clone the repo and install all dependencies with:
 
 ```bash
-uv sync
+uv sync --python 3.12
 ```
 
-UV automatically creates a virtual environment and installs all packages from `pyproject.toml` and `uv.lock`. No manual venv activation needed!
+UV automatically creates a virtual environment and installs all packages from `pyproject.toml` and `uv.lock`, including the `eggsauce` CLI. No manual venv activation needed!
+
+> **Note**: The project needs Python 3.12. `--python 3.12` makes UV download it if you don't have it, so you only need the flag the first time.
 
 ## Running the Bot
-
-
-1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop.).
-
-2. After installation, confirm Docker is correctly set up by running the following command in your terminal:
-
-```powershell
-docker --version
-```
-
-### Installing and Running the CLI
 
 1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/).
 
@@ -71,7 +62,7 @@ docker --version
 
 3. **Run the CLI**
 
-   UV automatically manages the environment, so you can run the CLI directly:
+   Prefix every CLI command with `uv run`, which runs it inside the project's environment:
 
    ```bash
    uv run eggsauce run --env <environment>
@@ -88,14 +79,20 @@ docker --version
 Use the migrate command to generate and apply database migrations.
   * Run this command to create a migration:
     ```bash
-    eggsauce migrate -name <migration_name>
+    uv run eggsauce migrate -name <migration_name>
     ```
     Replace <migration_name> with your desired migration name.
   * The migration is automatically applied after this generation.
 
+#### Apply Migrations
+  * Run this command to apply pending migrations without generating a new one:
+    ```bash
+    uv run eggsauce apply-migrations
+    ```
+
 #### Build
   * Run this command to build the containers:
     ```bash
-    eggsauce build
+    uv run eggsauce build
     ```
   This will execute docker compose build and create the necessary application images.

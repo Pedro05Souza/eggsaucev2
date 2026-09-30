@@ -1,5 +1,4 @@
 from __future__ import annotations
-import asyncio
 from typing import Optional, TYPE_CHECKING, List
 from datetime import datetime, timedelta, timezone
 from random import randint
@@ -9,6 +8,7 @@ from tools.constants import (
     CHICKEN_HOURS_THRESHOLD,
     CORN_HOURS_THRESHOLD,
     SECONDS_TO_CHICKEN_DROP,
+    SECONDS_TO_CORNFIELD_DROP,
     CHICKEN_RARITIES,
     NON_DEVOLVABLE_RARITIES,
     BASE_CHICKEN_PRICE,
@@ -17,7 +17,7 @@ from tools.constants import (
     ChickenRaritiesEmojis,
 )
 from tools.utils import get_salary_from_title
-from tools.chicken_utils import calculate_base_egg_production, calculate_plot_production
+from tools.chicken_utils import calculate_base_egg_production, calculate_egg_production, calculate_plot_production
 
 
 if TYPE_CHECKING:
@@ -72,33 +72,38 @@ class AwayTimeEarningsService:
 
         hours_passed = min(hours_passed, CHICKEN_HOURS_THRESHOLD)
 
-        has_rich_farmer = farm_entity.farmer == "Rich"
+        total_gained = 0
 
-        total_gained = await AwayTimeEarningsService.calculate_chicken_earnings(
-            farm_entity.chickens, hours_passed, has_rich_farmer
-        )
-
-        farm_entity.next_egg_drop_time = now + timedelta(seconds=SECONDS_TO_CHICKEN_DROP)
-
+        # Hour by hour: each hour is earned at that hour's happiness, then happiness drops.
+        # Earning every hour at the starting happiness would pay a neglected chicken as if just fed.
         for chicken in farm_entity.chickens:
             if chicken.can_be_updated is False:
                 continue
 
-            chicken.happiness = max(0, chicken.happiness - sum(randint(1, 3) for _ in range(hours_passed)))
+            for _ in range(hours_passed):
+                total_gained += calculate_egg_production(chicken)
+                chicken.happiness = max(0, chicken.happiness - randint(1, 3))
 
             if chicken.happiness == 0:
                 await AwayTimeEarningsService._maybe_devolve_chicken(chicken)
 
-        return total_gained
+        farm_entity.next_egg_drop_time = now + timedelta(seconds=SECONDS_TO_CHICKEN_DROP)
+
+        return AwayTimeEarningsService._add_rich_farmer_bonus(total_gained, farm_entity.farmer == "Rich")
 
     @staticmethod
     async def calculate_chicken_earnings(
         chickens: List["ChickenEntity"], hours: int, has_rich_farmer: bool, ignore_update: bool = False
     ) -> int:
+        """Projects what the chickens earn over `hours` at their current happiness."""
         eligible = chickens if ignore_update else [c for c in chickens if c.can_be_updated]
 
-        total = sum(await asyncio.gather(*(c.calculate_actual_egg_production() for c in eligible))) * hours
+        total = sum(calculate_egg_production(chicken) for chicken in eligible) * hours
 
+        return AwayTimeEarningsService._add_rich_farmer_bonus(total, has_rich_farmer)
+
+    @staticmethod
+    def _add_rich_farmer_bonus(total: int, has_rich_farmer: bool) -> int:
         if has_rich_farmer:
             total += int(total * FARMERS_DICT["rich"]["egg_value_percentage"] / 100)
 
@@ -120,21 +125,18 @@ class AwayTimeEarningsService:
 
         hours_passed = min(hours_passed, CORN_HOURS_THRESHOLD)
 
-        corn_to_add = await AwayTimeEarningsService.calculate_corn_earnings(cornfield_entity.plots, hours_passed)
+        corn_produced = await AwayTimeEarningsService.calculate_corn_earnings(cornfield_entity.plots, hours_passed)
 
-        reached_limit = cornfield_entity.current_corn + corn_to_add
+        # Never negative: corn stored above the limit (e.g. from before the limit changed) is kept.
+        free_storage = max(cornfield_entity.actual_corn_limit - cornfield_entity.current_corn, 0)
+        corn_to_add = min(corn_produced, free_storage)
 
-        if cornfield_entity.actual_corn_limit < reached_limit:
+        cornfield_entity.next_corn_drop = now + timedelta(seconds=SECONDS_TO_CORNFIELD_DROP)
 
-            if cornfield_entity.actual_corn_limit == cornfield_entity.current_corn:
-                cornfield_entity.next_corn_drop = now + timedelta(seconds=SECONDS_TO_SALARY_DROP)
-                return
-
-            corn_to_add = cornfield_entity.actual_corn_limit - cornfield_entity.current_corn
+        if corn_to_add == 0:
+            return
 
         cornfield_entity.current_corn += corn_to_add
-
-        cornfield_entity.next_corn_drop = now + timedelta(seconds=SECONDS_TO_SALARY_DROP)
 
         return corn_to_add
 

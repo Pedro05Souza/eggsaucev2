@@ -143,8 +143,10 @@ class ChickenPricesMultiplier(Enum):
     ETHEREAL = 250
 
 
+DEAD_RARITY = "DEAD"
+
 CHICKEN_RARITIES = [
-    "DEAD",
+    DEAD_RARITY,
     "COMMON",
     "UNCOMMON",
     "RARE",
@@ -165,14 +167,7 @@ CHICKEN_RARITIES = [
     "ETHEREAL",
 ]
 
-RANKS_DICT = {
-    0: "RAW EGG",
-    200: "FRIED EGG",
-    400: "BOILED EGG",
-    600: "SCRAMBLED EGG",
-    800: "OMELETTE",
-    1000: "LEGGEND",
-}
+MMR_PER_RANK = 200
 
 RANKS = [
     "RAW EGG",
@@ -183,8 +178,17 @@ RANKS = [
     "LEGGEND",
 ]
 
-NON_TRADEABLE_RARITIES = ("DEAD", "ETHEREAL", "BETA")
+# Chicken rarity given the first time a player reaches each rank, keyed by the rank's index in RANKS.
+RANK_UP_REWARDS = {
+    1: "LEGENDARY",
+    2: "COSMIC",
+    3: "GALACTIC",
+    4: "IMMORTAL",
+    5: "ASCENDED",
+}
 
-NON_EVOLVABLE_RARITIES = ("DEAD", "ETHEREAL")
+NON_TRADEABLE_RARITIES = (DEAD_RARITY, "ETHEREAL", "BETA")
 
-NON_DEVOLVABLE_RARITIES = ("DEAD", "ETHEREAL", "BETA")
+NON_EVOLVABLE_RARITIES = (DEAD_RARITY, "ETHEREAL")
+
+NON_DEVOLVABLE_RARITIES = (DEAD_RARITY, "ETHEREAL", "BETA")

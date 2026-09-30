@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from tortoise.transactions import atomic
-from tools import chicken_entity_to_model
+from tools import chicken_entity_to_model, calculate_feeding_cost, update_away_corn
 
 if TYPE_CHECKING:
     from eggsauce_context import EggsauceContext
@@ -28,13 +28,18 @@ class FeedAllChickenUsecase:
 
     @atomic()
     async def feed_all_chicken(self) -> None:
-        are_all_chickens_fed = True
-        not_enough_corn = True
+        farm_entity = await self._farm_cache.get_or_fetch(self._ctx.author.id)
 
-        farm_entity = self._farm_cache.get_or_raise(self._ctx.author.id)
-
-        if len(farm_entity.chickens) == 0:
+        if farm_entity is None or len(farm_entity.chickens) == 0:
             await self._ctx.send_failed_embed("You don't have any chickens to feed!")
+            return
+
+        hungry_chickens = sorted(
+            (chicken for chicken in farm_entity.chickens if chicken.happiness < 100), key=lambda c: c.happiness
+        )
+
+        if len(hungry_chickens) == 0:
+            await self._ctx.send_failed_embed("All chickens are already fed!")
             return
 
         cornfield_entity = await self._cornfield_repository.get_cornfield_by_user_discord_id(self._ctx.author.id)
@@ -42,38 +47,49 @@ class FeedAllChickenUsecase:
         if not cornfield_entity:
             raise ValueError("Cornfield entity not found!")
 
-        total_chickens_to_feed = 0
-        total_chickens_fed = 0
+        # Collect the corn produced while away first, so it can be spent right away.
+        await update_away_corn(self._cornfield_repository, cornfield_entity)
 
-        for chicken in farm_entity.chickens:
+        corn_spent = 0
+        fully_fed = 0
+        partly_fed = 0
 
-            if chicken.happiness == 100:
+        # Hungriest first, so the chickens closest to devolving get fed if corn runs out.
+        for chicken in hungry_chickens:
+            missing_happiness = 100 - chicken.happiness
+
+            if chicken.food_consumption > 0:
+                affordable = cornfield_entity.current_corn * 100 // chicken.food_consumption
+                happiness_restored = min(missing_happiness, affordable)
+            else:
+                happiness_restored = missing_happiness
+
+            if happiness_restored <= 0:
                 continue
 
-            total_chickens_to_feed += 1
+            cost = calculate_feeding_cost(chicken.food_consumption, happiness_restored)
+            cornfield_entity.current_corn -= cost
+            corn_spent += cost
+            chicken.happiness += happiness_restored
 
-            if cornfield_entity.current_corn >= chicken.food_consumption:
-                total_chickens_fed += 1
-                not_enough_corn = False
-                are_all_chickens_fed = False
-                cornfield_entity.current_corn -= chicken.food_consumption
-                chicken.happiness = 100
+            if chicken.happiness == 100:
+                fully_fed += 1
+            else:
+                partly_fed += 1
 
-        if not_enough_corn:
-            await self._ctx.send_failed_embed("You don't have enough corn to feed all chickens!")
-            return
-
-        if are_all_chickens_fed:
-            await self._ctx.send_failed_embed("All chickens are already fed!")
+        if fully_fed + partly_fed == 0:
+            await self._ctx.send_failed_embed("You don't have enough corn to feed your chickens!")
             return
 
         chicken_models = [await chicken_entity_to_model(farm_entity.id, chicken) for chicken in farm_entity.chickens]
 
+        description = f"✅ Fed **{fully_fed}** out of **{len(hungry_chickens)}** hungry chickens"
+        description += f" for **{corn_spent}** corn!"
+
+        if partly_fed > 0:
+            description += f"\n🌽 Ran out of corn, so **{partly_fed}** chicken(s) were only partly fed."
+
         async with self._farm_cache.remove_if_exception(farm_entity.discord_user_id):
             await self._farm_repository.bulk_update_chickens(chicken_models)
             await self._cornfield_repository.update_cornfield(cornfield_entity)
-            await self._ctx.send_bot_embed(
-                embed_params={
-                    "description": f"✅ Fed **{total_chickens_fed}** out of **{total_chickens_to_feed}** chickens!"
-                }
-            )
+            await self._ctx.send_bot_embed(embed_params={"description": description})

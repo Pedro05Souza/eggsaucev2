@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import asyncio
 from tortoise.transactions import atomic
-from tools import calculate_corn_limit, calculate_corn_limit_price
+from tools import calculate_corn_limit, calculate_corn_limit_price, corn_storage_hours, is_corn_storage_maxed
 
 if TYPE_CHECKING:
     from eggsauce_context import EggsauceContext
@@ -34,7 +34,13 @@ class ExpandCornLimitUsecase:
             self._player_repository.get_or_create(self._ctx.author.id),
         )
 
+        if is_corn_storage_maxed(cornfield_entity.corn_limit_upgrades):
+            max_hours = corn_storage_hours(cornfield_entity.corn_limit_upgrades)
+            await self._ctx.send_failed_embed(f"Your cornfield already stores the maximum of **{max_hours} hours** of corn!")
+            return
+
         total_cost = calculate_corn_limit_price(cornfield_entity.corn_limit_upgrades + 1)
+        next_hours = corn_storage_hours(cornfield_entity.corn_limit_upgrades + 1)
 
         if player_entity.balance + player_entity.bank_balance < total_cost:
             await self._ctx.send_failed_embed(
@@ -43,7 +49,8 @@ class ExpandCornLimitUsecase:
             return
 
         has_confirmed, message = await self._ctx.confirmation_popup(
-            f"Are you sure you want to expand the cornfield limit? The cost is **{total_cost}** eggbux."
+            f"Are you sure you want to expand the cornfield limit to **{next_hours} hours** of corn?"
+            f" The cost is **{total_cost}** eggbux."
         )
 
         if has_confirmed is None:
@@ -67,6 +74,7 @@ class ExpandCornLimitUsecase:
         await self._transaction_service.deduct_from_balance_and_bank(player_entity, total_cost)
 
         cornfield_entity.corn_limit_upgrades += 1
+        new_limit = calculate_corn_limit(cornfield_entity.corn_limit_upgrades, cornfield_entity.plots)
 
         await self._cornfield_repository.update_cornfield(cornfield_entity)
 
@@ -74,7 +82,8 @@ class ExpandCornLimitUsecase:
             embed=self._ctx.embed_builder(
                 embed_params={
                     "description": "✅ Successfully expanded the cornfield limit to "
-                    + f"**{calculate_corn_limit(cornfield_entity.corn_limit_upgrades)}**."
+                    + f"**{next_hours} hours** of corn "
+                    + f"(**{new_limit}** corn)."
                 }
             ),
             view=None,

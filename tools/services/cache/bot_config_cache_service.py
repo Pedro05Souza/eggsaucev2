@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+import asyncio
+from typing import TYPE_CHECKING, Optional, Sequence
 from asyncio import Lock
 from ._entity_cache import EntityCacheService
 
@@ -15,31 +16,19 @@ class BotConfigCacheService(EntityCacheService["BotConfigEntity"]):
 
     def __init__(
         self,
-        track_evict: bool,
         bot_config_repository: "BotConfigRepositoryProtocol",
         max_size: int = 100,
         expiration_time: int = 300,
     ) -> None:
-        super().__init__(track_evict, max_size, expiration_time)
+        super().__init__(max_size, expiration_time)
         self.bot_config_repository = bot_config_repository
-        self._lock = Lock()
+        self._create_lock = Lock()
 
-    async def get_or_fetch(self, key: int):
-        async with self._lock:
-            guild_config = self.get(key)
+    async def _fetch(self, key: int) -> Optional[BotConfigEntity]:
+        return await self.bot_config_repository.get_guild_config_by_discord_guild_id(key)
 
-            if guild_config:
-                return guild_config
-
-            guild_config = await self.bot_config_repository.get_guild_config_by_discord_guild_id(key)
-
-            if guild_config:
-                self.add(key, guild_config)
-
-            if not guild_config:
-                return None
-
-            return guild_config
+    async def _persist(self, entities: Sequence[BotConfigEntity]) -> None:
+        await asyncio.gather(*(self.bot_config_repository.update_bot_config(entity) for entity in entities))
 
     async def create_bot_config(self, discord_guild_id: int) -> BotConfigEntity:
         """Creates a guild config entity in the cache and database.
@@ -48,9 +37,13 @@ class BotConfigCacheService(EntityCacheService["BotConfigEntity"]):
             discord_guild_id (int): The Discord ID of the guild.
 
         Returns:
-            BotConfigEntity: The created guild config entity.
+            BotConfigEntity: The created guild config entity, or the existing one if another task created it first.
         """
-        async with self._lock:
+        async with self._create_lock:
+            existing = await self.get_or_fetch(discord_guild_id)
+            if existing is not None:
+                return existing
+
             guild_config = await self.bot_config_repository.create_guild_config(discord_guild_id)
-            self.add(discord_guild_id, guild_config)
+            self.add_saved(discord_guild_id, guild_config)
             return guild_config

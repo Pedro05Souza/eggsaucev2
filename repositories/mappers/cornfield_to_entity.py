@@ -17,7 +17,7 @@ async def farm_cornfield_model_to_entity(farm_cornfield: Cornfield) -> Cornfield
         cornfield_title=farm_cornfield.cornfield_title,
         current_corn=farm_cornfield.current_corn,
         corn_limit_upgrades=farm_cornfield.corn_limit_upgrades,
-        actual_corn_limit=calculate_corn_limit(farm_cornfield.corn_limit_upgrades),
+        actual_corn_limit=calculate_corn_limit(farm_cornfield.corn_limit_upgrades, farm_cornfield.plots),
         plots=farm_cornfield.plots,
         next_corn_drop=farm_cornfield.next_corn_drop,
     )

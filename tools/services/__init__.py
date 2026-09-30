@@ -5,4 +5,5 @@ from .chicken_generator_service import *
 from .action_guard_service import *
 from .match_making_service import *
 from .chicken_battle_service import *
+from .elo_rating_service import *
 from .transaction_service import *

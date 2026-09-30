@@ -15,18 +15,29 @@ dependencies = [
     "click==8.1.8",
     "setuptools==78.1.1",
     "pylint==3.3.3",
-    "pyright==1.1.391",
+    "pyright==1.1.414",
     "pytest==8.3.4",
     "pytest-mock==3.14.0",
     "pytest-asyncio==0.25.2",
     "pympler==1.1",
 ]
 
+[project.scripts]
+eggsauce = "eggsauce_cli:cli"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+# Only the CLI module is installed; the bot itself runs from the source tree.
+[tool.setuptools]
+py-modules = ["eggsauce_cli"]
+
 [tool.pylint]
 disable = ["C0114", "C0115", "C0116", "R0903", "W0703", "R0913", "R0917", "R0902", "W0511", "W0621", "W0236", "R0801", "W0613"]
 max-line-length = 120
 suggestion-mode = true
-ignore = ["venv", "migrations", "build"]
+ignore = ["venv", ".venv", "migrations", "build"]
 load-plugins = ["tortoise.contrib.pylint"]
 
 [tool.aerich]

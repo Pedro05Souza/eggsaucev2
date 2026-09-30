@@ -1,5 +1,5 @@
 from typing import List, Tuple
-from cachetools import TTLCache, Cache
+from cachetools import TTLCache
 from tools.utils import get_logger
 from ._cache_base import CacheBase
 from ._types import KT, VT
@@ -20,13 +20,19 @@ class TTLCacheService(CacheBase[KT, VT]):
             self.evicted_items.append((key, value))
             return key, value
 
+        def expire(self, time=None):
+            # TTLCache also calls expire() internally (on writes, len(), popitem()) and discards
+            # the result, so record expired items here or they are lost.
+            expired = super().expire(time)
+            self.evicted_items.extend(expired)
+            return expired
+
     def __init__(self, track_evict: bool, maxsize: int = 250, expiration_time: float = 300) -> None:
-        cache_instance: Cache[KT, VT] = (
+        self._cache: TTLCache[KT, VT] = (
             self._TrackEvictCache(maxsize=maxsize, ttl=expiration_time)
             if track_evict
-            else TTLCache(maxsize=maxsize, ttl=expiration_time)
+            else TTLCache[KT, VT](maxsize=maxsize, ttl=expiration_time)
         )
-        self._cache = cache_instance
         super().__init__(self._cache)
         self._logger = get_logger(__name__)
 
@@ -34,13 +40,11 @@ class TTLCacheService(CacheBase[KT, VT]):
         if not isinstance(self._cache, self._TrackEvictCache):
             raise ValueError("This method is only available when track_evict is set to True")
 
-        items = self._cache.expire()
-
-        if len(self._cache.evicted_items) > 0:
-            items.extend(self._cache.evicted_items)
-            self._cache.evicted_items.clear()
+        self._cache.expire()  # records into evicted_items
+        items = list(self._cache.evicted_items)
+        self._cache.evicted_items.clear()
         return items
 
     @property
-    def cache(self) -> _TrackEvictCache[KT, VT] | TTLCache[KT, VT]:
+    def cache(self) -> TTLCache[KT, VT]:
         return self._cache

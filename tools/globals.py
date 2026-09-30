@@ -6,5 +6,5 @@ __all__ = [
     "GlobalFarmCache",
 ]
 
-GlobalBotConfigCache = BotConfigCacheService(False, BotConfigRepository(), expiration_time=3600)
-GlobalFarmCache = FarmCacheService(True, FarmRepository())
+GlobalBotConfigCache = BotConfigCacheService(BotConfigRepository(), expiration_time=3600)
+GlobalFarmCache = FarmCacheService(FarmRepository())

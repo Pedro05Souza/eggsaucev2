@@ -1,14 +1,14 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from discord import Member
 from discord.ext.commands import Cog, Bot, hybrid_command, CooldownMapping, BucketType, parameter
 from tools import (
     GlobalFarmCache,
     FarmCacheService,
 )
-from tools.constants import REGULAR_COMMAND_COOLDOWN
+from tools.constants import REGULAR_COMMAND_COOLDOWN, CORN_SELL_PRICE
 from tools.services import TransactionService
-from usecases import CornFieldUsecase, ExpandCornLimitUsecase, BuyPlotUsecase
+from usecases import CornFieldUsecase, ExpandCornLimitUsecase, BuyPlotUsecase, SellCornUsecase
 from repositories import (
     FarmRepositoryProtocol,
     CornfieldRepositoryProtocol,
@@ -86,6 +86,22 @@ class CornfieldController(
             ctx, self.cornfield_repository, self.player_repository, self.transaction_service
         )
         await buy_plot_usecase.buy_plot()
+
+    @hybrid_command(
+        name="sellcorn",
+        aliases=["scorn"],
+        description="🌽 Sell corn for eggbux!",
+        help=f"Sell corn for {CORN_SELL_PRICE} eggbux each. Sells all your corn if no amount is given.",
+    )
+    async def sell_corn(
+        self,
+        ctx: "EggsauceContext",
+        amount: Optional[int] = parameter(default=None, description="How much corn to sell. Sells all if empty."),
+    ) -> None:
+        sell_corn_usecase = SellCornUsecase(
+            ctx, self.cornfield_repository, self.player_repository, self.transaction_service, amount
+        )
+        await sell_corn_usecase.sell_corn()
 
     async def cog_check(self, ctx: "EggsauceContext"):  # type: ignore
         farm_entity = await self.farm_cache_service.get_or_fetch(ctx.author.id)

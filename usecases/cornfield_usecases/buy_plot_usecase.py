@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import asyncio
 from tortoise.transactions import atomic
-from tools import calculate_plot_production, calculate_plot_price
+from tools import calculate_plot_production, calculate_plot_price, calculate_corn_limit
 
 if TYPE_CHECKING:
     from eggsauce_context import EggsauceContext
@@ -63,7 +63,9 @@ class BuyPlotUsecase:
             embed=self._ctx.embed_builder(
                 embed_params={
                     "description": "✅ Successfully bought a plot!"
-                    + f" You now have **{calculate_plot_production(cornfield_entity.plots)}** of corn production."
+                    + f" You now produce **{calculate_plot_production(cornfield_entity.plots)}** corn per hour"
+                    + " and can store"
+                    + f" **{calculate_corn_limit(cornfield_entity.corn_limit_upgrades, cornfield_entity.plots)}** corn."
                 }
             ),
             view=None,

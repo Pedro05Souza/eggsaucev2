@@ -13,7 +13,7 @@ TIPS = [
     "You can inspect all the interesting attributes of a chicken with inspectchicken command.",
     "The quality attribute of a chicken determines its maximum egg production.",
     "Buying farmers will give you permanent bonuses.",
-    "You can buy corn to feed your chickens.",
+    "Extra corn can be sold for eggbux with the sellcorn command.",
     "You can naturally produce corn with a cornfield.",
     f"The market command generates {MAX_GENERATED_CHICKENS} chickens.",
     "The battle command allows you to battle your chickens against other players' chickens.",

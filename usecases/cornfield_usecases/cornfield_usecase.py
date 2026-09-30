@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from discord.utils import format_dt
 from discord import Member
 from tools.constants import SECONDS_TO_CORNFIELD_DROP, REASON_INVALID_USER
-from tools import calculate_plot_production, update_away_corn
+from tools import calculate_plot_production, corn_storage_hours, update_away_corn
 
 if TYPE_CHECKING:
     from eggsauce_context import EggsauceContext
@@ -34,7 +34,8 @@ class CornFieldUsecase:
 
         title = cornfield_entity.cornfield_title
         description = (
-            f"**🌽 Corn Balance:** {cornfield_entity.current_corn}/{cornfield_entity.actual_corn_limit}\n"
+            f"**🌽 Corn Balance:** {cornfield_entity.current_corn}/{cornfield_entity.actual_corn_limit}"
+            + f" ({corn_storage_hours(cornfield_entity.corn_limit_upgrades)} hours of production)\n"
             + f" **🚜 Corn expected to be generated in {SECONDS_TO_CORNFIELD_DROP // 3600} hour(s)**:"
             + f" {calculate_plot_production(cornfield_entity.plots)}\n"
             + f" **🏞️ Plots Owned:** {cornfield_entity.plots}\n"

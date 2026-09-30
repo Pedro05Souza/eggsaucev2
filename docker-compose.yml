@@ -11,21 +11,28 @@ services:
     ports:
       - "5000:5000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: on-failure:3
     networks:
       - eggsauce_network
 
   db:
     container_name: eggsauce_db
-    image: postgres
+    # Pinned: data files are tied to the major version, so upgrading needs a pg_upgrade.
+    image: postgres:18
     environment:
       POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
       POSTGRES_DB: 'eggsauce'
-      PGDATA: /data/postgres
     volumes:
-      - db-data:/var/lib/postgresql/data
+      # Postgres 18+ keeps its data under /var/lib/postgresql/<major>/docker.
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
     ports:
       - "5432:5432"
     networks:

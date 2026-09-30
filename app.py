@@ -1,11 +1,11 @@
 from eggsauce import Eggsauce
-from tools import DatabaseStarterService, GlobalBotConfigCache
+from tools import DatabaseStarterService, GlobalBotConfigCache, GlobalFarmCache
 from usecases import HelpCommandUsecase
 
 
 def main():
     DatabaseStarterService()
-    bot = Eggsauce(GlobalBotConfigCache)
+    bot = Eggsauce(GlobalBotConfigCache, GlobalFarmCache)
     bot.help_command = HelpCommandUsecase()
     bot.run()
 

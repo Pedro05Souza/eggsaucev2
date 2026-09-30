@@ -135,7 +135,7 @@ class ChickenView(View):
         cached_bot_config = self._bot_config_cache_service.get(interaction.guild_id)  # type: ignore
 
         if not cached_bot_config:
-            raise Exception("Bot config not found in cache")
+            raise ValueError("Bot config not found in cache")
 
         if interaction.user.id != self._farm_entity.discord_user_id and not cached_bot_config.can_steal_chickens:
             await self._ctx.handle_failed_interaction(interaction, REASON_NO_PERMISSION)

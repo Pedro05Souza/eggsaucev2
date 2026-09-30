@@ -4,25 +4,20 @@ on:
   pull_request:
 
 jobs:
-    type_checker:
-        runs-on: ubuntu-latest
-    
-        steps:
-          - name: Checkout code
-            uses: actions/checkout@v3
-    
-          - name: Set up Python
-            uses: actions/setup-python@v4
-            with:
-              python-version: "3.12"
+  type_checker:
+    runs-on: ubuntu-latest
 
-          - name: Install UV
-            uses: astral-sh/setup-uv@v2
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-          - name: Install dependencies
-            run: |
-              uv sync
+      - name: Install UV
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
 
-          - name: Run pyright
-            run: |
-              pyright .
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Run pyright
+        run: uv run pyright .
