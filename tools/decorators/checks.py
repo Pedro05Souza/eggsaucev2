@@ -1,9 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from discord import User
-from discord.ext.commands import check
+from discord.ext.commands import check, MissingPermissions
 from tools.constants import get_list_env_var
-
 
 if TYPE_CHECKING:
     from eggsauce_context import EggsauceContext
@@ -33,12 +32,12 @@ def admin_only():
     Returns:
         bool: True if the user has administrator permissions, False otherwise
     """
-    async def predicate(ctx: " EggsauceContext") -> bool:
-        if isinstance(ctx.author, User):
-            return False
 
-        if ctx.author.guild_permissions.administrator:
+    async def predicate(ctx: " EggsauceContext") -> bool:
+        if not isinstance(ctx.author, User) and ctx.author.guild_permissions.administrator:
             return True
-        return False
+
+        # Raised instead of returning False so the error handler can tell the user why
+        raise MissingPermissions(["administrator"])
 
     return check(predicate)

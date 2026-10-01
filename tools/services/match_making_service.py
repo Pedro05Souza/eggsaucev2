@@ -6,11 +6,10 @@ from random import randint, random, choice, choices
 from math import ceil
 import asyncio
 from discord import Message
-from tools.chicken_utils import generated_chicken_to_chicken_entity
+from tools.chicken_utils import generated_chicken_to_chicken_entity, calculate_chicken_price
 from tools.constants import (
     FARM_MAX_CHICKENS,
     ChickenRaritiesProbabilities,
-    ChickenPricesMultiplier,
     ChickenRaritiesEmojis,
     GeneratedChicken,
 )
@@ -136,9 +135,7 @@ class MatchMakingBot(MatchMakingUser):
         ]
 
         generated_chickens = [
-            GeneratedChicken(
-                rarity, ChickenRaritiesEmojis[rarity].value, "Chicken", int(ChickenPricesMultiplier[rarity].value)
-            )
+            GeneratedChicken(rarity, ChickenRaritiesEmojis[rarity].value, "Chicken", calculate_chicken_price(rarity))
             for rarity in bot_chicken_deck
         ]
 

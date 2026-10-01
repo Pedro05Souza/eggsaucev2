@@ -6,7 +6,8 @@ from discord import ButtonStyle, Interaction, Message
 from entities import FarmerType
 from repositories import FarmRepositoryProtocol, PlayerRepositoryProtocol
 from tools.services import FarmCacheService
-from tools.constants import FARMERS_DICT, FARM_MAX_CHICKENS, BASE_FARMER_PRICE
+from tools.constants import FARMERS_DICT, BASE_FARMER_PRICE
+from tools.chicken_utils import farm_max_size
 from eggsauce_context import EggsauceContext
 
 if TYPE_CHECKING:
@@ -35,12 +36,6 @@ class BuyFarmerUseCase:
 
     async def buy_farmer(self) -> None:
         farm_entity = self._farm_cache.get_or_raise(self._ctx.author.id)
-
-        if farm_entity.farmer == "Guardian" and len(farm_entity.chickens) > FARM_MAX_CHICKENS:
-            await self._ctx.send_failed_embed(
-                description="You need to sell the extra farm slots to buy another farmer. "
-            )
-            return
 
         player_entity = await self._player_repository.get_or_create(self._ctx.author.id)
 
@@ -81,10 +76,22 @@ class BuyFarmerUseCase:
             )
             return
 
+        # Only the Warrior adds slots, so leaving it must not leave the farm over its new size
+        if len(farm_entity.chickens) > farm_max_size(farmer):
+            await message.edit(
+                embed=self._ctx.embed_builder(
+                    embed_params={
+                        "description": f"❌ The **{farmer}** farmer only has room for **{farm_max_size(farmer)}**"
+                        + f" chickens, but you have **{len(farm_entity.chickens)}**. Vault or sell some first."
+                    }
+                ),
+                view=None,
+            )
+            return
+
         farm_entity.farmer = farmer
-        await self._transaction_service.deduct_from_balance_and_bank(
-            player_entity, BASE_FARMER_PRICE
-        )
+        farm_entity.actual_max_farm_size = farm_max_size(farmer)
+        await self._transaction_service.deduct_from_balance_and_bank(player_entity, BASE_FARMER_PRICE)
 
         async with self._farm_cache.remove_if_exception(farm_entity.discord_user_id):
             await self._farm_repository.update_farm(farm_entity)
@@ -97,11 +104,12 @@ class BuyFarmerUseCase:
         return (
             "👨‍🌾 **Farmer Types & Their Benefits:**\n\n"
             "💰 **Rich Farmer**\n"
-            f"   ➜ Increases **egg value** by **{FARMERS_DICT['rich']['egg_value_percentage']}%**\n\n"
+            f"   ➜ Increases **egg value** by **{FARMERS_DICT['rich']['egg_value_percentage']}%**"
+            f" and **corn production** by **{FARMERS_DICT['rich']['corn_production_percentage']}%**\n\n"
             "🛡️ **Guardian Farmer**\n"
             f"   ➜ Sells chickens for **full price**\n\n"
             "⚔️ **Warrior Farmer**\n"
-            f"   ➜ Adds **{FARMERS_DICT['warrior']}** extra chickens to the farm\n\n"
+            f"   ➜ Adds **{FARMERS_DICT['warrior']}** extra chicken slots to the farm\n\n"
             "🎁 **Generous Farmer**\n"
             f"   ➜ Generates **{FARMERS_DICT['generous']}** extra chickens in the market\n\n"
         )

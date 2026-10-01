@@ -1,5 +1,6 @@
 from typing import Optional
 from datetime import datetime, timedelta
+from tortoise.expressions import F
 from entities import PlayerEntity
 from models import Player, BankPlayer
 from tools.constants import SECONDS_TO_SALARY_DROP
@@ -57,3 +58,24 @@ class PlayerRepository(metaclass=RepositoryMeta):
 
     async def bulk_update_players(self, players: list[Player]) -> None:
         await Player.bulk_update(players, ["balance", "last_bought_title", "next_salary_time"])
+
+    async def get_onboarding_steps(self, discord_user_id: int) -> int:
+        steps = await Player.filter(discord_user_id=discord_user_id).values_list("onboarding_steps", flat=True)
+        return steps[0] if steps else 0
+
+    async def complete_onboarding_steps(
+        self, discord_user_id: int, previous_steps: int, new_steps: int, reward: int
+    ) -> bool:
+        """Saves the new steps and pays the reward, only if the steps are still `previous_steps`.
+
+        Returns:
+            bool: False when another command changed the steps first, so the reward is never paid twice.
+        """
+        updated_rows = await Player.filter(discord_user_id=discord_user_id, onboarding_steps=previous_steps).update(
+            onboarding_steps=new_steps, balance=F("balance") + reward
+        )
+        return updated_rows > 0
+
+    async def get_created_at(self, discord_user_id: int) -> Optional[datetime]:
+        created_at = await Player.filter(discord_user_id=discord_user_id).values_list("created_at", flat=True)
+        return created_at[0] if created_at else None

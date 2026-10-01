@@ -2,12 +2,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from discord import Member
 from tools.services import AwayTimeEarningsService
-from tools.constants import SECONDS_TO_CHICKEN_DROP, SECONDS_TO_CORNFIELD_DROP, REASON_INVALID_USER
+from tools.constants import SECONDS_TO_CHICKEN_DROP, SECONDS_TO_CORNFIELD_DROP, REASON_INVALID_USER, OnboardingStep
 
 if TYPE_CHECKING:
     from repositories import CornfieldRepositoryProtocol
     from eggsauce_context import EggsauceContext
-    from tools.services import FarmCacheService
+    from tools.services import FarmCacheService, OnboardingService
 
 
 __all__ = ["FarmProfitUsecase"]
@@ -21,8 +21,10 @@ class FarmProfitUsecase:
         farm_cache: "FarmCacheService",
         cornfield_repository: "CornfieldRepositoryProtocol",
         member: Member,
+        onboarding_service: "OnboardingService",
     ):
         self._ctx = ctx
+        self._onboarding_service = onboarding_service
         self._farm_cache = farm_cache
         self._cornfield_repository = cornfield_repository
         self._member = member
@@ -44,11 +46,11 @@ class FarmProfitUsecase:
         time_to_chicken_drop_hours = SECONDS_TO_CHICKEN_DROP // 3600
         time_to_corn_drop_hours = SECONDS_TO_CORNFIELD_DROP // 3600
 
-        total_profit_for_cornfield = await AwayTimeEarningsService.calculate_corn_earnings(
-            cornfield_entity.plots, time_to_corn_drop_hours
-        )
-
         has_rich_farmer = farm_entity.farmer == "Rich"
+
+        total_profit_for_cornfield = await AwayTimeEarningsService.calculate_corn_earnings(
+            cornfield_entity.plots, time_to_corn_drop_hours, has_rich_farmer
+        )
 
         total_profit_for_chickens = await AwayTimeEarningsService.calculate_chicken_earnings(
             farm_entity.chickens, time_to_chicken_drop_hours, has_rich_farmer, True
@@ -67,3 +69,6 @@ class FarmProfitUsecase:
         await self._ctx.send_bot_embed(
             embed_params={"description": description},
         )
+
+        if self._member.id == self._ctx.author.id:
+            await self._onboarding_service.complete_step(self._ctx, OnboardingStep.CHECK_PROFIT)

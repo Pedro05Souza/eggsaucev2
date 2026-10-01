@@ -7,3 +7,4 @@ from .match_making_service import *
 from .chicken_battle_service import *
 from .elo_rating_service import *
 from .transaction_service import *
+from .onboarding_service import *

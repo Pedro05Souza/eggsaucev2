@@ -3,11 +3,12 @@ from typing import TYPE_CHECKING
 import asyncio
 from tortoise.transactions import atomic
 from tools import calculate_plot_production, calculate_plot_price, calculate_corn_limit
+from tools.constants import OnboardingStep
 
 if TYPE_CHECKING:
     from eggsauce_context import EggsauceContext
     from repositories import CornfieldRepositoryProtocol, PlayerRepositoryProtocol
-    from tools.services import TransactionService
+    from tools.services import TransactionService, OnboardingService
 
 
 __all__ = ("BuyPlotUsecase",)
@@ -21,12 +22,13 @@ class BuyPlotUsecase:
         cornfield_repository: "CornfieldRepositoryProtocol",
         player_repository: "PlayerRepositoryProtocol",
         transaction_service: "TransactionService",
+        onboarding_service: "OnboardingService",
     ) -> None:
         self._ctx = ctx
         self._cornfield_repository = cornfield_repository
         self._player_repository = player_repository
-        self._ctx = ctx
         self._transaction_service = transaction_service
+        self._onboarding_service = onboarding_service
 
     @atomic()
     async def buy_plot(self) -> None:
@@ -39,7 +41,8 @@ class BuyPlotUsecase:
 
         if player_entity.balance + player_entity.bank_balance < total_price:
             await self._ctx.send_failed_embed(
-                f"You don't have enough money to buy a plot! The cost is **{total_price}** eggbux."
+                f"You don't have enough money to buy a plot! The cost is **{total_price}** eggbux,"
+                + f" and you have **{player_entity.balance + player_entity.bank_balance}** in your wallet and bank."
             )
             return
 
@@ -70,3 +73,4 @@ class BuyPlotUsecase:
             ),
             view=None,
         )
+        await self._onboarding_service.complete_step(self._ctx, OnboardingStep.BUY_PLOT)

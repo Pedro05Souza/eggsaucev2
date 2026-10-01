@@ -1,6 +1,6 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-from tools.constants import REASON_INVALID_INDEX, NAME_REGEX
+from typing import TYPE_CHECKING, Optional
+from tools.constants import NAME_REGEX
 
 if TYPE_CHECKING:
     from eggsauce_context import EggsauceContext
@@ -17,28 +17,32 @@ class RenameChickenUsecase:
         ctx: "EggsauceContext",
         farm_cache: "FarmCacheService",
         farm_repository: "FarmRepositoryProtocol",
-        position: int,
+        position: Optional[int],
         new_name: str,
     ) -> None:
         self._ctx = ctx
         self._farm_cache = farm_cache
         self._farm_repository = farm_repository
-        self._position = position - 1
+        self._position = position
         self._new_name = new_name.capitalize()
 
     async def rename_chicken(self) -> None:
 
         farm_entity = self._farm_cache.get_or_raise(self._ctx.author.id)
 
-        if self._position < 0 or self._position >= len(farm_entity.chickens):
-            return await self._ctx.send_failed_embed(REASON_INVALID_INDEX)
-
         if not NAME_REGEX.match(self._new_name):
             return await self._ctx.send_failed_embed(
-                "Invalid name format. Please use only letters, numbers, and underscores."
+                "Names must be 3 to 20 characters long and use only letters, numbers and underscores."
             )
 
-        chicken_to_rename = farm_entity.chickens[self._position]
+        index = await self._ctx.pick_chicken(
+            farm_entity.chickens, self._position, f"Pick a chicken to rename to {self._new_name}"
+        )
+
+        if index is None:
+            return
+
+        chicken_to_rename = farm_entity.chickens[index]
         chicken_to_rename.name = self._new_name
 
         await self._farm_repository.upsert_farm_chicken(farm_entity.id, chicken_to_rename)

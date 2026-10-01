@@ -15,6 +15,10 @@ class Player(Model):
     highest_mmr = fields.IntField(default=0)
     wins = fields.IntField(default=0)
     losses = fields.IntField(default=0)
+    # Bitmask of the finished OnboardingStep values
+    onboarding_steps = fields.IntField(default=0)
+    # Null for players created before this field existed
+    created_at = fields.DatetimeField(null=True, auto_now_add=True)
 
     class Meta:
         table = "player"

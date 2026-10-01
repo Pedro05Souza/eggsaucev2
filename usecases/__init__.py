@@ -3,3 +3,4 @@ from .player_usecases import *
 from .farm_usecases import *
 from .cornfield_usecases import *
 from .help_command_usecase import *
+from .onboarding_usecases import *

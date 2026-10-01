@@ -24,17 +24,16 @@ class _FarmersTypedDict(TypedDict):
     rich: _RichTypedDict
     warrior: int
     generous: int
-    sustainable: int
 
 
+# Rich and Warrior are meant to be about as strong: +20% eggs and corn, or +2 slots (+25% eggs on a full farm)
 FARMERS_DICT: _FarmersTypedDict = {
     "rich": {
-        "egg_value_percentage": 10,
-        "corn_production_percentage": 10,
+        "egg_value_percentage": 20,
+        "corn_production_percentage": 20,
     },
     "warrior": 2,
     "generous": 2,
-    "sustainable": 3600,
 }
 
 
@@ -119,28 +118,6 @@ chicken_quality_rates = {
     90: "AWESOME",
     100: "PERFECT",
 }
-
-
-class ChickenPricesMultiplier(Enum):
-    DEAD = 0
-    COMMON = 1
-    UNCOMMON = 2
-    RARE = 3
-    EXCEPTIONAL = 4
-    EPIC = 5
-    LEGENDARY = 6
-    MYTHICAL = 7
-    ULTIMATE = 8
-    COSMIC = 9
-    DIVINE = 10
-    GALACTIC = 11
-    OMINOUS = 12
-    CELESTIAL = 13
-    IMMORTAL = 14
-    CHOSEN = 15
-    ASCENDED = 16
-    BETA = 17
-    ETHEREAL = 250
 
 
 DEAD_RARITY = "DEAD"

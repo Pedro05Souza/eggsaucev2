@@ -1,12 +1,15 @@
 from __future__ import annotations
-from typing import Optional, Any, TypedDict
+from typing import TYPE_CHECKING, Optional, Any, TypedDict, Iterable
 from datetime import datetime
-from discord import Embed, Colour
+from discord import Embed, Colour, SelectOption
 from discord.types.embed import EmbedType
 from discord import Forbidden, Interaction, ButtonStyle, Member
-from discord.ui import View, button, Button
+from discord.ui import View, button, Button, Select
 from discord.ext.commands import Context
-from tools.constants import REASON_DM_FAILURE
+from tools.constants import REASON_DM_FAILURE, REASON_INVALID_INDEX
+
+if TYPE_CHECKING:
+    from entities import ChickenEntity
 
 __all__ = ["EggsauceContext"]
 
@@ -209,6 +212,90 @@ class EggsauceContext(Context):
         await message.edit(view=None)
 
         return confirmation_popup.value, message
+
+    async def pick_chicken(
+        self,
+        chickens: list["ChickenEntity"],
+        position: Optional[int],
+        placeholder: str,
+        allowed_indexes: Optional[Iterable[int]] = None,
+    ) -> Optional[int]:
+        """Resolve which chicken the author means.
+
+        Uses `position` (1-based, as shown in `farm`/`vault`) when given. Otherwise the author
+        picks from a dropdown, so they never need to look the position up.
+
+        Args:
+            chickens (list[ChickenEntity]): The chickens to choose from.
+            position (Optional[int]): The 1-based position the author typed, if any.
+            placeholder (str): What the author is choosing a chicken for.
+            allowed_indexes (Optional[Iterable[int]]): 0-based indexes that can be picked. Defaults to all.
+
+        Returns:
+            Optional[int]: The 0-based index of the chicken, or None if the choice failed, was
+            invalid or timed out (the author has already been told why).
+        """
+        if position is not None:
+            if 1 <= position <= len(chickens):
+                return position - 1
+
+            await self.send_failed_embed(REASON_INVALID_INDEX)
+            return None
+
+        indexes = list(range(len(chickens)) if allowed_indexes is None else allowed_indexes)
+
+        if not indexes:
+            await self.send_failed_embed("There are no chickens you can choose for this.")
+            return None
+
+        picker = _ChickenPicker(self.author, chickens, indexes, placeholder)  # type: ignore
+        message = await self.send(embed=Embed(description=f"🐔 {placeholder}"), view=picker)
+        await picker.wait()
+
+        if picker.value is None:
+            await message.edit(embed=Embed(description="❌ No chicken was picked in time."), view=None)
+            return None
+
+        chosen_chicken = chickens[picker.value]
+        await message.edit(
+            embed=Embed(description=f"🐔 {placeholder}\n**{picker.value + 1}.** {chosen_chicken.format_chicken()}"),
+            view=None,
+        )
+        return picker.value
+
+
+class _ChickenPicker(View):
+
+    def __init__(self, author: Member, chickens: list["ChickenEntity"], indexes: list[int], placeholder: str) -> None:
+        super().__init__(timeout=60)
+        self.value: Optional[int] = None
+        self.author = author
+
+        # Discord caps a dropdown at 25 options
+        select = Select[_ChickenPicker](
+            placeholder=placeholder[:150],
+            options=[
+                SelectOption(
+                    label=f"{index + 1}. {chickens[index].rarity} {chickens[index].name}"[:100],
+                    description=f"💖 {chickens[index].happiness}% happiness · 📊 {int(chickens[index].quality * 100)}%"
+                    + " quality",
+                    emoji=chickens[index].emoji,
+                    value=str(index),
+                )
+                for index in indexes[:25]
+            ],
+        )
+        select.callback = self.on_select
+        self._select = select
+        self.add_item(select)
+
+    async def on_select(self, interaction: Interaction) -> None:
+        await interaction.response.defer()
+        self.value = int(self._select.values[0])
+        self.stop()
+
+    async def interaction_check(self, interaction: Interaction, /) -> bool:
+        return interaction.user.id == self.author.id
 
 
 class _ConfirmationPopUp(View):

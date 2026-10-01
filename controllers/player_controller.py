@@ -6,7 +6,7 @@ from tools import (
     GlobalBotConfigCache,
     spin_command_autocomplete,
 )
-from tools.services import TransactionService
+from tools.services import TransactionService, OnboardingService
 from tools.constants import (
     REGULAR_COMMAND_COOLDOWN,
     MIN_AMOUNT_SPIN,
@@ -44,8 +44,10 @@ class PlayerController(
         bot_config_cache: BotConfigCacheService,
         player_repository: PlayerRepositoryProtocol,
         transaction_service: TransactionService,
+        onboarding_service: OnboardingService,
     ) -> None:
         self.bot = bot
+        self.onboarding_service = onboarding_service
         self.bot_config_cache = bot_config_cache
         self.player_repository = player_repository
         self.transaction_service = transaction_service
@@ -62,7 +64,7 @@ class PlayerController(
         ctx: EggsauceContext,
         member: Member = parameter(
             default=lambda ctx: ctx.author,
-            description="The member whose balance is being checked. If not specified its the author.",
+            description="The member whose balance is being checked. Defaults to you.",
         ),
     ) -> None:
         balance_usecase = BalanceUsecase(ctx, self.player_repository, self.transaction_service, member)
@@ -72,13 +74,13 @@ class PlayerController(
         name="donate",
         aliases=["give"],
         description="🤝 Share the love by donating eggbux to others!",
-        help="Donate any amount to the specified user.",
+        help="Donate any amount to the specified user. The amount can be a number, `2.5k`, `25%`, `half` or `all`.",
     )
     async def donate(
         self,
         ctx: EggsauceContext,
-        amount: int = parameter(description="The amount of the donation."),
         recipient: Member = parameter(description="The recipient of the donation."),
+        amount: str = parameter(description="The amount to donate. Plain number, 2.5k, 25%, half or all."),
     ) -> None:
         donate_usecase = DonateUsecase(ctx, amount, recipient, self.player_repository)
         await donate_usecase.donate()
@@ -88,11 +90,11 @@ class PlayerController(
         aliases=["rob"],
         description="🦹‍♂️ Steal some eggbux from another user!",
         help=f"Attempt to steal between **1%** and **{int(MAX_PERCETANGE_TO_STEAL * 100)}%** of a user's"
-        + "wallet balance."
+        + " wallet balance."
         + f" The target must have at least **{MIN_AMOUNT_TO_STEAL}** eggbux."
-        + "You can't steal from the same user twice in a row."
+        + " You can't steal from the same user twice in a row."
         + f" There's a **{int(STEAL_FAILURE_CHANCE * 100)}%** chance of failure."
-        f"This action costs **{PRICE_TO_STEAL}** eggbux, and bank funds cannot be stolen.",
+        + f" This action costs **{PRICE_TO_STEAL}** eggbux, and bank funds cannot be stolen.",
     )
     async def steal(
         self, ctx: EggsauceContext, target: Member = parameter(description="The target to steal from.")
@@ -103,18 +105,18 @@ class PlayerController(
     @hybrid_command(
         name="spin",
         description="🎰 Spin the roulette wheel to win some eggbux!",
-        help=f"Bet at least **{MIN_AMOUNT_SPIN}** eggbux. Choose a color (red, black, or green) and an amount to bet. "
-        "If the wheel lands on your color, you win!"
-        "Red and black have a combined **99%** chance of winning, while green has a **1%** chance.",
+        help=f"Bet at least **{MIN_AMOUNT_SPIN}** eggbux on a color: red, black or green. "
+        "If the wheel lands on your color, you win! "
+        "Red and black (**48%** chance each) pay **2x**, green (**4%**) pays **20x**. Payouts include your bet.",
     )
-    @app_commands.autocomplete(color_choice=spin_command_autocomplete)
+    @app_commands.autocomplete(color=spin_command_autocomplete)
     async def spin(
         self,
         ctx: EggsauceContext,
-        color_choice: str = parameter(description="The color to bet on."),
-        amount: int = parameter(description="The amount to bet."),
+        amount: str = parameter(description="The amount to bet. Plain number, 2.5k, 25%, half or all."),
+        color: str = parameter(description="The color to bet on: red, black or green."),
     ) -> None:
-        spin_usecase = SpinUsecase(ctx, color_choice, amount, self.player_repository)
+        spin_usecase = SpinUsecase(ctx, color, amount, self.player_repository)
         await spin_usecase.spin()
 
     @hybrid_command(
@@ -122,6 +124,7 @@ class PlayerController(
         description="🎰 Play the slot machine to win some eggbux!",
         help="Bet any amount of eggbux to play the slot machine. Match three fruits to win a jackpot, "
         "match two fruits to win a smaller prize, or lose your bet if no fruits match. "
+        "Prizes are what you get back, your bet included. "
         "\n\nPossible jackpots:\n"
         "🍇🍇🍇 (**12x**)\n"
         "🍋🍋🍋 (**9x**)\n"
@@ -135,7 +138,11 @@ class PlayerController(
         "🍊🍊 (**1.2x**)\n"
         "🍉🍉 (**1.1x**).",
     )
-    async def slots(self, ctx: EggsauceContext, amount: int = parameter(description="The amount to bet.")) -> None:
+    async def slots(
+        self,
+        ctx: EggsauceContext,
+        amount: str = parameter(description="The amount to bet. Plain number, 2.5k, 25%, half or all."),
+    ) -> None:
         slots_usecase = SlotsUsecase(ctx, amount, self.player_repository)
         await slots_usecase.slots()
 
@@ -155,10 +162,12 @@ class PlayerController(
         name="withdraw",
         aliases=["with", "w"],
         description="💸 Withdraw money from your bank account!",
-        help="Withdraw any valid amount from your bank",
+        help="Withdraw any amount from your bank. The amount can be a number, `2.5k`, `25%`, `half` or `all`.",
     )
     async def withdraw(
-        self, ctx: EggsauceContext, amount: str = parameter(description="The amount to withdraw.")
+        self,
+        ctx: EggsauceContext,
+        amount: str = parameter(description="The amount to withdraw. Plain number, 2.5k, 25%, half or all."),
     ) -> None:
         withdraw_usecase = WithdrawUsecase(ctx, amount, self.player_repository)
         await withdraw_usecase.withdraw()
@@ -166,18 +175,20 @@ class PlayerController(
     @hybrid_command(
         name="deposit",
         aliases=["dep"],
-        description="💸Deposit money in your bank account!",
-        help="Deposit any valid amount to your bank",
+        description="💸 Deposit money in your bank account!",
+        help="Deposit any amount to your bank. The amount can be a number, `2.5k`, `25%`, `half` or `all`.",
     )
     async def deposit(
-        self, ctx: EggsauceContext, amount: str = parameter(description="The amount to deposit.")
+        self,
+        ctx: EggsauceContext,
+        amount: str = parameter(description="The amount to deposit. Plain number, 2.5k, 25%, half or all."),
     ) -> None:
-        deposit_usecase = DepositUsecase(ctx, amount, self.player_repository)
+        deposit_usecase = DepositUsecase(ctx, amount, self.player_repository, self.onboarding_service)
         await deposit_usecase.deposit()
 
     @hybrid_command(
         name="upgradetitle",
-        aliases=["bt"],
+        aliases=["ut", "bt"],
         description="🏆 Upgrade your title to earn more hourly income",
         help="Upgrade your title to increase your hourly income. Each title has a different price and income. "
         "The titles give a salary every **60** minutes. You can only upgrade to the next title in the sequence.",
@@ -196,5 +207,6 @@ async def setup(bot: Bot) -> None:
             GlobalBotConfigCache,
             player_repository,
             transaction_service,
+            OnboardingService(player_repository),
         )
     )

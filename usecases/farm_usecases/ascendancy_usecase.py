@@ -5,10 +5,8 @@ from tools.constants import (
     ASCENDED_AMOUNT,
     GeneratedChicken,
     ChickenRaritiesEmojis,
-    ChickenPricesMultiplier,
-    BASE_CHICKEN_PRICE,
 )
-from tools import generated_chicken_to_chicken_entity
+from tools import generated_chicken_to_chicken_entity, calculate_chicken_price
 
 if TYPE_CHECKING:
     from eggsauce_context import EggsauceContext
@@ -58,7 +56,7 @@ class AscendancyUsecase:
             rarity="ETHEREAL",
             name="Chicken",
             emoji=ChickenRaritiesEmojis.ETHEREAL.value,
-            price=ChickenPricesMultiplier.ETHEREAL.value * BASE_CHICKEN_PRICE,
+            price=calculate_chicken_price("ETHEREAL"),
         )
 
         chicken = await generated_chicken_to_chicken_entity(ethereal_chicken, "farm")

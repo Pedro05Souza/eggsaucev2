@@ -1,7 +1,7 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from tortoise.transactions import atomic
-from tools.constants import REASON_INVALID_INDEX, REASON_USER_IS_ALREADY_IN_EVENT
+from tools.constants import REASON_USER_IS_ALREADY_IN_EVENT
 from tools.services import ActionGuardService
 
 if TYPE_CHECKING:
@@ -21,29 +21,30 @@ class SellChickenUsecase:
         farm_repository: "FarmRepositoryProtocol",
         player_repository: "PlayerRepositoryProtocol",
         farm_cache: "FarmCacheService",
-        position: int,
+        position: Optional[int],
     ) -> None:
         self._ctx = ctx
         self._farm_repository = farm_repository
         self._player_repository = player_repository
         self._farm_cache = farm_cache
-        self._position = position - 1
+        self._position = position
 
     @atomic()
     async def sell_chicken(self):
 
         if ActionGuardService.is_player_discord_id_guarded(self._ctx.author.id):
-            await self._ctx.send_bot_embed(embed_params={"description": REASON_USER_IS_ALREADY_IN_EVENT})
+            await self._ctx.send_failed_embed(REASON_USER_IS_ALREADY_IN_EVENT)
             return
 
         async with ActionGuardService.guard_players(self._ctx.author.id):
             farm_entity = self._farm_cache.get_or_raise(self._ctx.author.id)
 
-            if self._position < 0 or self._position >= len(farm_entity.chickens):
-                await self._ctx.send(REASON_INVALID_INDEX)
+            index = await self._ctx.pick_chicken(farm_entity.chickens, self._position, "Pick a chicken to sell")
+
+            if index is None:
                 return
 
-            chicken_to_sell = farm_entity.chickens[self._position]
+            chicken_to_sell = farm_entity.chickens[index]
 
             price_to_sell = chicken_to_sell.price if farm_entity.farmer == "Guardian" else chicken_to_sell.price // 2
 
@@ -57,7 +58,7 @@ class SellChickenUsecase:
                     player_entity = await self._player_repository.get_or_create(self._ctx.author.id)
                     player_entity.balance += price_to_sell
                     await self._player_repository.update_player(player_entity)
-                    farm_entity.chickens.pop(self._position)
+                    farm_entity.chickens.remove(chicken_to_sell)
 
                     async with self._farm_cache.remove_if_exception(self._ctx.author.id):
                         await self._farm_repository.delete_chicken(chicken_to_sell.id)

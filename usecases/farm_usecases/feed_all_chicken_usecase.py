@@ -2,11 +2,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from tortoise.transactions import atomic
 from tools import chicken_entity_to_model, calculate_feeding_cost, update_away_corn
+from tools.constants import OnboardingStep
 
 if TYPE_CHECKING:
     from eggsauce_context import EggsauceContext
     from repositories import FarmRepositoryProtocol, CornfieldRepositoryProtocol
-    from tools import FarmCacheService
+    from tools import FarmCacheService, OnboardingService
 
 
 __all__ = ("FeedAllChickenUsecase",)
@@ -20,8 +21,10 @@ class FeedAllChickenUsecase:
         farm_repository: "FarmRepositoryProtocol",
         farm_cache: "FarmCacheService",
         cornfield_repository: "CornfieldRepositoryProtocol",
+        onboarding_service: "OnboardingService",
     ) -> None:
         self._ctx = ctx
+        self._onboarding_service = onboarding_service
         self._farm_cache = farm_cache
         self._farm_repository = farm_repository
         self._cornfield_repository = cornfield_repository
@@ -40,6 +43,8 @@ class FeedAllChickenUsecase:
 
         if len(hungry_chickens) == 0:
             await self._ctx.send_failed_embed("All chickens are already fed!")
+            # Nothing to feed still teaches the command
+            await self._onboarding_service.complete_step(self._ctx, OnboardingStep.FEED_CHICKENS)
             return
 
         cornfield_entity = await self._cornfield_repository.get_cornfield_by_user_discord_id(self._ctx.author.id)
@@ -48,7 +53,7 @@ class FeedAllChickenUsecase:
             raise ValueError("Cornfield entity not found!")
 
         # Collect the corn produced while away first, so it can be spent right away.
-        await update_away_corn(self._cornfield_repository, cornfield_entity)
+        await update_away_corn(self._cornfield_repository, cornfield_entity, farm_entity.farmer)
 
         corn_spent = 0
         fully_fed = 0
@@ -78,7 +83,10 @@ class FeedAllChickenUsecase:
                 partly_fed += 1
 
         if fully_fed + partly_fed == 0:
-            await self._ctx.send_failed_embed("You don't have enough corn to feed your chickens!")
+            await self._ctx.send_failed_embed(
+                "You don't have enough corn to feed your chickens! Your cornfield grows more every hour,"
+                + f" and `{self._ctx.clean_prefix}buyplot` makes it grow faster."
+            )
             return
 
         chicken_models = [await chicken_entity_to_model(farm_entity.id, chicken) for chicken in farm_entity.chickens]
@@ -93,3 +101,5 @@ class FeedAllChickenUsecase:
             await self._farm_repository.bulk_update_chickens(chicken_models)
             await self._cornfield_repository.update_cornfield(cornfield_entity)
             await self._ctx.send_bot_embed(embed_params={"description": description})
+
+        await self._onboarding_service.complete_step(self._ctx, OnboardingStep.FEED_CHICKENS)

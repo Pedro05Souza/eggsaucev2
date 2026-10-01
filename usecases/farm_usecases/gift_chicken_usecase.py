@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from discord import Member
 from tools.services import ActionGuardService
 from tools.constants import (
@@ -26,13 +26,13 @@ class GiftChickenUsecase:
         farm_cache: "FarmCacheService",
         farm_repository: "FarmRepositoryProtocol",
         member: Member,
-        position: int,
+        position: Optional[int],
     ) -> None:
         self._ctx = ctx
         self._farm_cache = farm_cache
         self._farm_repository = farm_repository
         self._member = member
-        self._position = position - 1
+        self._position = position
 
     async def gift_chicken(self):  # pylint: disable=too-many-return-statements
         if self._ctx.author.id == self._member.id:
@@ -53,26 +53,41 @@ class GiftChickenUsecase:
 
         author_farm_entity = self._farm_cache.get_or_raise(self._ctx.author.id)
 
-        if self._position < 0 or self._position >= len(author_farm_entity.chickens):
-            return await self._ctx.send_failed_embed("Invalid index.")
+        index = await self._ctx.pick_chicken(
+            author_farm_entity.chickens, self._position, f"Pick a chicken to gift to {self._member.display_name}"
+        )
+
+        if index is None:
+            return
+
+        chicken_to_gift = author_farm_entity.chickens[index]
 
         async with ActionGuardService.guard_players(self._ctx.author.id, self._member.id):
             has_author_confirmed = await self._handle_confirmation(
                 self._ctx.author,  # type: ignore
-                f"Are you sure you want to gift this chicken to **{self._member.display_name}**?",
+                f"Are you sure you want to gift {chicken_to_gift.format_chicken()}"
+                + f" to **{self._member.display_name}**?",
             )
 
             if not has_author_confirmed:
                 return
 
             has_member_confirmed = await self._handle_confirmation(
-                self._member, f"**{self._ctx.author.display_name}** wants to gift you a chicken! Do you accept?"
+                self._member,
+                f"**{self._ctx.author.display_name}** wants to gift you {chicken_to_gift.format_chicken()}!"
+                + " Do you accept?",
             )
 
             if not has_member_confirmed:
                 return
 
-            chicken_to_gift = author_farm_entity.chickens.pop(self._position)
+            if chicken_to_gift not in author_farm_entity.chickens:
+                return await self._ctx.send_failed_embed("That chicken is no longer in your farm.")
+
+            if len(member_farm_entity.chickens) >= member_farm_entity.actual_max_farm_size:
+                return await self._ctx.send_failed_embed(REASON_FARM_IS_FULL)
+
+            author_farm_entity.chickens.remove(chicken_to_gift)
             chicken_to_gift.can_be_updated = False
             member_farm_entity.chickens.append(chicken_to_gift)
 
@@ -82,7 +97,7 @@ class GiftChickenUsecase:
             await self._ctx.send_bot_embed(
                 embed_params={
                     "description": f"🎁 **{self._ctx.author.display_name}** has"
-                    + f" gifted a chicken to **{self._member.display_name}**!"
+                    + f" gifted {chicken_to_gift.format_chicken()} to **{self._member.display_name}**!"
                 }
             )
 

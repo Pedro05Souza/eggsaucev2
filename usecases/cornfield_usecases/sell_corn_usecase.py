@@ -2,13 +2,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 import asyncio
 from tortoise.transactions import atomic
-from tools import update_away_corn
-from tools.constants import CORN_SELL_PRICE
+from tools import update_away_corn, parse_amount
+from tools.constants import CORN_SELL_PRICE, REASON_INVALID_AMOUNT_FORMAT
 
 if TYPE_CHECKING:
     from eggsauce_context import EggsauceContext
     from repositories import CornfieldRepositoryProtocol, PlayerRepositoryProtocol
-    from tools.services import TransactionService
+    from tools.services import TransactionService, FarmCacheService
 
 
 __all__ = ["SellCornUsecase"]
@@ -21,9 +21,11 @@ class SellCornUsecase:
         cornfield_repository: "CornfieldRepositoryProtocol",
         player_repository: "PlayerRepositoryProtocol",
         transaction_service: "TransactionService",
-        amount: Optional[int],
+        amount: Optional[str],
+        farm_cache: "FarmCacheService",
     ) -> None:
         self._ctx = ctx
+        self._farm_cache = farm_cache
         self._cornfield_repository = cornfield_repository
         self._player_repository = player_repository
         self._transaction_service = transaction_service
@@ -37,9 +39,16 @@ class SellCornUsecase:
         )
 
         # Collect the corn produced while away first, so it can be sold too.
-        await update_away_corn(self._cornfield_repository, cornfield_entity)
+        farm_entity = self._farm_cache.get(self._ctx.author.id)
+        await update_away_corn(
+            self._cornfield_repository, cornfield_entity, farm_entity.farmer if farm_entity else None
+        )
 
-        amount = cornfield_entity.current_corn if self._amount is None else self._amount
+        amount = parse_amount(self._amount or "all", cornfield_entity.current_corn)
+
+        if amount is None:
+            await self._ctx.send_failed_embed(REASON_INVALID_AMOUNT_FORMAT)
+            return
 
         if amount <= 0:
             await self._ctx.send_failed_embed("You don't have any corn to sell!")

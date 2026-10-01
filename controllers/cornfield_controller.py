@@ -7,7 +7,7 @@ from tools import (
     FarmCacheService,
 )
 from tools.constants import REGULAR_COMMAND_COOLDOWN, CORN_SELL_PRICE
-from tools.services import TransactionService
+from tools.services import TransactionService, OnboardingService
 from usecases import CornFieldUsecase, ExpandCornLimitUsecase, BuyPlotUsecase, SellCornUsecase
 from repositories import (
     FarmRepositoryProtocol,
@@ -26,7 +26,7 @@ class CornfieldController(
     Cog,
     name="Cornfield",
     command_attrs={"cooldown": CooldownMapping.from_cooldown(1, REGULAR_COMMAND_COOLDOWN, BucketType.user)},
-    description="Commands to interact the cornfield system.",
+    description="Commands to interact with the cornfield system.",
 ):
 
     def __init__(
@@ -37,8 +37,10 @@ class CornfieldController(
         cornfield_repository: CornfieldRepositoryProtocol,
         player_repository: PlayerRepositoryProtocol,
         transaction_service: TransactionService,
+        onboarding_service: OnboardingService,
     ) -> None:
         self.bot = bot
+        self.onboarding_service = onboarding_service
         self.farm_cache_service = farm_cache_service
         self.farm_repository = farm_repository
         self.cornfield_repository = cornfield_repository
@@ -57,10 +59,10 @@ class CornfieldController(
         ctx: "EggsauceContext",
         member: Member = parameter(
             default=lambda ctx: ctx.author,
-            description="The member whose cornfield is being accessed. If not specified its the author.",
+            description="The member whose cornfield is being accessed. Defaults to you.",
         ),
     ) -> None:
-        cornfield_usecase = CornFieldUsecase(ctx, member, self.cornfield_repository)
+        cornfield_usecase = CornFieldUsecase(ctx, member, self.cornfield_repository, self.farm_cache_service)
         await cornfield_usecase.cornfield()
 
     @hybrid_command(
@@ -83,34 +85,33 @@ class CornfieldController(
     )
     async def buy_plot(self, ctx: "EggsauceContext") -> None:
         buy_plot_usecase = BuyPlotUsecase(
-            ctx, self.cornfield_repository, self.player_repository, self.transaction_service
+            ctx, self.cornfield_repository, self.player_repository, self.transaction_service, self.onboarding_service
         )
         await buy_plot_usecase.buy_plot()
 
     @hybrid_command(
         name="sellcorn",
-        aliases=["scorn"],
+        aliases=["scorn", "scn"],
         description="🌽 Sell corn for eggbux!",
-        help=f"Sell corn for {CORN_SELL_PRICE} eggbux each. Sells all your corn if no amount is given.",
+        help=f"Sell corn for {CORN_SELL_PRICE} eggbux each. Sells all your corn if no amount is given."
+        + " The amount can be a number, `2.5k`, `25%` or `half`.",
     )
     async def sell_corn(
         self,
         ctx: "EggsauceContext",
-        amount: Optional[int] = parameter(default=None, description="How much corn to sell. Sells all if empty."),
+        amount: Optional[str] = parameter(
+            default=None, description="How much corn to sell: a number, 2.5k, 25% or half. Sells all if empty."
+        ),
     ) -> None:
         sell_corn_usecase = SellCornUsecase(
-            ctx, self.cornfield_repository, self.player_repository, self.transaction_service, amount
+            ctx,
+            self.cornfield_repository,
+            self.player_repository,
+            self.transaction_service,
+            amount,
+            self.farm_cache_service,
         )
         await sell_corn_usecase.sell_corn()
-
-    async def cog_check(self, ctx: "EggsauceContext"):  # type: ignore
-        farm_entity = await self.farm_cache_service.get_or_fetch(ctx.author.id)
-
-        if farm_entity is None:
-            await ctx.send_failed_embed("You need to have a farm to use this command!")
-            return False
-
-        return True
 
 
 async def setup(bot: Bot) -> None:
@@ -118,6 +119,12 @@ async def setup(bot: Bot) -> None:
     transaction_service = TransactionService(player_repository)
     await bot.add_cog(
         CornfieldController(
-            bot, GlobalFarmCache, FarmRepository(), CornfieldRepository(), PlayerRepository(), transaction_service
+            bot,
+            GlobalFarmCache,
+            FarmRepository(),
+            CornfieldRepository(),
+            player_repository,
+            transaction_service,
+            OnboardingService(player_repository),
         )
     )

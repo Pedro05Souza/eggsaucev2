@@ -9,4 +9,9 @@ REASON_FARM_IS_FULL = "You can't perform this action because your farm is full."
 REASON_USER_IS_ALREADY_IN_EVENT = (
     "The user is already in an event. Please wait for the current event to end to start a new one."
 )
-REASON_INVALID_INDEX = "Invalid index."
+REASON_INVALID_INDEX = "There's no chicken at that position. Check `farm` or `vault` for the numbers."
+REASON_INVALID_AMOUNT_FORMAT = "Use a positive number like `500`, `2.5k`, `25%`, `half` or `all`."
+
+
+def insufficient_balance_reason(balance: int, needed: int, source: str = "wallet") -> str:
+    return f"You need **{needed}** eggbux, but you only have **{balance}** in your {source}."

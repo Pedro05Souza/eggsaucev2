@@ -1,4 +1,4 @@
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 from discord.utils import format_dt
 from discord import SelectOption, Interaction
 from discord.ui import View, Select
@@ -7,23 +7,27 @@ from entities import FarmEntity
 from repositories import FarmRepositoryProtocol, PlayerRepositoryProtocol
 from tools import (
     ChickenGeneratorService,
+    TransactionService,
+    OnboardingService,
     FarmCacheService,
     generated_chicken_to_chicken_entity,
     sort_chickens,
     BotConfigCacheService,
+    refresh_farm_rolls,
 )
 from tools.constants import (
     REASON_NO_PERMISSION,
-    REASON_INSUFFICIENT_BALANCE,
     REASON_FARM_IS_FULL,
+    MAX_FARM_ROLLS,
+    insufficient_balance_reason,
     MAX_GENERATED_CHICKENS,
     SECONDS_TO_FARM_ROLL,
+    OnboardingStep,
     MAX_VAULTED_CHICKENS,
     GeneratedChicken,
     FARMERS_DICT,
 )
 from eggsauce_context import EggsauceContext
-
 
 __all__ = ["MarketUsecase"]
 
@@ -37,20 +41,28 @@ class MarketUsecase:
         farm_repository: FarmRepositoryProtocol,
         player_repository: PlayerRepositoryProtocol,
         bot_config_cache_service: BotConfigCacheService,
+        transaction_service: TransactionService,
+        onboarding_service: OnboardingService,
     ) -> None:
         self._ctx = ctx
         self._farm_cache_service = farm_cache_service
         self._farm_repository = farm_repository
         self._player_repository = player_repository
         self._bot_config_cache_service = bot_config_cache_service
+        self._transaction_service = transaction_service
+        self._onboarding_service = onboarding_service
 
     async def market(self) -> None:
         farm_entity = self._farm_cache_service.get_or_raise(self._ctx.author.id)
+        refresh_farm_rolls(farm_entity)
 
-        if farm_entity.remaining_rolls == 0 and farm_entity.next_chicken_roll_time is not None:
+        if farm_entity.remaining_rolls <= 0 and farm_entity.next_chicken_roll_time is not None:
             await self._ctx.send_failed_embed(
-                "You have no rolls left. The next roll will be available in "
-                + f"{format_dt(farm_entity.next_chicken_roll_time, 'R')}.",
+                "You have no rolls left. You get new rolls "
+                # Discord rounds relative times to the hour, so the exact time is shown too
+                + f"{format_dt(farm_entity.next_chicken_roll_time, 'R')}"
+                + f" (at {format_dt(farm_entity.next_chicken_roll_time, 't')})."
+                + " Meanwhile, check your eggs with `farm` or try `cornfield`.",
             )
             return
 
@@ -60,10 +72,7 @@ class MarketUsecase:
         # This will be updated when the cache entry is removed/expired
 
         if farm_entity.remaining_rolls == 0:
-            if not farm_entity.next_chicken_roll_time:
-                farm_entity.next_chicken_roll_time = datetime.now()
-
-            farm_entity.next_chicken_roll_time += timedelta(seconds=SECONDS_TO_FARM_ROLL)
+            farm_entity.next_chicken_roll_time = datetime.now(timezone.utc) + timedelta(seconds=SECONDS_TO_FARM_ROLL)
 
         chickens_to_generated = (
             MAX_GENERATED_CHICKENS
@@ -87,8 +96,19 @@ class MarketUsecase:
             self._farm_repository,
             self._player_repository,
             self._bot_config_cache_service,
+            self._transaction_service,
+            self._onboarding_service,
         )
-        await self._ctx.send_bot_embed(embed_params={"title": title, "description": description}, view=view)
+        await self._ctx.send_bot_embed(
+            embed_params={"title": title, "description": description},
+            view=view,
+            footer_text=_rolls_footer(farm_entity),
+        )
+        await self._onboarding_service.complete_step(self._ctx, OnboardingStep.ROLL_MARKET)
+
+
+def _rolls_footer(farm_entity: FarmEntity) -> str:
+    return f"🎲 Rolls left: {farm_entity.remaining_rolls}/{MAX_FARM_ROLLS}"
 
 
 class ChickenView(View):
@@ -101,8 +121,12 @@ class ChickenView(View):
         farm_repository: FarmRepositoryProtocol,
         player_repository: PlayerRepositoryProtocol,
         bot_config_cache_service: BotConfigCacheService,
+        transaction_service: TransactionService,
+        onboarding_service: OnboardingService,
     ):
         super().__init__()
+        self._transaction_service = transaction_service
+        self._onboarding_service = onboarding_service
         self._ctx = ctx
         self._farm_entity = farm_entity
         self._chickens = chickens
@@ -161,8 +185,14 @@ class ChickenView(View):
         if not player_entity:
             return
 
-        if player_entity.balance < selected_chicken.price:
-            await self._ctx.send_failed_embed(REASON_INSUFFICIENT_BALANCE)
+        # Like every other purchase, chickens are paid from the wallet first, then the bank
+        if self._transaction_service.get_total_balance_diff(player_entity, selected_chicken.price) < 0:
+            await self._ctx.handle_failed_interaction(
+                interaction,
+                insufficient_balance_reason(
+                    player_entity.balance + player_entity.bank_balance, selected_chicken.price, "wallet and bank"
+                ),
+            )
             await interaction.message.edit(view=self)  # type: ignore
             return
 
@@ -177,9 +207,8 @@ class ChickenView(View):
             self._farm_entity.chickens = await sort_chickens(self._farm_entity.chickens)
             await self._farm_repository.upsert_farm_chicken(self._farm_entity.id, chicken_entity)
 
-        player_entity.balance -= selected_chicken.price
+        await self._transaction_service.deduct_from_balance_and_bank(player_entity, selected_chicken.price)
         self._chickens.remove(selected_chicken)
-        await self._player_repository.update_player(player_entity)
         await self._ctx.handle_interaction_response(
             interaction,
             embed={
@@ -189,6 +218,7 @@ class ChickenView(View):
             },
             ephemeral=False,
         )
+        await self._onboarding_service.complete_step(self._ctx, OnboardingStep.BUY_CHICKEN)
 
         if not self._chickens:
             await interaction.message.delete(delay=1)  # type: ignore
@@ -207,5 +237,6 @@ class ChickenView(View):
                     for chicken in self._chickens
                 ),
             },
+            footer_text=_rolls_footer(self._farm_entity),
         )
         await interaction.message.edit(view=self, embed=embed)  # type: ignore

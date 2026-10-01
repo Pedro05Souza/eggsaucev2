@@ -1,13 +1,11 @@
 from typing import List
 from random import uniform
+from ..chicken_utils import calculate_chicken_price
 from ..constants import (
     ChickenRaritiesProbabilities,
     ChickenRaritiesEmojis,
-    ChickenPricesMultiplier,
-    BASE_CHICKEN_PRICE,
     GeneratedChicken,
 )
-
 
 __all__ = ["ChickenGeneratorService"]
 
@@ -28,7 +26,7 @@ class ChickenGeneratorService:
                 if roll < current_sum:
                     rarity_emoji = ChickenRaritiesEmojis[rarity].value
                     chicken_name = "Chicken"
-                    chicken_price = int(BASE_CHICKEN_PRICE * ChickenPricesMultiplier[rarity].value)
+                    chicken_price = calculate_chicken_price(rarity)
                     chicken_rarities_generated.append(
                         GeneratedChicken(rarity, rarity_emoji, chicken_name, chicken_price)
                     )

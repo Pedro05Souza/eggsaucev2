@@ -4,7 +4,7 @@ from typing import Optional, TYPE_CHECKING
 from repositories import PlayerRepositoryProtocol
 from tools.constants import (
     SECONDS_TO_SALARY_DROP,
-    REASON_INSUFFICIENT_BALANCE,
+    insufficient_balance_reason,
     TITLE_EMOJIS,
     TITLE_PRICES,
     TITLE_SALARIES,
@@ -46,37 +46,42 @@ class UpgradeTitleUsecase:
             ephemeral=False, title=f"Do you want to buy the title ``{next_title}``?", description=description
         )
 
-        if has_confirmed:
-
-            if has_confirmed is False:
-                await message.edit(
-                    content="",
-                    embed=self._ctx.embed_builder(embed_params={"description": "❌ Title purchase cancelled."}),
-                )
-                return
-
-            title_price: int = TITLE_PRICES[next_title]
-
-            if title_price > player_entity.balance + player_entity.bank_balance:
-                await message.edit(
-                    content="",
-                    embed=self._ctx.embed_builder(embed_params={"description": "❌" + REASON_INSUFFICIENT_BALANCE}),
-                )
-                return
-
-            player_entity.last_bought_title = next_title
-            player_entity.next_salary_time = datetime.now() + timedelta(seconds=SECONDS_TO_SALARY_DROP)
-            player_entity.next_salary_time = player_entity.next_salary_time.replace(tzinfo=timezone.utc)
-            await self._transaction_service.deduct_from_balance_and_bank(player_entity, title_price)
-            await message.edit(
-                embed=self._ctx.embed_builder(
-                    embed_params={"description": f"Title **{next_title}** has been bought successfully."}
-                )
-            )
-        else:
+        if has_confirmed is None:
             await message.edit(
                 content="", embed=self._ctx.embed_builder(embed_params={"description": "❌ Title purchase timed out."})
             )
+            return
+
+        if has_confirmed is False:
+            await message.edit(
+                content="",
+                embed=self._ctx.embed_builder(embed_params={"description": "❌ Title purchase cancelled."}),
+            )
+            return
+
+        title_price: int = TITLE_PRICES[next_title]
+        total_balance = player_entity.balance + player_entity.bank_balance
+
+        if title_price > total_balance:
+            await message.edit(
+                content="",
+                embed=self._ctx.embed_builder(
+                    embed_params={
+                        "description": "❌ "
+                        + insufficient_balance_reason(total_balance, title_price, "wallet and bank")
+                    }
+                ),
+            )
+            return
+
+        player_entity.last_bought_title = next_title
+        player_entity.next_salary_time = datetime.now(timezone.utc) + timedelta(seconds=SECONDS_TO_SALARY_DROP)
+        await self._transaction_service.deduct_from_balance_and_bank(player_entity, title_price)
+        await message.edit(
+            embed=self._ctx.embed_builder(
+                embed_params={"description": f"Title **{next_title}** has been bought successfully."}
+            )
+        )
 
     def _get_next_title(self, title_names: list[str], player_entity: "PlayerEntity") -> Optional[str]:
         current_title = player_entity.last_bought_title

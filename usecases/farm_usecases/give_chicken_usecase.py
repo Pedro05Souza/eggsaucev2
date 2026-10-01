@@ -5,11 +5,9 @@ from tools.constants import (
     MAX_VAULTED_CHICKENS,
     CHICKEN_RARITIES,
     GeneratedChicken,
-    BASE_CHICKEN_PRICE,
-    ChickenPricesMultiplier,
     ChickenRaritiesEmojis,
 )
-from tools.chicken_utils import generated_chicken_to_chicken_entity, sort_chickens
+from tools.chicken_utils import generated_chicken_to_chicken_entity, sort_chickens, calculate_chicken_price
 
 if TYPE_CHECKING:
     from eggsauce_context import EggsauceContext
@@ -68,7 +66,7 @@ class GiveChickenUsecase:
         generated_chicken = GeneratedChicken(
             name="Chicken",
             rarity=self._rarity,
-            price=int(BASE_CHICKEN_PRICE * ChickenPricesMultiplier[self._rarity].value),
+            price=calculate_chicken_price(self._rarity),
             emoji=ChickenRaritiesEmojis[self._rarity].value,
         )
 

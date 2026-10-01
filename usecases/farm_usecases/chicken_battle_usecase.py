@@ -3,7 +3,13 @@ from typing import TYPE_CHECKING, Optional
 import asyncio
 from discord import Embed, HTTPException, Member, Message
 from tortoise.transactions import atomic
-from tools import get_random_tip_message, generated_chicken_to_chicken_entity, get_logger, get_rank_index
+from tools import (
+    get_random_tip_message,
+    generated_chicken_to_chicken_entity,
+    get_logger,
+    get_rank_index,
+    calculate_chicken_price,
+)
 from tools.constants import (
     REASON_USER_IS_ALREADY_IN_EVENT,
     RANKS,
@@ -11,20 +17,19 @@ from tools.constants import (
     DEAD_RARITY,
     GeneratedChicken,
     ChickenRaritiesEmojis,
-    ChickenPricesMultiplier,
-    BASE_CHICKEN_PRICE,
     REASON_CANT_ACTION_SELF,
     FARM_MAX_CHICKENS,
 )
 from tools.services import (
     MatchMakingService,
-    ChickenBattleService,
     EloRatingService,
     MmrChange,
     MatchMakingPlayer,
     MatchMakingUser,
     ActionGuardService,
 )
+
+from .battle_board import BattleBoard, RESULT_COLOR
 
 if TYPE_CHECKING:
     from repositories import FarmRepositoryProtocol, PlayerRepositoryProtocol
@@ -61,6 +66,7 @@ class ChickenBattleUsecase:
         self._farm_entity = None
         self._friendly_battle_user = friendly_battle_user
         self._is_friendly_battle = friendly_battle_user is not None
+        self._board: Optional[BattleBoard] = None
         self._logger = get_logger(__name__)
 
     async def queue(self) -> None:
@@ -186,34 +192,25 @@ class ChickenBattleUsecase:
 
     async def battle(self, author: MatchMakingPlayer, opponent: MatchMakingUser) -> None:
         try:
-            author_alive_chickens = author.chicken_deck.copy()
-            opponent_alive_chickens = opponent.chicken_deck.copy()
+            board = BattleBoard(author.name, opponent.name, author.chicken_deck.copy(), opponent.chicken_deck.copy())
+            self._board = board
 
-            while len(author_alive_chickens) > 0 and len(opponent_alive_chickens) > 0:
-                benched_description = self._handle_extra_chickens_description(
-                    author_alive_chickens, opponent_alive_chickens, author, opponent
-                )
+            # Show both lineups before the first round, so players see who they're up against
+            await self._message_dispatcher(author, opponent, board.build_embed(self._ctx))
+            await asyncio.sleep(self._dynamic_match_cooldown(len(board.author_deck) + len(board.opponent_deck)))
 
-                embed_description = self._matchups_handler(
-                    author_alive_chickens, opponent_alive_chickens, author, opponent
-                )
+            while board.is_running:
+                board.play_round()
 
-                embed_description += benched_description
+                if not board.is_running:
+                    # The final screen shows this last round's knockouts along with the result
+                    break
 
-                embed = self._ctx.embed_builder(
-                    embed_params={
-                        "description": embed_description,
-                        "title": f"⚔️ **{author.name}** vs **{opponent.name}**",
-                    }
-                )
+                await self._message_dispatcher(author, opponent, board.build_embed(self._ctx))
+                await asyncio.sleep(self._dynamic_match_cooldown(len(board.author_alive) + len(board.opponent_alive)))
 
-                await self._message_dispatcher(author, opponent, embed)
-
-                total_alive = len(author_alive_chickens) + len(opponent_alive_chickens)
-                await asyncio.sleep(self._dynamic_match_cooldown(total_alive))
-
-            winner = author if len(author_alive_chickens) > 0 else opponent
-            loser = author if len(author_alive_chickens) == 0 else opponent
+            winner = author if board.author_won else opponent
+            loser = opponent if board.author_won else author
 
             await self.on_battle_end(winner, loser)
         finally:
@@ -221,78 +218,17 @@ class ChickenBattleUsecase:
                 if isinstance(user, MatchMakingPlayer):
                     user.battle_done.set()
 
-    def _matchups_handler(
-        self,
-        author_alive_chickens: list["ChickenEntity"],
-        opponent_alive_chickens: list["ChickenEntity"],
-        author: MatchMakingPlayer,
-        opponent: MatchMakingUser,
-    ) -> str:
-        embed_description = ""
-        dead_author_indexes: set[int] = set()
-        dead_opponent_indexes: set[int] = set()
-
-        for i in range(min(len(author_alive_chickens), len(opponent_alive_chickens))):
-            author_won, win_rate_author, win_rate_opponent = ChickenBattleService.get_chicken_battle_result(
-                author_alive_chickens[i], opponent_alive_chickens[i]
-            )
-
-            win_rate_author_pct = round(win_rate_author * 100, 1)
-            win_rate_opponent_pct = round(win_rate_opponent * 100, 1)
-
-            if author_won is True:
-                dead_opponent_indexes.add(i)
-
-                embed_description += (
-                    f"🥇 {author.name}'s {author_alive_chickens[i].format_chicken()} won"
-                    f" against {opponent.name}'s {opponent_alive_chickens[i].format_chicken()}!\n"
-                    f"📊 Win rate: **{win_rate_author_pct}%** vs **{win_rate_opponent_pct}%**\n\n"
-                )
-            else:
-                dead_author_indexes.add(i)
-                embed_description += (
-                    f"🥇 {opponent.name}'s {opponent_alive_chickens[i].format_chicken()} won"
-                    f" against {author.name}'s {author_alive_chickens[i].format_chicken()}!\n"
-                    f"📊 Win rate: **{win_rate_opponent_pct}%** vs **{win_rate_author_pct}%**\n\n"
-                )
-
-        self._remove_dead_chickens(author_alive_chickens, dead_author_indexes)
-        self._remove_dead_chickens(opponent_alive_chickens, dead_opponent_indexes)
-
-        return embed_description
-
-    def _handle_extra_chickens_description(
-        self,
-        author_alive_chickens: list["ChickenEntity"],
-        opponent_alive_chickens: list["ChickenEntity"],
-        author: MatchMakingPlayer,
-        opponent: MatchMakingUser,
-    ) -> str:
-
-        if len(author_alive_chickens) == len(opponent_alive_chickens):
-            return ""
-
-        if len(author_alive_chickens) > len(opponent_alive_chickens):
-            extra_chickens = author_alive_chickens[len(opponent_alive_chickens) :]
-            name_to_format = author.name
-        else:
-            extra_chickens = opponent_alive_chickens[len(author_alive_chickens) :]
-            name_to_format = opponent.name
-
-        return f"\n\n🐔 **{name_to_format}'s** extra chickens:\n\n" + "\n".join(
-            [chicken.format_chicken() for chicken in extra_chickens]
-        )
-
-    @staticmethod
-    def _remove_dead_chickens(alive_chickens: list["ChickenEntity"], dead_indexes: set[int]) -> None:
-        # By position, not by value: two identical chickens must not be mistaken for each other.
-        alive_chickens[:] = [chicken for i, chicken in enumerate(alive_chickens) if i not in dead_indexes]
-
     @staticmethod
     def _dynamic_match_cooldown(total_alive_chickens: int) -> float:
-        base_cooldown = 2
+        """Seconds between updates: longer when there is more to read, but never sluggish."""
+        return min(3 + total_alive_chickens * 0.25, 6)
 
-        return base_cooldown + (total_alive_chickens * 0.5)
+    def _result_embed(self, result: str, title: str) -> Embed:
+        """The final screen: the board with the result on top, or just the result if there's no board."""
+        if self._board is not None:
+            return self._board.build_embed(self._ctx, result=result)
+
+        return self._ctx.embed_builder(embed_params={"description": result, "title": title}, color=RESULT_COLOR)
 
     async def _message_dispatcher(self, author: MatchMakingUser, opponent: MatchMakingUser, embed: Embed) -> None:
         """Shows the embed on each player's battle message. Bots have no message.
@@ -360,22 +296,16 @@ class ChickenBattleUsecase:
 
         # Messages are sent after the transaction, so it isn't held open while talking to Discord.
         embed_description = (
-            f"🎉 **{winner.name}** has won the battle!\n\n"
-            f"🏆 **{winner.name}** gained **{mmr_change.winner_gain}** MMR\n"
-            f"🔻 **{loser.name}** lost **{mmr_change.loser_loss}** MMR"
+            f"📈 **{winner.name}** +{mmr_change.winner_gain} MMR · 📉 **{loser.name}** -{mmr_change.loser_loss} MMR"
         )
 
         for rank_index, chicken in rewards:
             embed_description += (
-                f"\n🐔 **{winner.name}** reached **{RANKS[rank_index]}** and received a {chicken.format_chicken()}"
+                f"\n🎖️ **{winner.name}** reached **{RANKS[rank_index]}** and received a {chicken.format_chicken()}!"
+                + f" Claim it with `{self._ctx.clean_prefix}redeemables`."
             )
 
-        embed = self._ctx.embed_builder(
-            embed_params={
-                "description": embed_description,
-                "title": "🏁 Battle results",
-            }
-        )
+        embed = self._result_embed(embed_description, f"🏆 {winner.name} wins!")
 
         await self._message_dispatcher(winner, loser, embed)
 
@@ -400,13 +330,8 @@ class ChickenBattleUsecase:
 
     async def _handle_friendly_match_battle_end(self, winner: MatchMakingUser, loser: MatchMakingUser) -> None:
 
-        embed_description = f"🎉 **{winner.name}** has won the battle!\n\n"
-
-        embed = self._ctx.embed_builder(
-            embed_params={
-                "description": embed_description,
-                "title": "🏁 Battle results",
-            }
+        embed = self._result_embed(
+            f"🤝 A friendly battle: no MMR was won or lost, {loser.name}.", f"🏆 {winner.name} wins!"
         )
 
         await self._message_dispatcher(winner, loser, embed)
@@ -471,7 +396,7 @@ class ChickenBattleUsecase:
             rarity=rarity,
             emoji=ChickenRaritiesEmojis[rarity].value,
             name="Chicken",
-            price=int(BASE_CHICKEN_PRICE * ChickenPricesMultiplier[rarity].value),
+            price=calculate_chicken_price(rarity),
         )
 
         return await generated_chicken_to_chicken_entity(generated_chicken, "redeemables")

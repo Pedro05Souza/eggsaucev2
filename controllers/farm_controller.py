@@ -1,10 +1,9 @@
 from typing import Optional
-from discord import Member
+from discord import Member, app_commands
 from discord.ext.commands import (
     Cog,
     Bot,
     hybrid_command,
-    command,
     cooldown,
     BucketType,
     CooldownMapping,
@@ -41,8 +40,16 @@ from repositories import (
     PlayerRepository,
     CornfieldRepository,
 )
-from tools import GlobalFarmCache, GlobalBotConfigCache, FarmCacheService, BotConfigCacheService, ensure_author_farm
-from tools.services import TransactionService
+from tools import (
+    GlobalFarmCache,
+    GlobalBotConfigCache,
+    FarmCacheService,
+    BotConfigCacheService,
+    farm_chicken_autocomplete,
+    member_farm_chicken_autocomplete,
+    vault_chicken_autocomplete,
+)
+from tools.services import TransactionService, OnboardingService
 from tools.constants import REGULAR_COMMAND_COOLDOWN, SPAM_COMMAND_COOLDOWN, MAX_GENERATED_CHICKENS
 from eggsauce_context import EggsauceContext
 
@@ -63,8 +70,10 @@ class FarmController(  # pylint: disable=too-many-public-methods
         player_repository: PlayerRepositoryProtocol,
         cornfield_repository: CornfieldRepository,
         transaction_service: TransactionService,
+        onboarding_service: OnboardingService,
     ) -> None:
         self.bot = bot
+        self.onboarding_service = onboarding_service
         self.farm_cache = farm_cache
         self.bot_config_cache = bot_config_cache
         self.farm_repository = farm_repository
@@ -86,13 +95,17 @@ class FarmController(  # pylint: disable=too-many-public-methods
             self.farm_repository,
             self.player_repository,
             self.bot_config_cache,
+            self.transaction_service,
+            self.onboarding_service,
         )
         await market_usecase.market()
 
-    @command(
+    @hybrid_command(
         name="farm",
         aliases=["f"],
-        help="Displays all chickens in a farm. Defaults to your farm unless another user is specified.",
+        description="🐔 View your farm or someone else's!",
+        help="Displays all chickens in a farm and their positions. Defaults to your farm unless another user is"
+        + " specified.",
     )
     async def farm(
         self,
@@ -139,18 +152,21 @@ class FarmController(  # pylint: disable=too-many-public-methods
         name="inspectchicken",
         aliases=["ic"],
         description="🐔 Retrieve detailed information about a specific chicken",
-        help="Displays detailed stats of a chicken by its position in your farm.",
+        help="Displays detailed stats of a chicken. Leave the position empty to pick it from a list.",
     )
+    @app_commands.autocomplete(chicken=member_farm_chicken_autocomplete)
     async def inspect_chicken(
         self,
         ctx: EggsauceContext,
-        position: int = parameter(description="The position of the chicken in your farm."),
+        chicken: Optional[int] = parameter(
+            default=None, description="The chicken's position in the farm. Leave empty to pick from a list."
+        ),
         member: Member = parameter(
             default=lambda ctx: ctx.author,
             description="The member whose farm you want to view. Defaults to the command author.",
         ),
     ) -> None:
-        chicken_info_usecase = InspectChickenUseCase(ctx, self.farm_cache, position, member)
+        chicken_info_usecase = InspectChickenUseCase(ctx, self.farm_cache, chicken, member)
         await chicken_info_usecase.inspect_chicken()
 
     @hybrid_command(
@@ -165,6 +181,7 @@ class FarmController(  # pylint: disable=too-many-public-methods
             self.farm_repository,
             self.farm_cache,
             self.cornfield_repository,
+            self.onboarding_service,
         )
         await feed_all_chicken_usecase.feed_all_chicken()
 
@@ -187,6 +204,7 @@ class FarmController(  # pylint: disable=too-many-public-methods
             self.farm_cache,
             self.cornfield_repository,
             member,
+            self.onboarding_service,
         )
         await farm_profit_usecase.farm_profit()
 
@@ -194,30 +212,36 @@ class FarmController(  # pylint: disable=too-many-public-methods
         name="giftchicken",
         aliases=["gc"],
         description="🐔 Gift a chicken to another player!",
-        help="Transfers a chicken from your farm to another user.",
+        help="Transfers a chicken from your farm to another user. Leave the position empty to pick it from a list.",
     )
+    @app_commands.autocomplete(chicken=farm_chicken_autocomplete)
     async def gift_chicken(
         self,
         ctx: EggsauceContext,
-        member: Member = parameter(description="The user you want to gift the chicken to"),
-        position: int = parameter(description="The position of the chicken in your farm that you'd want to give."),
+        member: Member = parameter(description="The user you want to gift the chicken to."),
+        chicken: Optional[int] = parameter(
+            default=None, description="The position of the chicken to gift. Leave empty to pick from a list."
+        ),
     ) -> None:
-        gift_chicken_usecase = GiftChickenUsecase(ctx, self.farm_cache, self.farm_repository, member, position)
+        gift_chicken_usecase = GiftChickenUsecase(ctx, self.farm_cache, self.farm_repository, member, chicken)
         await gift_chicken_usecase.gift_chicken()
 
     @hybrid_command(
         name="renamechicken",
         aliases=["rc"],
         description="🐔 Rename a chicken in your farm!",
-        help="Changes the name of a chicken in your farm.",
+        help="Changes the name of a chicken in your farm. Leave the position empty to pick it from a list.",
     )
+    @app_commands.autocomplete(chicken=farm_chicken_autocomplete)
     async def rename_chicken(
         self,
         ctx: EggsauceContext,
-        position: int = parameter(description="The position of the chicken in your farm."),
-        new_name: str = parameter(description="The new name for the chicken"),
+        new_name: str = parameter(description="The new name for the chicken (3-20 letters, numbers or _)."),
+        chicken: Optional[int] = parameter(
+            default=None, description="The position of the chicken to rename. Leave empty to pick from a list."
+        ),
     ) -> None:
-        rename_chicken_usecase = RenameChickenUsecase(ctx, self.farm_cache, self.farm_repository, position, new_name)
+        rename_chicken_usecase = RenameChickenUsecase(ctx, self.farm_cache, self.farm_repository, chicken, new_name)
         await rename_chicken_usecase.rename_chicken()
 
     @hybrid_command(
@@ -242,16 +266,21 @@ class FarmController(  # pylint: disable=too-many-public-methods
         name="addvault",
         aliases=["av"],
         description="🐔 Add a chicken to your vault!",
-        help="Moves a chicken from your farm to the vault.",
+        help="Moves a chicken from your farm to the vault. Leave the position empty to pick it from a list.",
     )
+    @app_commands.autocomplete(chicken=farm_chicken_autocomplete)
     async def add_vault(
-        self, ctx: EggsauceContext, position: int = parameter(description="The position of the chicken in the farm.")
+        self,
+        ctx: EggsauceContext,
+        chicken: Optional[int] = parameter(
+            default=None, description="The position of the chicken in the farm. Leave empty to pick from a list."
+        ),
     ) -> None:
         add_vault_usecase = AddVaultUsecase(
             ctx,
             self.farm_cache,
             self.farm_repository,
-            position,
+            chicken,
         )
         await add_vault_usecase.add_vault()
 
@@ -259,23 +288,27 @@ class FarmController(  # pylint: disable=too-many-public-methods
         name="removevault",
         aliases=["rv"],
         description="🐔 Remove a chicken from your vault!",
-        help="Moves a chicken from the vault back to your farm.",
+        help="Moves a chicken from the vault back to your farm. If your farm is full, you pick a farm chicken"
+        + " to swap into the vault. Leave the positions empty to pick from a list.",
     )
+    @app_commands.autocomplete(vault_chicken=vault_chicken_autocomplete, swap_with=farm_chicken_autocomplete)
     async def remove_vault(
         self,
         ctx: EggsauceContext,
-        position: int = parameter(description="The position of the chicken in the vault."),
-        farm_position: Optional[int] = parameter(
+        vault_chicken: Optional[int] = parameter(
+            default=None, description="The position of the chicken in the vault. Leave empty to pick from a list."
+        ),
+        swap_with: Optional[int] = parameter(
             default=None,
-            description="An optional argument that switches the selected chicken from the farm to the vault.",
+            description="The position of a farm chicken to swap into the vault in its place.",
         ),
     ) -> None:
         remove_vault_usecase = RemoveVaultUsecase(
             ctx,
             self.farm_cache,
             self.farm_repository,
-            position,
-            farm_position,
+            vault_chicken,
+            swap_with,
         )
         await remove_vault_usecase.remove_vault()
 
@@ -284,8 +317,8 @@ class FarmController(  # pylint: disable=too-many-public-methods
         aliases=["b"],
         description="🐔 Battle a chicken against another player!",
         help="Queues your chicken for matchmaking."
-        + " Battiling with the **Guardian** Farmer will not give you extra chickens,"
-        + " instead they will be cut off to the maximum amount of chickens you can have.",
+        + " Battling with the **Guardian** Farmer will not give you extra chickens,"
+        + " instead they will be cut off at the maximum amount of chickens you can have.",
     )
     @max_concurrency(100, BucketType.guild)
     async def chicken_battle(self, ctx: EggsauceContext) -> None:
@@ -302,17 +335,23 @@ class FarmController(  # pylint: disable=too-many-public-methods
         aliases=["sc"],
         description="🐔 Sell a chicken from your farm!",
         help="Sells a chicken for half of its original price,"
-        + " unless you have the `Guardian` Farmer which lets you sell it for the full price.",
+        + " unless you have the `Guardian` Farmer which lets you sell it for the full price."
+        + " Leave the position empty to pick it from a list.",
     )
+    @app_commands.autocomplete(chicken=farm_chicken_autocomplete)
     async def sell_chicken(
-        self, ctx: EggsauceContext, position: int = parameter(description="The position of the chicken")
+        self,
+        ctx: EggsauceContext,
+        chicken: Optional[int] = parameter(
+            default=None, description="The position of the chicken to sell. Leave empty to pick from a list."
+        ),
     ) -> None:
         sell_chicken_usecase = SellChickenUsecase(
             ctx,
             self.farm_repository,
             self.player_repository,
             self.farm_cache,
-            position,
+            chicken,
         )
         await sell_chicken_usecase.sell_chicken()
 
@@ -335,7 +374,7 @@ class FarmController(  # pylint: disable=too-many-public-methods
         name="battleinfo",
         aliases=["bi"],
         description="🐔 View your battle status!",
-        help="Displays the battle ifnromation of the user.",
+        help="Displays the battle information of a user. Defaults to you.",
     )
     async def battle_info(
         self,
@@ -350,13 +389,13 @@ class FarmController(  # pylint: disable=too-many-public-methods
         aliases=["fb"],
         description="🐔 Battle against a friend without losing your rank",
         help="Sends a request for a friendly battle to the specified user."
-        + " Friendly battles do not increase your losses or wins nor they gie you MMR",
+        + " Friendly battles don't count as wins or losses and don't change your MMR.",
     )
     @max_concurrency(100, BucketType.guild)
     async def friendly_battle(
         self,
         ctx: EggsauceContext,
-        member: Member = parameter(description="The user you want yo have a friendly battle with"),
+        member: Member = parameter(description="The user you want to have a friendly battle with."),
     ) -> None:
         friendly_battle_usecase = ChickenBattleUsecase(
             ctx,
@@ -373,29 +412,35 @@ class FarmController(  # pylint: disable=too-many-public-methods
         description="🐔 Evolve two chickens of the same rarity!",
         help="Essentially lets you 'trade' two chickens of the"
         + " same rarity present in your farm for a single upper rarity chicken."
-        + " All the status in the new chicken are randomized, this includes **quality**.",
+        + " The new chicken's **quality** is random, but never worse than the better of the two."
+        + " Leave the positions empty to pick from a list that only shows chickens that can be paired.",
     )
+    @app_commands.autocomplete(first_chicken=farm_chicken_autocomplete, second_chicken=farm_chicken_autocomplete)
     async def evolve_chicken(
         self,
         ctx: EggsauceContext,
-        first_position: int = parameter(description="The position of the first chicken in the farm"),
-        second_position: int = parameter(description="The position of the second chicken in the farm"),
+        first_chicken: Optional[int] = parameter(
+            default=None, description="The position of the first chicken. Leave empty to pick from a list."
+        ),
+        second_chicken: Optional[int] = parameter(
+            default=None, description="The position of the second chicken. Leave empty to pick from a list."
+        ),
     ) -> None:
         evolve_chicken_usecase = EvolveChickenUsecase(
             ctx,
             self.farm_cache,
             self.farm_repository,
-            first_position,
-            second_position,
+            first_chicken,
+            second_chicken,
         )
         await evolve_chicken_usecase.evolve_chicken()
 
     @hybrid_command(
         name="ascendancy",
         aliases=["asc"],
-        description="🐔 Trade 8 Ascended chickebs for an ethereal one",
+        description="🐔 Trade 8 Ascended chickens for an Ethereal one",
         help="Essentially lets you trade eight **ASCENDED** chickens for one **ETHEREAL** chicken."
-        + "**ETHEREAL** chickens always come with 100% quality.",
+        + " **ETHEREAL** chickens always come with 100% quality.",
     )
     async def ascendancy(self, ctx: EggsauceContext) -> None:
         ascendancy_usecase = AscendancyUsecase(
@@ -409,22 +454,28 @@ class FarmController(  # pylint: disable=too-many-public-methods
         name="tradechicken",
         aliases=["tc"],
         description="🐔 Trade a chicken with another player!",
-        help="Trade a chicken from your farm with another user.",
+        help="Trade a chicken from your farm for one in another user's farm. They have to accept the trade."
+        + " Leave the positions empty to pick from a list.",
     )
+    @app_commands.autocomplete(your_chicken=farm_chicken_autocomplete, their_chicken=member_farm_chicken_autocomplete)
     async def trade_chicken(
         self,
         ctx: EggsauceContext,
-        member: Member = parameter(description="The user you want to trade with"),
-        farm_position: int = parameter(description="The position of the chicken in your farm"),
-        user_farm_position: int = parameter(description="The position of the chicken in the user's farm"),
+        member: Member = parameter(description="The user you want to trade with."),
+        your_chicken: Optional[int] = parameter(
+            default=None, description="The position of the chicken you give. Leave empty to pick from a list."
+        ),
+        their_chicken: Optional[int] = parameter(
+            default=None, description="The position of the chicken you want. Leave empty to pick from a list."
+        ),
     ) -> None:
         trade_chicken_usecase = TradeChickenUsecase(
             ctx,
             self.farm_repository,
             self.farm_cache,
-            farm_position,
+            your_chicken,
             member,
-            user_farm_position,
+            their_chicken,
         )
         await trade_chicken_usecase.trade_chicken()
 
@@ -440,22 +491,13 @@ class FarmController(  # pylint: disable=too-many-public-methods
 
     @hybrid_command(
         name="chickenprices",
-        aliases=["cps"],
+        aliases=["cp", "cps"],
         description="🐔 View the prices of chickens!",
         help="Displays the prices of chickens by rarity.",
     )
     async def chicken_prices(self, ctx: EggsauceContext) -> None:
         chicken_prices_usecase = ChickenPricesUsecase(ctx)
         await chicken_prices_usecase.get_chicken_prices()
-
-    async def cog_before_invoke(self, ctx: EggsauceContext) -> None:  # type: ignore
-        await ensure_author_farm(
-            ctx,
-            self.farm_cache,
-            self.farm_repository,
-            self.cornfield_repository,
-            self.player_repository,
-        )
 
 
 async def setup(bot: Bot) -> None:
@@ -470,5 +512,6 @@ async def setup(bot: Bot) -> None:
             player_repository,
             CornfieldRepository(),
             transaction_service,
+            OnboardingService(player_repository),
         )
     )

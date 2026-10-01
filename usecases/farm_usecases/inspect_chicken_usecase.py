@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from discord import Member
 from tools.chicken_utils import calculate_egg_production
 from tools.constants import CHICKEN_HAPPY_THRESHOLD
@@ -14,7 +14,9 @@ __all__ = ["InspectChickenUseCase"]
 
 class InspectChickenUseCase:
 
-    def __init__(self, ctx: "EggsauceContext", farm_cache: "FarmCacheService", index: int, member: Member) -> None:
+    def __init__(
+        self, ctx: "EggsauceContext", farm_cache: "FarmCacheService", index: Optional[int], member: Member
+    ) -> None:
         self._ctx = ctx
         self._farm_cache = farm_cache
         self._index = index
@@ -27,12 +29,12 @@ class InspectChickenUseCase:
             await self._ctx.send_failed_embed("The user you are trying to inspect does not have a farm.")
             return
 
-        # Indexes are 1-based; 0 would wrap around to the last chicken.
-        if self._index < 1 or self._index > len(farm_entity.chickens):
-            await self._ctx.send_failed_embed("Invalid index")
+        index = await self._ctx.pick_chicken(farm_entity.chickens, self._index, "Pick a chicken to inspect")
+
+        if index is None:
             return
 
-        chicken = farm_entity.chickens[self._index - 1]
+        chicken = farm_entity.chickens[index]
 
         full_egg_production = int(chicken.total_egg_production * chicken.quality)
         egg_production_with_happiness = calculate_egg_production(chicken)

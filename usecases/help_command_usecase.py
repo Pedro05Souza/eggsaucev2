@@ -16,8 +16,10 @@ class HelpCommandUsecase(MinimalHelpCommand):
 
     async def send_bot_help(self, mapping, /):
         embed = Embed(title="📚 Categories")
-        embed.description = "Use `help <command>` for more info on a command."
-        embed.description += "\nYou can also use `$help [category]` for more info on a category."
+        prefix = self.context.clean_prefix
+        embed.description = f"Use `{prefix}help <command>` for more info on a command."
+        embed.description += f"\nYou can also use `{prefix}help <category>` to see a category's commands."
+        embed.description += "\nMost commands also work as slash commands, try typing `/`."
         cog_description = []
 
         for cog in mapping:
@@ -67,18 +69,23 @@ class HelpCommandUsecase(MinimalHelpCommand):
         await self.get_destination().send(embed=embed)
 
     async def send_cog_help(self, cog, /):
-        embed = Embed(
-            title=f"ℹ️ Help with `{cog.qualified_name}` Commands",
-            description="Type `help <command>` for more info on a command.",
-        )
-        command_description = []
+        command_description = [
+            f"Type `{self.context.clean_prefix}help <command>` for more info on a command."
+            + "\nArguments in `<>` are required, arguments in `[]` are optional.\n"
+        ]
 
         for command in cog.get_commands():
 
             if command.hidden:
                 continue
 
-            command_description.append(f"`{self.context.clean_prefix}{command.name}: {command.signature}`")
+            usage = f"{self.context.clean_prefix}{command.name} {command.signature}".rstrip()
+            summary = command.description or command.short_doc or "No description"
+            command_description.append(f"`{usage}`\n{summary}")
 
-        embed.add_field(name="📜 Commands", value="\n".join(command_description), inline=False)
+        # The description holds up to 4096 characters, a field only 1024
+        embed = Embed(
+            title=f"ℹ️ Help with `{cog.qualified_name}` Commands",
+            description="\n".join(command_description)[:4096],
+        )
         await self.get_destination().send(embed=embed)

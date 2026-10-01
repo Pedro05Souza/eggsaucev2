@@ -1,10 +1,16 @@
+from typing import Optional
 from uuid import uuid4
 from random import randint, uniform
 from entities import ChickenEntity, ChickenLocationType
 from .constants import (
     chicken_quality_rates,
     DELTA_EGG_VALUE,
-    DELTA_FOOD_CONSUMPTION,
+    FOOD_PER_RARITY_SQUARED,
+    CHICKEN_PAYBACK_HOURS_COMMON,
+    CHICKEN_PAYBACK_HOURS_ASCENDED,
+    AVERAGE_CHICKEN_QUALITY,
+    FARM_MAX_CHICKENS,
+    FARMERS_DICT,
     DELTA_CORN_PER_PLOT,
     CORN_BASE_STORAGE_HOURS,
     CORN_STORAGE_HOURS_PER_UPGRADE,
@@ -20,6 +26,10 @@ from .constants import (
 __all__ = [
     "get_quality_text",
     "calculate_base_egg_production",
+    "base_egg_production",
+    "calculate_chicken_price",
+    "farm_max_size",
+    "rich_farmer_bonus",
     "production_multiplier",
     "calculate_egg_production",
     "calculate_food_consuption",
@@ -53,7 +63,8 @@ def calculate_egg_production(chicken: ChickenEntity) -> int:
     return int(chicken.total_egg_production * chicken.quality * production_multiplier(chicken.happiness))
 
 
-async def calculate_base_egg_production(chicken_quality_index: int) -> int:
+def base_egg_production(chicken_quality_index: int) -> int:
+    """Eggs per hour of a 100% quality chicken of this rarity index."""
     if chicken_quality_index < 1:
         return 0
 
@@ -64,11 +75,61 @@ async def calculate_base_egg_production(chicken_quality_index: int) -> int:
     return DELTA_EGG_VALUE * (chicken_quality_index**2)
 
 
+async def calculate_base_egg_production(chicken_quality_index: int) -> int:
+    return base_egg_production(chicken_quality_index)
+
+
+def calculate_chicken_price(rarity: str) -> int:
+    """What a chicken of this rarity costs, based on what it earns.
+
+    An average quality chicken pays for itself in CHICKEN_PAYBACK_HOURS_COMMON hours for a COMMON,
+    falling evenly to CHICKEN_PAYBACK_HOURS_ASCENDED for an ASCENDED and above.
+    """
+    index = CHICKEN_RARITIES.index(rarity)
+
+    if index < 1:
+        return 0
+
+    # ETHEREAL chickens always have 100% quality
+    quality = 1 if rarity == "ETHEREAL" else AVERAGE_CHICKEN_QUALITY
+    eggs_per_hour = base_egg_production(index) * quality
+
+    ascended_index = CHICKEN_RARITIES.index("ASCENDED")
+    progress = min((index - 1) / (ascended_index - 1), 1)
+    payback_hours = (
+        CHICKEN_PAYBACK_HOURS_COMMON - (CHICKEN_PAYBACK_HOURS_COMMON - CHICKEN_PAYBACK_HOURS_ASCENDED) * progress
+    )
+
+    return int(round(eggs_per_hour * payback_hours, -1))
+
+
 async def calculate_food_consuption(chicken_quality_index: int) -> int:
+    """Corn a full meal (0 to 100 happiness) costs. Grows with the square of the rarity, like egg production."""
     if chicken_quality_index < 1:
         return 0
 
-    return DELTA_FOOD_CONSUMPTION * chicken_quality_index
+    if chicken_quality_index == 18:
+        # Lays as much as the 8 ASCENDED chickens it was made from, so it eats as much as them too
+        return 8 * FOOD_PER_RARITY_SQUARED * (chicken_quality_index - 1) ** 2
+
+    return FOOD_PER_RARITY_SQUARED * chicken_quality_index**2
+
+
+def farm_max_size(farmer: Optional[str]) -> int:
+    """How many chickens a farm holds. The Warrior farmer adds extra slots."""
+    return FARM_MAX_CHICKENS + (FARMERS_DICT["warrior"] if farmer == "Warrior" else 0)
+
+
+def rich_farmer_bonus(amount: int, farmer: Optional[str], bonus_key: str) -> int:
+    """`amount` plus the Rich farmer's bonus, when the farmer is Rich.
+
+    Args:
+        bonus_key: "egg_value_percentage" or "corn_production_percentage".
+    """
+    if farmer != "Rich":
+        return amount
+
+    return amount + int(amount * FARMERS_DICT["rich"][bonus_key] / 100)  # type: ignore[literal-required]
 
 
 def _generate_chicken_quality(chicken_rarity: str) -> float:

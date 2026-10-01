@@ -66,9 +66,11 @@ async def update_away_farm(
 
 
 async def update_away_corn(
-    cornfield_repository: "CornfieldRepositoryProtocol", cornfield_entity: "CornfieldEntity"
+    cornfield_repository: "CornfieldRepositoryProtocol",
+    cornfield_entity: "CornfieldEntity",
+    farmer: Optional[str] = None,
 ) -> Optional[str]:
-    corn_gained = await AwayTimeEarningsService.calculate_corn_profit(cornfield_entity)
+    corn_gained = await AwayTimeEarningsService.calculate_corn_profit(cornfield_entity, farmer == "Rich")
 
     if corn_gained is None:
         return

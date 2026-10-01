@@ -11,14 +11,17 @@ from tools.constants import (
     SECONDS_TO_CORNFIELD_DROP,
     CHICKEN_RARITIES,
     NON_DEVOLVABLE_RARITIES,
-    BASE_CHICKEN_PRICE,
-    FARMERS_DICT,
-    ChickenPricesMultiplier,
+    CHICKEN_HAPPINESS_LOSS_PER_HOUR,
     ChickenRaritiesEmojis,
 )
 from tools.utils import get_salary_from_title
-from tools.chicken_utils import calculate_base_egg_production, calculate_egg_production, calculate_plot_production
-
+from tools.chicken_utils import (
+    calculate_base_egg_production,
+    calculate_egg_production,
+    calculate_plot_production,
+    calculate_chicken_price,
+    rich_farmer_bonus,
+)
 
 if TYPE_CHECKING:
     from entities import PlayerEntity, FarmEntity, ChickenEntity, CornfieldEntity
@@ -82,7 +85,7 @@ class AwayTimeEarningsService:
 
             for _ in range(hours_passed):
                 total_gained += calculate_egg_production(chicken)
-                chicken.happiness = max(0, chicken.happiness - randint(1, 3))
+                chicken.happiness = max(0, chicken.happiness - randint(*CHICKEN_HAPPINESS_LOSS_PER_HOUR))
 
             if chicken.happiness == 0:
                 await AwayTimeEarningsService._maybe_devolve_chicken(chicken)
@@ -104,17 +107,17 @@ class AwayTimeEarningsService:
 
     @staticmethod
     def _add_rich_farmer_bonus(total: int, has_rich_farmer: bool) -> int:
-        if has_rich_farmer:
-            total += int(total * FARMERS_DICT["rich"]["egg_value_percentage"] / 100)
-
-        return total
+        return rich_farmer_bonus(total, "Rich" if has_rich_farmer else None, "egg_value_percentage")
 
     @staticmethod
-    async def calculate_corn_earnings(total_plots: int, hours: int) -> int:
-        return calculate_plot_production(total_plots) * hours
+    async def calculate_corn_earnings(total_plots: int, hours: int, has_rich_farmer: bool = False) -> int:
+        corn = calculate_plot_production(total_plots) * hours
+        return rich_farmer_bonus(corn, "Rich" if has_rich_farmer else None, "corn_production_percentage")
 
     @staticmethod
-    async def calculate_corn_profit(cornfield_entity: "CornfieldEntity") -> Optional[int]:
+    async def calculate_corn_profit(
+        cornfield_entity: "CornfieldEntity", has_rich_farmer: bool = False
+    ) -> Optional[int]:
         now = datetime.now(timezone.utc)
         time_diffence = cornfield_entity.next_corn_drop - now
 
@@ -125,7 +128,9 @@ class AwayTimeEarningsService:
 
         hours_passed = min(hours_passed, CORN_HOURS_THRESHOLD)
 
-        corn_produced = await AwayTimeEarningsService.calculate_corn_earnings(cornfield_entity.plots, hours_passed)
+        corn_produced = await AwayTimeEarningsService.calculate_corn_earnings(
+            cornfield_entity.plots, hours_passed, has_rich_farmer
+        )
 
         # Never negative: corn stored above the limit (e.g. from before the limit changed) is kept.
         free_storage = max(cornfield_entity.actual_corn_limit - cornfield_entity.current_corn, 0)
@@ -158,7 +163,7 @@ class AwayTimeEarningsService:
         chicken.happiness = 100
         chicken.total_egg_production = await calculate_base_egg_production(current_chicken_rarity_index - 1)
         chicken.actual_egg_production = int(chicken.total_egg_production * chicken.quality)
-        chicken.price = BASE_CHICKEN_PRICE * ChickenPricesMultiplier[previous_rarity].value
+        chicken.price = calculate_chicken_price(previous_rarity)
         chicken.emoji = ChickenRaritiesEmojis[previous_rarity].value
 
     @staticmethod
