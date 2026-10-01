@@ -36,7 +36,9 @@ class ExpandCornLimitUsecase:
 
         if is_corn_storage_maxed(cornfield_entity.corn_limit_upgrades):
             max_hours = corn_storage_hours(cornfield_entity.corn_limit_upgrades)
-            await self._ctx.send_failed_embed(f"Your cornfield already stores the maximum of **{max_hours} hours** of corn!")
+            await self._ctx.send_failed_embed(
+                f"Your cornfield already stores the maximum of **{max_hours} hours** of corn!"
+            )
             return
 
         total_cost = calculate_corn_limit_price(cornfield_entity.corn_limit_upgrades + 1)

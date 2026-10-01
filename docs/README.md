@@ -1,98 +1,128 @@
 <div align="center">
-    <img src="eggsauce.png" alt="Logo" width="200" height="200">
-    <h3 align="center">Eggsauce</h3>
+  <img src="eggsauce.png" alt="Eggsauce logo" width="180" height="180">
+  <h1>Eggsauce</h1>
+  <p><strong>A farming and battling game for Discord, built in Python on a layered, test-backed architecture.</strong></p>
+
+  <p>
+    <img alt="Python" src="https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white">
+    <img alt="discord.py" src="https://img.shields.io/badge/discord.py-2.7-5865F2?logo=discord&logoColor=white">
+    <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-18-4169E1?logo=postgresql&logoColor=white">
+    <img alt="Docker" src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white">
+    <img alt="Pyright" src="https://img.shields.io/badge/types-pyright-informational">
+  </p>
 </div>
 
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li><a href="#project-dependencies">Project Dependencies</a></li>
-    <li><a href="#running-the-bot">Running the Bot</a></li>
-  </ol>
-</details>
+---
 
-## 🔧 Setting Up Project Dependencies
+## About
 
-Follow the steps below to set up the project and get it running in no time. 
+Eggsauce is a Discord bot where players build a chicken farm, grow a cornfield, trade with each other and climb a ranked ladder in chicken battles. It has 35+ commands across four modules: Farm, Cornfield, Player economy, and Server config.
 
+This repository is **v2**, a ground-up rewrite of the [original bot](https://github.com/Pedro05Souza/old-eggsauce). The goal was a codebase that can grow without slowing down: explicit layers, typed entities, a write-back cache in front of the database, and CI checks on every pull request.
 
-> **Note**: Without the proper enviroment variables configured, this project will **NOT** function as intended.
+## Highlights
 
-### 1️⃣ Install UV
+- **Write-back entity cache** ([`_entity_cache.py`](../tools/services/cache/_entity_cache.py)): a TTL cache in front of PostgreSQL that cuts database traffic during busy sessions.
+  - Hits take no lock, and a miss is fetched once per key using a per-key lock.
+  - Expiration is sliding, so entities in active use stay in memory.
+  - Dirty tracking compares snapshots, so unchanged entities are never written. Failed saves stay in a pending buffer and are retried on the next flush.
+  - Keys that don't exist in the database are cached for a short time.
+  - A background task flushes periodically, and a `SIGTERM` handler flushes on `docker stop`, so no progress is lost.
+- **Ranked matchmaking with Elo** ([`elo_rating_service.py`](../tools/services/elo_rating_service.py), [`match_making_service.py`](../tools/services/match_making_service.py)):
+  - Ratings work like chess Elo, with placement matches and a smaller K-factor at the top rank.
+  - Players are pooled into MMR buckets, and the search widens to nearby buckets after repeated misses.
+  - When no human opponent is found, a bot fills in, and its deck strength scales with the player's MMR.
+- **Atomic economy**: balance and bank operations run inside database transactions ([`transaction_service.py`](../tools/services/transaction_service.py)). An action guard keeps players from being involved in two conflicting actions at once (for example, a trade during a battle).
+- **Idle progression**: players earn from the time they were away, computed when they come back ([`away_time_earnings_service.py`](../tools/services/away_time_earnings_service.py)).
 
-This project uses [UV](https://astral.sh/uv/) for fast and reliable dependency management. Install it first:
+## Architecture
 
-**macOS/Linux:**
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+controllers/   Discord cogs: parse commands, call a use case, reply
+usecases/      One class per command, holding the game rules
+entities/      Plain domain objects (Player, Farm, Chicken, Cornfield)
+repositories/  Data access behind Protocol interfaces, with mappers between ORM models and entities
+models/        Tortoise ORM models (PostgreSQL), migrations managed by Aerich
+tools/         Services (cache, Elo, matchmaking, transactions), constants, decorators
+tests/         pytest + pytest-asyncio suites
 ```
 
-**Windows:**
+The flow is always `controller → use case → repository → database`. Use cases only depend on repository *protocols*, so the tests can swap in mocks without touching the database.
+
+## Tech stack
+
+| Area | Tools |
+|---|---|
+| Language | Python 3.12 (fully type-annotated) |
+| Bot framework | discord.py 2.7 |
+| Database | PostgreSQL, Tortoise ORM, asyncpg, Aerich migrations |
+| Caching | cachetools (TTL), custom write-back layer |
+| Tooling | uv, Click CLI, Docker Compose, Adminer |
+| Quality | pytest, pyright, pylint, black, GitHub Actions |
+
+## Quality and CI
+
+Every pull request runs three GitHub Actions workflows:
+
+- **Tests**: `pytest` covers the battle use case, the Elo rating service, matchmaking and the config use cases.
+- **Type checker**: `pyright` in standard mode.
+- **Lint**: `pylint`, with formatting enforced by `black`.
+
+## Getting started
+
+### Prerequisites
+
+- [uv](https://astral.sh/uv/) (it installs Python 3.12 if needed)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- A Discord bot token ([Discord Developer Portal](https://discord.com/developers/applications))
+
+### Setup
+
 ```bash
-powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+git clone https://github.com/Pedro05Souza/eggsaucev2.git
+cd eggsaucev2
+uv sync --python 3.12          # creates the venv and installs the `eggsauce` CLI
+cp .env.template .env          # then fill in your bot token(s)
 ```
 
-Or use your package manager:
-```bash
-brew install uv                      # macOS
-sudo snap install astral-uv --classic   # Linux (Ubuntu)
-```
+> The bot will not start without valid environment variables.
 
-### 2️⃣ Install Dependencies
-
-Clone the repo and install all dependencies with:
+### Run
 
 ```bash
-uv sync --python 3.12
+uv run eggsauce run --env dev   # or --env prod
 ```
 
-UV automatically creates a virtual environment and installs all packages from `pyproject.toml` and `uv.lock`, including the `eggsauce` CLI. No manual venv activation needed!
+This starts the bot, PostgreSQL and Adminer (database UI on `localhost:8080`) through Docker Compose.
 
-> **Note**: The project needs Python 3.12. `--python 3.12` makes UV download it if you don't have it, so you only need the flag the first time.
+### CLI reference
 
-## Running the Bot
+| Command | What it does |
+|---|---|
+| `uv run eggsauce run --env <dev\|prod>` | Start the bot and its services |
+| `uv run eggsauce build` | Build the Docker images |
+| `uv run eggsauce migrate -name <name>` | Generate a migration and apply it |
+| `uv run eggsauce apply-migrations` | Apply pending migrations |
 
-1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/).
-
-2. After installation, confirm Docker is correctly set up by running:
+### Run the checks locally
 
 ```bash
-docker --version
+uv run pytest
+uv run pyright .
+uv run pylint .
 ```
 
-3. **Run the CLI**
+## Commands overview
 
-   Prefix every CLI command with `uv run`, which runs it inside the project's environment:
+| Module | Examples |
+|---|---|
+| Farm | `farm`, `market`, `battle`, `friendlybattle`, `tradechicken`, `evolvechicken`, `ascendancy`, `vault` |
+| Cornfield | `cornfield`, `buyplot`, `expandcornfield`, `sellcorn` |
+| Player | `balance`, `deposit`, `withdraw`, `steal`, `slots`, `spin`, `upgradebank` |
+| Config | `setprefix`, `togglecanstealchickens` |
 
-   ```bash
-   uv run eggsauce run --env <environment>
-   ```
+Use `$help` in Discord for the full list. The default prefix is `$` and can be changed per server.
 
-   The `--env` flag specifies the environment in which the CLI will run. It supports the following options:
+## Author
 
-  * `dev`: Development environment (default).
-  * `prod`: Production environment.
-
-### Additional Commands in the CLI
-
-#### Migrate
-Use the migrate command to generate and apply database migrations.
-  * Run this command to create a migration:
-    ```bash
-    uv run eggsauce migrate -name <migration_name>
-    ```
-    Replace <migration_name> with your desired migration name.
-  * The migration is automatically applied after this generation.
-
-#### Apply Migrations
-  * Run this command to apply pending migrations without generating a new one:
-    ```bash
-    uv run eggsauce apply-migrations
-    ```
-
-#### Build
-  * Run this command to build the containers:
-    ```bash
-    uv run eggsauce build
-    ```
-  This will execute docker compose build and create the necessary application images.
+**Pedro Henrique Ferreira Souza**: [GitHub](https://github.com/Pedro05Souza) · [LinkedIn](https://www.linkedin.com/in/pedro-henrique-ferreira-souza)
