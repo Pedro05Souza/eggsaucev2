@@ -5,10 +5,10 @@
 
   <p>
     <img alt="Python" src="https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white">
-    <img alt="discord.py" src="https://img.shields.io/badge/discord.py-2.7-5865F2?logo=discord&logoColor=white">
+    <img alt="discord.py" src="https://img.shields.io/static/v1?label=discord.py&message=2.7&color=5865F2&logo=discord&logoColor=white">
     <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-18-4169E1?logo=postgresql&logoColor=white">
     <img alt="Docker" src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white">
-    <img alt="Pyright" src="https://img.shields.io/badge/types-pyright-informational">
+    <img alt="Pyright" src="https://img.shields.io/static/v1?label=types&message=Pyright&color=0A7BBB">
   </p>
 </div>
 
